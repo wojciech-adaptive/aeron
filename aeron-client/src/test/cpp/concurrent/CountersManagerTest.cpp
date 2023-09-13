@@ -271,7 +271,18 @@ TEST_F(CountersManagerTest, shouldSetOwnerId)
     EXPECT_EQ(m_countersManager.getCounterOwnerId(counterId), OwnerId);
 }
 
-TEST_F(CountersManagerTest, shouldResetValueAndOwnerIdIfReused)
+TEST_F(CountersManagerTest, shouldSetReferenceId)
+{
+    const std::int64_t defaultReferenceId = CountersManager::DEFAULT_REFERENCE_ID;
+    const std::int32_t counterId = m_countersManager.allocate("abc");
+    EXPECT_EQ(m_countersManager.getCounterReferenceId(counterId), defaultReferenceId);
+
+    const std::int64_t referenceId = 444;
+    m_countersManager.setCounterReferenceId(counterId, referenceId);
+    EXPECT_EQ(m_countersManager.getCounterReferenceId(counterId), referenceId);
+}
+
+TEST_F(CountersManagerTest, shouldResetValueAndOwnerIdAndReferenceIdIfReused)
 {
     const std::int64_t defaultOwnerId = CountersManager::DEFAULT_OWNER_ID;
     const std::int32_t counterIdOne = m_countersManager.allocate("abc");
@@ -281,18 +292,29 @@ TEST_F(CountersManagerTest, shouldResetValueAndOwnerIdIfReused)
     m_countersManager.setCounterOwnerId(counterIdOne, ownerIdOne);
     EXPECT_EQ(m_countersManager.getCounterOwnerId(counterIdOne), ownerIdOne);
 
+    const std::int64_t defaultReferenceId = CountersManager::DEFAULT_REFERENCE_ID;
+    EXPECT_EQ(m_countersManager.getCounterReferenceId(counterIdOne), defaultReferenceId);
+
+    const std::int64_t referenceIdOne = 555;
+    m_countersManager.setCounterReferenceId(counterIdOne, referenceIdOne);
+    EXPECT_EQ(m_countersManager.getCounterReferenceId(counterIdOne), referenceIdOne);
+
     m_countersManager.free(counterIdOne);
 
     const std::int32_t counterIdTwo = m_countersManager.allocate("def");
     EXPECT_EQ(counterIdOne, counterIdTwo);
     EXPECT_EQ(m_countersManager.getCounterOwnerId(counterIdTwo), defaultOwnerId);
+    EXPECT_EQ(m_countersManager.getCounterReferenceId(counterIdTwo), defaultReferenceId);
 
     const std::int64_t ownerIdTwo = 222;
     m_countersManager.setCounterOwnerId(counterIdTwo, ownerIdTwo);
+    const std::int64_t referenceIdTwo = 333;
+    m_countersManager.setCounterReferenceId(counterIdTwo, referenceIdTwo);
     EXPECT_EQ(m_countersManager.getCounterOwnerId(counterIdTwo), ownerIdTwo);
+    EXPECT_EQ(m_countersManager.getCounterReferenceId(counterIdTwo), referenceIdTwo);
 }
 
-TEST_F(CountersManagerTest, shouldFindByRegisrationId)
+TEST_F(CountersManagerTest, shouldFindByRegistrationId)
 {
     const std::int64_t nullCounterId = CountersManager::NULL_COUNTER_ID;
     const std::int64_t registrationId = 777;
@@ -306,7 +328,7 @@ TEST_F(CountersManagerTest, shouldFindByRegisrationId)
     EXPECT_EQ(m_countersManager.findByRegistrationId(registrationId), counterId);
 }
 
-TEST_F(CountersManagerTest, shouldFindByTypeIdAndRegisrationId)
+TEST_F(CountersManagerTest, shouldFindByTypeIdAndRegistrationId)
 {
     const std::int64_t nullCounterId = CountersManager::NULL_COUNTER_ID;
     const std::int64_t registrationId = 777;

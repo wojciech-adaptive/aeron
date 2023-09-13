@@ -138,6 +138,12 @@ public:
         m_valuesBuffer.putInt64(counterOffset(counterId) + OWNER_ID_OFFSET, ownerId);
     }
 
+    inline void setCounterReferenceId(std::int32_t counterId, std::int64_t referenceId)
+    {
+        validateCounterId(counterId);
+        m_valuesBuffer.putInt64(counterOffset(counterId) + REFERENCE_ID_OFFSET, referenceId);
+    }
+
 private:
     std::deque<std::int32_t> m_freeList;
     clock_t m_clock = []() { return 0LL; };
@@ -165,6 +171,7 @@ private:
                 m_freeList.erase(it);
                 m_valuesBuffer.putInt64Ordered(offset + REGISTRATION_ID_OFFSET, DEFAULT_REGISTRATION_ID);
                 m_valuesBuffer.putInt64(offset + OWNER_ID_OFFSET, DEFAULT_OWNER_ID);
+                m_valuesBuffer.putInt64(offset + REFERENCE_ID_OFFSET, DEFAULT_REFERENCE_ID);
                 m_valuesBuffer.putInt64Ordered(offset, 0);
 
                 return counterId;

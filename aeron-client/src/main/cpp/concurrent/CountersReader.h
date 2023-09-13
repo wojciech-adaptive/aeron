@@ -42,7 +42,10 @@ namespace aeron { namespace concurrent {
  *  |                          Owner Id                             |
  *  |                                                               |
  *  +---------------------------------------------------------------+
- *  |                     104 bytes of padding                     ...
+ *  |                        Reference Id                           |
+ *  |                                                               |
+ *  +---------------------------------------------------------------+
+ *  |                     96 bytes of padding                      ...
  * ...                                                              |
  *  +---------------------------------------------------------------+
  *  |                   Repeats to end of buffer                   ...
@@ -197,6 +200,12 @@ public:
         return m_valuesBuffer.getInt64(counterOffset(id) + OWNER_ID_OFFSET);
     }
 
+    inline std::int64_t getCounterReferenceId(std::int32_t id) const
+    {
+        validateCounterId(id);
+        return m_valuesBuffer.getInt64(counterOffset(id) + REFERENCE_ID_OFFSET);
+    }
+
     inline std::int32_t getCounterState(std::int32_t id) const
     {
         validateCounterId(id);
@@ -248,7 +257,8 @@ public:
         std::int64_t counterValue;
         std::int64_t registrationId;
         std::int64_t ownerId;
-        std::int8_t padding[(2 * util::BitUtil::CACHE_LINE_LENGTH) - (3 * sizeof(std::int64_t))];
+        std::int64_t referenceId;
+        std::int8_t padding[(2 * util::BitUtil::CACHE_LINE_LENGTH) - (4 * sizeof(std::int64_t))];
     };
 
     struct CounterMetaDataDefn
@@ -270,11 +280,13 @@ public:
 
     static const std::int64_t DEFAULT_REGISTRATION_ID = INT64_C(0);
     static const std::int64_t DEFAULT_OWNER_ID = INT64_C(0);
+    static const std::int64_t DEFAULT_REFERENCE_ID = INT64_C(0);
     static const std::int64_t NOT_FREE_TO_REUSE = INT64_MAX;
 
     static const util::index_t COUNTER_LENGTH = sizeof(CounterValueDefn);
     static const util::index_t REGISTRATION_ID_OFFSET = offsetof(CounterValueDefn, registrationId);
     static const util::index_t OWNER_ID_OFFSET = offsetof(CounterValueDefn, ownerId);
+    static const util::index_t REFERENCE_ID_OFFSET = offsetof(CounterValueDefn, referenceId);
 
     static const util::index_t METADATA_LENGTH = sizeof(CounterMetaDataDefn);
     static const util::index_t TYPE_ID_OFFSET = offsetof(CounterMetaDataDefn, typeId);
