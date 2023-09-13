@@ -45,7 +45,10 @@ namespace aeron { namespace concurrent {
  *  |                          Owner Id                             |
  *  |                                                               |
  *  +---------------------------------------------------------------+
- *  |                     104 bytes of padding                     ...
+ *  |                        Reference Id                           |
+ *  |                                                               |
+ *  +---------------------------------------------------------------+
+ *  |                     96 bytes of padding                      ...
  * ...                                                              |
  *  +---------------------------------------------------------------+
  *  |                   Repeats to end of buffer                   ...
@@ -150,6 +153,19 @@ public:
         return ownerId;
     }
 
+    inline std::int64_t getCounterReferenceId(std::int32_t id) const
+    {
+        validateCounterId(id);
+
+        std::int64_t referenceId;
+        if (aeron_counters_reader_counter_reference_id(m_countersReader, id, &referenceId) < 0)
+        {
+            AERON_MAP_ERRNO_TO_SOURCED_EXCEPTION_AND_THROW;
+        }
+
+        return referenceId;
+    }
+
     inline std::int32_t getCounterState(std::int32_t id) const
     {
         std::int32_t state;
@@ -234,6 +250,7 @@ public:
     static const std::int32_t RECORD_RECLAIMED = AERON_COUNTER_RECORD_RECLAIMED;
 
     static const std::int64_t DEFAULT_REGISTRATION_ID = AERON_COUNTER_REGISTRATION_ID_DEFAULT;
+    static const std::int64_t DEFAULT_REFERENCE_ID = AERON_COUNTER_REFERENCE_ID_DEFAULT;
     static const std::int64_t NOT_FREE_TO_REUSE = AERON_COUNTER_NOT_FREE_TO_REUSE;
 
     static const util::index_t COUNTER_LENGTH = AERON_COUNTER_VALUE_LENGTH;
