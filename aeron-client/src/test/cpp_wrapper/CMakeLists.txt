@@ -35,7 +35,7 @@ function(aeron_client_wrapper_test name file)
     add_executable(${wrapper_name} ${file} ${TEST_HEADERS})
     add_dependencies(${wrapper_name} gmock)
     target_link_libraries(${wrapper_name} aeron_client_wrapper aeron_driver gmock_main ${CMAKE_THREAD_LIBS_INIT})
-    target_compile_definitions(${wrapper_name} PUBLIC "_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING")
+    target_compile_definitions(${wrapper_name} PUBLIC "_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING" "WRAPPER_TEST")
     add_test(NAME ${wrapper_name} COMMAND ${wrapper_name})
 endfunction()
 

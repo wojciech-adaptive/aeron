@@ -903,6 +903,16 @@ public:
     }
 
     /**
+     * Get the underlying C Aeron client or nullptr if there isn't one.
+     *
+     * @return the underlying C Aeron client or nullptr if there isn't one.
+     */
+    inline aeron_t *aeron()
+    {
+        return m_aeron;
+    }
+
+    /**
      * Return the static version and build string for the binary library.
      *
      * @return static version and build string for the binary library.

@@ -23,6 +23,8 @@
 #include "concurrent/AgentInvoker.h"
 #include "util/Export.h"
 
+typedef struct aeron_stct aeron_t;
+
 /// Top namespace for Aeron C++ API
 namespace aeron
 {
@@ -430,6 +432,16 @@ public:
     inline const Context &context() const
     {
         return m_context;
+    }
+
+    /**
+     * Get the underlying C Aeron client or nullptr if there isn't one.
+     *
+     * @return the underlying C Aeron client or nullptr if there isn't one.
+     */
+    inline aeron_t *aeron()
+    {
+        return nullptr;
     }
 
     /**

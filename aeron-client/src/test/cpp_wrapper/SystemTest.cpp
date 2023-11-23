@@ -192,3 +192,14 @@ TEST_F(SystemTest, shouldAddRemoveCloseHandler)
     EXPECT_EQ(1, closeCount1);
     EXPECT_EQ(0, closeCount2);
 }
+
+TEST_F(SystemTest, testAccessingUnderlyingClient)
+{
+    std::shared_ptr<Aeron> aeron = Aeron::connect();
+    aeron_t *underlying = aeron->aeron();
+#ifdef WRAPPER_TEST
+    ASSERT_TRUE(nullptr != underlying);
+#else
+    ASSERT_TRUE(nullptr == underlying);
+#endif
+}
