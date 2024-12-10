@@ -53,6 +53,7 @@ import java.nio.channels.DatagramChannel;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Properties;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -445,73 +446,73 @@ public final class MediaDriver implements AutoCloseable
         }
 
         private volatile boolean isClosed;
-        private boolean printConfigurationOnStart = Configuration.printConfigurationOnStart();
-        private boolean useWindowsHighResTimer = Configuration.useWindowsHighResTimer();
-        private boolean warnIfDirectoryExists = Configuration.warnIfDirExists();
-        private boolean dirDeleteOnStart = Configuration.dirDeleteOnStart();
-        private boolean dirDeleteOnShutdown = Configuration.dirDeleteOnShutdown();
-        private boolean termBufferSparseFile = Configuration.termBufferSparseFile();
-        private boolean performStorageChecks = Configuration.performStorageChecks();
-        private boolean spiesSimulateConnection = Configuration.spiesSimulateConnection();
-        private boolean reliableStream = Configuration.reliableStream();
-        private boolean tetherSubscriptions = Configuration.tetherSubscriptions();
-        private boolean rejoinStream = Configuration.rejoinStream();
-        private long lowStorageWarningThreshold = Configuration.lowStorageWarningThreshold();
-        private long timerIntervalNs = Configuration.timerIntervalNs();
-        private long clientLivenessTimeoutNs = Configuration.clientLivenessTimeoutNs();
-        private long imageLivenessTimeoutNs = Configuration.imageLivenessTimeoutNs();
-        private long publicationUnblockTimeoutNs = Configuration.publicationUnblockTimeoutNs();
-        private long publicationConnectionTimeoutNs = Configuration.publicationConnectionTimeoutNs();
-        private long publicationLingerTimeoutNs = Configuration.publicationLingerTimeoutNs();
-        private long untetheredWindowLimitTimeoutNs = Configuration.untetheredWindowLimitTimeoutNs();
-        private long untetheredRestingTimeoutNs = Configuration.untetheredRestingTimeoutNs();
-        private long statusMessageTimeoutNs = Configuration.statusMessageTimeoutNs();
-        private long counterFreeToReuseTimeoutNs = Configuration.counterFreeToReuseTimeoutNs();
-        private long retransmitUnicastDelayNs = Configuration.retransmitUnicastDelayNs();
-        private long retransmitUnicastLingerNs = Configuration.retransmitUnicastLingerNs();
-        private long nakUnicastDelayNs = Configuration.nakUnicastDelayNs();
-        private long nakUnicastRetryDelayRatio = Configuration.nakUnicastRetryDelayRatio();
-        private long nakMulticastMaxBackoffNs = Configuration.nakMulticastMaxBackoffNs();
-        private long flowControlReceiverTimeoutNs = Configuration.flowControlReceiverTimeoutNs();
-        private long reResolutionCheckIntervalNs = Configuration.reResolutionCheckIntervalNs();
-        private long conductorCycleThresholdNs = Configuration.conductorCycleThresholdNs();
-        private long senderCycleThresholdNs = Configuration.senderCycleThresholdNs();
-        private long receiverCycleThresholdNs = Configuration.receiverCycleThresholdNs();
-        private long nameResolverThresholdNs = Configuration.nameResolverThresholdNs();
+        private boolean printConfigurationOnStart;
+        private boolean useWindowsHighResTimer;
+        private boolean warnIfDirectoryExists;
+        private boolean dirDeleteOnStart;
+        private boolean dirDeleteOnShutdown;
+        private boolean termBufferSparseFile;
+        private boolean performStorageChecks;
+        private boolean spiesSimulateConnection;
+        private boolean reliableStream;
+        private boolean tetherSubscriptions;
+        private boolean rejoinStream;
+        private long lowStorageWarningThreshold;
+        private long timerIntervalNs;
+        private long clientLivenessTimeoutNs;
+        private long imageLivenessTimeoutNs;
+        private long publicationUnblockTimeoutNs;
+        private long publicationConnectionTimeoutNs;
+        private long publicationLingerTimeoutNs;
+        private long untetheredWindowLimitTimeoutNs;
+        private long untetheredRestingTimeoutNs;
+        private long statusMessageTimeoutNs;
+        private long counterFreeToReuseTimeoutNs;
+        private long retransmitUnicastDelayNs;
+        private long retransmitUnicastLingerNs;
+        private long nakUnicastDelayNs;
+        private long nakUnicastRetryDelayRatio;
+        private long nakMulticastMaxBackoffNs;
+        private long flowControlReceiverTimeoutNs;
+        private long reResolutionCheckIntervalNs;
+        private long conductorCycleThresholdNs;
+        private long senderCycleThresholdNs;
+        private long receiverCycleThresholdNs;
+        private long nameResolverThresholdNs;
 
-        private int conductorBufferLength = Configuration.conductorBufferLength();
-        private int toClientsBufferLength = Configuration.toClientsBufferLength();
-        private int counterValuesBufferLength = Configuration.counterValuesBufferLength();
-        private int errorBufferLength = Configuration.errorBufferLength();
-        private int nakMulticastGroupSize = Configuration.nakMulticastGroupSize();
-        private int publicationTermBufferLength = Configuration.termBufferLength();
-        private int ipcTermBufferLength = Configuration.ipcTermBufferLength();
-        private int publicationTermWindowLength = Configuration.publicationTermWindowLength();
-        private int ipcPublicationTermWindowLength = Configuration.ipcPublicationTermWindowLength();
-        private int initialWindowLength = Configuration.initialWindowLength();
-        private int socketSndbufLength = Configuration.socketSndbufLength();
-        private int socketRcvbufLength = Configuration.socketRcvbufLength();
-        private int socketMulticastTtl = Configuration.socketMulticastTtl();
-        private int mtuLength = Configuration.mtuLength();
-        private int ipcMtuLength = Configuration.ipcMtuLength();
-        private int filePageSize = Configuration.filePageSize();
-        private int publicationReservedSessionIdLow = Configuration.publicationReservedSessionIdLow();
-        private int publicationReservedSessionIdHigh = Configuration.publicationReservedSessionIdHigh();
-        private int lossReportBufferLength = Configuration.lossReportBufferLength();
-        private int sendToStatusMessagePollRatio = Configuration.sendToStatusMessagePollRatio();
-        private int resourceFreeLimit = Configuration.resourceFreeLimit();
-        private int asyncTaskExecutorThreads = Configuration.asyncTaskExecutorThreads();
-        private int maxResend = Configuration.maxResend();
+        private int conductorBufferLength;
+        private int toClientsBufferLength;
+        private int counterValuesBufferLength;
+        private int errorBufferLength;
+        private int nakMulticastGroupSize;
+        private int publicationTermBufferLength;
+        private int ipcTermBufferLength;
+        private int publicationTermWindowLength;
+        private int ipcPublicationTermWindowLength;
+        private int initialWindowLength;
+        private int socketSndbufLength;
+        private int socketRcvbufLength;
+        private int socketMulticastTtl;
+        private int mtuLength;
+        private int ipcMtuLength;
+        private int filePageSize;
+        private int publicationReservedSessionIdLow;
+        private int publicationReservedSessionIdHigh;
+        private int lossReportBufferLength;
+        private int sendToStatusMessagePollRatio;
+        private int resourceFreeLimit;
+        private int asyncTaskExecutorThreads;
+        private int maxResend;
 
-        private Long receiverGroupTag = Configuration.groupTag();
-        private long flowControlGroupTag = Configuration.flowControlGroupTag();
-        private int flowControlGroupMinSize = Configuration.flowControlGroupMinSize();
-        private InferableBoolean receiverGroupConsideration = Configuration.receiverGroupConsideration();
-        private String resolverName = Configuration.resolverName();
-        private String resolverInterface = Configuration.resolverInterface();
-        private String resolverBootstrapNeighbor = Configuration.resolverBootstrapNeighbor();
-        private String senderWildcardPortRange = Configuration.senderWildcardPortRange();
-        private String receiverWildcardPortRange = Configuration.receiverWildcardPortRange();
+        private Long receiverGroupTag;
+        private long flowControlGroupTag;
+        private int flowControlGroupMinSize;
+        private InferableBoolean receiverGroupConsideration;
+        private String resolverName;
+        private String resolverInterface;
+        private String resolverBootstrapNeighbor;
+        private String senderWildcardPortRange;
+        private String receiverWildcardPortRange;
 
         private EpochClock epochClock;
         private NanoClock nanoClock;
@@ -584,7 +585,95 @@ public final class MediaDriver implements AutoCloseable
         private DutyCycleTracker nameResolverTimeTracker;
         private PortManager senderPortManager;
         private PortManager receiverPortManager;
-        private int streamSessionLimit = Configuration.streamSessionLimit();
+        private int streamSessionLimit;
+
+        /**
+         * Creates a context using system properties.
+         */
+        public Context()
+        {
+            this(System.getProperties());
+        }
+
+        /**
+         * Creates a context using given properties.
+         *
+         * @param properties the properties to read from when populating this context
+         */
+        public Context(final Properties properties)
+        {
+            super(properties);
+
+            printConfigurationOnStart = Configuration.printConfigurationOnStart(properties);
+            useWindowsHighResTimer = Configuration.useWindowsHighResTimer(properties);
+            warnIfDirectoryExists = Configuration.warnIfDirExists(properties);
+            dirDeleteOnStart = Configuration.dirDeleteOnStart(properties);
+            dirDeleteOnShutdown = Configuration.dirDeleteOnShutdown(properties);
+            termBufferSparseFile = Configuration.termBufferSparseFile(properties);
+            performStorageChecks = Configuration.performStorageChecks(properties);
+            spiesSimulateConnection = Configuration.spiesSimulateConnection(properties);
+            reliableStream = Configuration.reliableStream(properties);
+            tetherSubscriptions = Configuration.tetherSubscriptions(properties);
+            rejoinStream = Configuration.rejoinStream(properties);
+            lowStorageWarningThreshold = Configuration.lowStorageWarningThreshold(properties);
+            timerIntervalNs = Configuration.timerIntervalNs(properties);
+            clientLivenessTimeoutNs = Configuration.clientLivenessTimeoutNs(properties);
+            imageLivenessTimeoutNs = Configuration.imageLivenessTimeoutNs(properties);
+            publicationUnblockTimeoutNs = Configuration.publicationUnblockTimeoutNs(properties);
+            publicationConnectionTimeoutNs = Configuration.publicationConnectionTimeoutNs(properties);
+            publicationLingerTimeoutNs = Configuration.publicationLingerTimeoutNs(properties);
+            untetheredWindowLimitTimeoutNs = Configuration.untetheredWindowLimitTimeoutNs(properties);
+            untetheredRestingTimeoutNs = Configuration.untetheredRestingTimeoutNs(properties);
+            statusMessageTimeoutNs = Configuration.statusMessageTimeoutNs(properties);
+            counterFreeToReuseTimeoutNs = Configuration.counterFreeToReuseTimeoutNs(properties);
+            retransmitUnicastDelayNs = Configuration.retransmitUnicastDelayNs(properties);
+            retransmitUnicastLingerNs = Configuration.retransmitUnicastLingerNs(properties);
+            nakUnicastDelayNs = Configuration.nakUnicastDelayNs(properties);
+            nakUnicastRetryDelayRatio = Configuration.nakUnicastRetryDelayRatio(properties);
+            nakMulticastMaxBackoffNs = Configuration.nakMulticastMaxBackoffNs(properties);
+            flowControlReceiverTimeoutNs = Configuration.flowControlReceiverTimeoutNs(properties);
+            reResolutionCheckIntervalNs = Configuration.reResolutionCheckIntervalNs(properties);
+            conductorCycleThresholdNs = Configuration.conductorCycleThresholdNs(properties);
+            senderCycleThresholdNs = Configuration.senderCycleThresholdNs(properties);
+            receiverCycleThresholdNs = Configuration.receiverCycleThresholdNs(properties);
+            nameResolverThresholdNs = Configuration.nameResolverThresholdNs(properties);
+
+            conductorBufferLength = Configuration.conductorBufferLength(properties);
+            toClientsBufferLength = Configuration.toClientsBufferLength(properties);
+            counterValuesBufferLength = Configuration.counterValuesBufferLength(properties);
+            errorBufferLength = Configuration.errorBufferLength(properties);
+            nakMulticastGroupSize = Configuration.nakMulticastGroupSize(properties);
+            publicationTermBufferLength = Configuration.termBufferLength(properties);
+            ipcTermBufferLength = Configuration.ipcTermBufferLength(properties);
+            publicationTermWindowLength = Configuration.publicationTermWindowLength(properties);
+            ipcPublicationTermWindowLength = Configuration.ipcPublicationTermWindowLength(properties);
+            initialWindowLength = Configuration.initialWindowLength(properties);
+            socketSndbufLength = Configuration.socketSndbufLength(properties);
+            socketRcvbufLength = Configuration.socketRcvbufLength(properties);
+            socketMulticastTtl = Configuration.socketMulticastTtl(properties);
+            mtuLength = Configuration.mtuLength(properties);
+            ipcMtuLength = Configuration.ipcMtuLength(properties);
+            filePageSize = Configuration.filePageSize(properties);
+            publicationReservedSessionIdLow = Configuration.publicationReservedSessionIdLow(properties);
+            publicationReservedSessionIdHigh = Configuration.publicationReservedSessionIdHigh(properties);
+            lossReportBufferLength = Configuration.lossReportBufferLength(properties);
+            sendToStatusMessagePollRatio = Configuration.sendToStatusMessagePollRatio(properties);
+            resourceFreeLimit = Configuration.resourceFreeLimit(properties);
+            asyncTaskExecutorThreads = Configuration.asyncTaskExecutorThreads(properties);
+            maxResend = Configuration.maxResend(properties);
+
+            receiverGroupTag = Configuration.groupTag(properties);
+            flowControlGroupTag = Configuration.flowControlGroupTag(properties);
+            flowControlGroupMinSize = Configuration.flowControlGroupMinSize(properties);
+            receiverGroupConsideration = Configuration.receiverGroupConsideration(properties);
+            resolverName = Configuration.resolverName(properties);
+            resolverInterface = Configuration.resolverInterface(properties);
+            resolverBootstrapNeighbor = Configuration.resolverBootstrapNeighbor(properties);
+            senderWildcardPortRange = Configuration.senderWildcardPortRange(properties);
+            receiverWildcardPortRange = Configuration.receiverWildcardPortRange(properties);
+
+            streamSessionLimit = Configuration.streamSessionLimit(properties);
+        }
 
         /**
          * Perform a shallow copy of the object.
@@ -3417,7 +3506,7 @@ public final class MediaDriver implements AutoCloseable
          *
          * @param resourceFreeLimit number of resources to limit to.
          * @return this for a fluent API.
-         * @see Configuration#resourceFreeLimit()
+         * @see Configuration#resourceFreeLimit(Properties)
          * @see Configuration#RESOURCE_FREE_LIMIT_PROP_NAME
          * @see Configuration#RESOURCE_FREE_LIMIT_DEFAULT
          * @since 1.41.0
@@ -3656,7 +3745,7 @@ public final class MediaDriver implements AutoCloseable
          * @return this for a fluent API.
          * @see Configuration#STREAM_SESSION_LIMIT_PROP_NAME
          * @see Configuration#STREAM_SESSION_LIMIT_DEFAULT
-         * @see Configuration#streamSessionLimit()
+         * @see Configuration#streamSessionLimit(Properties)
          */
         public Context streamSessionLimit(final int sessionLimit)
         {
@@ -3932,27 +4021,27 @@ public final class MediaDriver implements AutoCloseable
 
             if (null == unicastFlowControlSupplier)
             {
-                unicastFlowControlSupplier = Configuration.unicastFlowControlSupplier();
+                unicastFlowControlSupplier = Configuration.unicastFlowControlSupplier(properties);
             }
 
             if (null == multicastFlowControlSupplier)
             {
-                multicastFlowControlSupplier = Configuration.multicastFlowControlSupplier();
+                multicastFlowControlSupplier = Configuration.multicastFlowControlSupplier(properties);
             }
 
             if (null == sendChannelEndpointSupplier)
             {
-                sendChannelEndpointSupplier = Configuration.sendChannelEndpointSupplier();
+                sendChannelEndpointSupplier = Configuration.sendChannelEndpointSupplier(properties);
             }
 
             if (null == receiveChannelEndpointSupplier)
             {
-                receiveChannelEndpointSupplier = Configuration.receiveChannelEndpointSupplier();
+                receiveChannelEndpointSupplier = Configuration.receiveChannelEndpointSupplier(properties);
             }
 
             if (null == applicationSpecificFeedback)
             {
-                applicationSpecificFeedback = Configuration.applicationSpecificFeedback();
+                applicationSpecificFeedback = Configuration.applicationSpecificFeedback(properties);
             }
 
             if (null == receiverGroupTag)
@@ -3978,12 +4067,12 @@ public final class MediaDriver implements AutoCloseable
 
             if (null == congestionControlSupplier)
             {
-                congestionControlSupplier = Configuration.congestionControlSupplier();
+                congestionControlSupplier = Configuration.congestionControlSupplier(properties);
             }
 
             if (null == threadingMode)
             {
-                threadingMode = Configuration.threadingMode();
+                threadingMode = Configuration.threadingMode(properties);
             }
 
             if (null == driverCommandQueue)
@@ -4025,7 +4114,7 @@ public final class MediaDriver implements AutoCloseable
 
             if (null == terminationValidator)
             {
-                terminationValidator = Configuration.terminationValidator();
+                terminationValidator = Configuration.terminationValidator(properties);
             }
 
             if (null == nameResolver)

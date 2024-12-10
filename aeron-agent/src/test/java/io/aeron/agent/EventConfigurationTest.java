@@ -66,7 +66,7 @@ public class EventConfigurationTest
     {
         try
         {
-            assertEquals(1, asyncTaskExecutorThreads());
+            assertEquals(1, asyncTaskExecutorThreads(System.getProperties()));
         }
         finally
         {
@@ -81,7 +81,7 @@ public class EventConfigurationTest
         System.setProperty(ASYNC_TASK_EXECUTOR_THREADS_PROP_NAME, Integer.toString(threads));
         try
         {
-            assertEquals(threads, asyncTaskExecutorThreads());
+            assertEquals(threads, asyncTaskExecutorThreads(System.getProperties()));
         }
         finally
         {
@@ -95,7 +95,7 @@ public class EventConfigurationTest
         System.setProperty(ASYNC_TASK_EXECUTOR_THREADS_PROP_NAME, "abc");
         try
         {
-            assertEquals(1, asyncTaskExecutorThreads());
+            assertEquals(1, asyncTaskExecutorThreads(System.getProperties()));
         }
         finally
         {

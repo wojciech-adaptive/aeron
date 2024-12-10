@@ -37,8 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TaggedMulticastFlowControlTest
 {
     private static final int DEFAULT_GROUP_SIZE = 0;
-    private static final long DEFAULT_GROUP_TAG = Configuration.flowControlGroupTag();
-    private static final long DEFAULT_TIMEOUT = Configuration.flowControlReceiverTimeoutNs();
+    private static final long DEFAULT_GROUP_TAG = Configuration.flowControlGroupTag(System.getProperties());
+    private static final long DEFAULT_TIMEOUT = Configuration.flowControlReceiverTimeoutNs(System.getProperties());
     private static final int WINDOW_LENGTH = 16 * 1024;
     private static final int COUNTERS_BUFFER_LENGTH = 16 * 1024;
 

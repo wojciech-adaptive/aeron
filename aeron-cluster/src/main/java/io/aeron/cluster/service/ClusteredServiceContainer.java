@@ -1013,7 +1013,7 @@ public final class ClusteredServiceContainer implements AutoCloseable
             abortLatch = new CountDownLatch(aeron.conductorAgentInvoker() == null ? 1 : 0);
             concludeMarkFile();
 
-            if (io.aeron.driver.Configuration.printConfigurationOnStart())
+            if (io.aeron.driver.Configuration.printConfigurationOnStart(System.getProperties()))
             {
                 System.out.println(this);
             }

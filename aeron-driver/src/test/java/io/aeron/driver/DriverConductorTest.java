@@ -178,8 +178,8 @@ class DriverConductorTest
             .timerIntervalNs(DEFAULT_TIMER_INTERVAL_NS)
             .publicationTermBufferLength(TERM_BUFFER_LENGTH)
             .ipcTermBufferLength(TERM_BUFFER_LENGTH)
-            .unicastFlowControlSupplier(Configuration.unicastFlowControlSupplier())
-            .multicastFlowControlSupplier(Configuration.multicastFlowControlSupplier())
+            .unicastFlowControlSupplier(Configuration.unicastFlowControlSupplier(System.getProperties()))
+            .multicastFlowControlSupplier(Configuration.multicastFlowControlSupplier(System.getProperties()))
             .driverCommandQueue(new ManyToOneConcurrentLinkedQueue<>())
             .errorHandler(mockErrorHandler)
             .logFactory(new TestLogFactory())
@@ -190,9 +190,9 @@ class DriverConductorTest
             .receiverCachedNanoClock(nanoClock)
             .cachedEpochClock(new CachedEpochClock())
             .cachedNanoClock(new CachedNanoClock())
-            .sendChannelEndpointSupplier(Configuration.sendChannelEndpointSupplier())
-            .receiveChannelEndpointSupplier(Configuration.receiveChannelEndpointSupplier())
-            .congestControlSupplier(Configuration.congestionControlSupplier())
+            .sendChannelEndpointSupplier(Configuration.sendChannelEndpointSupplier(System.getProperties()))
+            .receiveChannelEndpointSupplier(Configuration.receiveChannelEndpointSupplier(System.getProperties()))
+            .congestControlSupplier(Configuration.congestionControlSupplier(System.getProperties()))
             .toDriverCommands(toDriverCommands)
             .clientProxy(mockClientProxy)
             .systemCounters(spySystemCounters)
@@ -632,7 +632,8 @@ class DriverConductorTest
         assertThat(publication.state(),
             Matchers.anyOf(is(NetworkPublication.State.DRAINING), is(NetworkPublication.State.LINGER)));
 
-        final long endTime = nanoClock.nanoTime() + publicationConnectionTimeoutNs() + DEFAULT_TIMER_INTERVAL_NS;
+        final long endTime = nanoClock.nanoTime() + publicationConnectionTimeoutNs(System.getProperties()) +
+            DEFAULT_TIMER_INTERVAL_NS;
         doWorkUntil(() -> nanoClock.nanoTime() >= endTime, publication::updateHasReceivers);
 
         assertThat(publication.state(),
@@ -778,7 +779,7 @@ class DriverConductorTest
         publicationImage.activate();
         publicationImage.deactivate();
 
-        doWorkUntil(() -> nanoClock.nanoTime() >= imageLivenessTimeoutNs() + 1000);
+        doWorkUntil(() -> nanoClock.nanoTime() >= imageLivenessTimeoutNs(System.getProperties()) + 1000);
 
         verify(mockClientProxy).onUnavailableImage(
             eq(publicationImage.correlationId()), eq(subId), eq(STREAM_ID_1), anyString());
@@ -816,7 +817,7 @@ class DriverConductorTest
 
         publicationImage.deactivate();
 
-        doWorkUntil(() -> nanoClock.nanoTime() >= imageLivenessTimeoutNs() + 1000);
+        doWorkUntil(() -> nanoClock.nanoTime() >= imageLivenessTimeoutNs(System.getProperties()) + 1000);
 
         final InOrder inOrder = inOrder(mockClientProxy);
         inOrder.verify(mockClientProxy, times(2)).onAvailableImage(
@@ -860,12 +861,12 @@ class DriverConductorTest
         publicationImage.activate();
         publicationImage.deactivate();
 
-        doWorkUntil(() -> nanoClock.nanoTime() >= imageLivenessTimeoutNs() / 2);
+        doWorkUntil(() -> nanoClock.nanoTime() >= imageLivenessTimeoutNs(System.getProperties()) / 2);
 
         final AtomicCounter heartbeatCounter = clientHeartbeatCounter(spyCountersManager);
         heartbeatCounter.setOrdered(epochClock.time());
 
-        doWorkUntil(() -> nanoClock.nanoTime() >= imageLivenessTimeoutNs() + 1000);
+        doWorkUntil(() -> nanoClock.nanoTime() >= imageLivenessTimeoutNs(System.getProperties()) + 1000);
 
         final long subTwoId = driverProxy.addSubscription(CHANNEL_4000, STREAM_ID_1);
 

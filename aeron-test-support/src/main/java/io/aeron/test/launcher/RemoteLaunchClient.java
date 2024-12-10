@@ -79,7 +79,7 @@ public final class RemoteLaunchClient implements AutoCloseable
     {
         try (ReadableByteChannel commandResponse = execute(command))
         {
-            final ByteBuffer buffer = ByteBuffer.allocate(Configuration.filePageSize());
+            final ByteBuffer buffer = ByteBuffer.allocate(Configuration.filePageSize(System.getProperties()));
 
             while (commandResponse.isOpen())
             {

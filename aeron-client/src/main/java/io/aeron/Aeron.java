@@ -41,17 +41,17 @@ import java.nio.channels.FileChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
+import java.util.Properties;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static io.aeron.Aeron.Configuration.MAX_CLIENT_NAME_LENGTH;
+import static io.aeron.CommonContext.getDurationNsProperty;
 import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
-import static org.agrona.SystemUtil.getDurationInNanos;
-import static org.agrona.SystemUtil.getProperty;
 
 /**
  * Aeron entry point for communicating to the Media Driver for creating {@link Publication}s and {@link Subscription}s.
@@ -842,51 +842,56 @@ public class Aeron implements AutoCloseable
         /**
          * Duration in nanoseconds for which the client conductor will sleep between work cycles when idle.
          *
+         * @param properties the properties to read the configuration parameter from.
          * @return duration in nanoseconds to wait when idle in client conductor.
          * @see #IDLE_SLEEP_DURATION_PROP_NAME
          */
         @Config
-        public static long idleSleepDurationNs()
+        public static long idleSleepDurationNs(final Properties properties)
         {
-            return getDurationInNanos(IDLE_SLEEP_DURATION_PROP_NAME, IDLE_SLEEP_DEFAULT_NS);
+            return getDurationNsProperty(properties, IDLE_SLEEP_DURATION_PROP_NAME, IDLE_SLEEP_DEFAULT_NS);
         }
 
         /**
          * Duration to wait while lingering an entity such as an {@link Image} before deleting underlying resources
          * such as memory mapped files.
          *
+         * @param properties the properties to read the configuration parameter from.
          * @return duration in nanoseconds to wait before deleting an expired resource.
          * @see #RESOURCE_LINGER_DURATION_PROP_NAME
          */
         @Config
-        public static long resourceLingerDurationNs()
+        public static long resourceLingerDurationNs(final Properties properties)
         {
-            return getDurationInNanos(RESOURCE_LINGER_DURATION_PROP_NAME, RESOURCE_LINGER_DURATION_DEFAULT_NS);
+            return getDurationNsProperty(properties,
+                RESOURCE_LINGER_DURATION_PROP_NAME, RESOURCE_LINGER_DURATION_DEFAULT_NS);
         }
 
         /**
          * Duration to wait while lingering an entity such as an {@link Image} before deleting underlying resources
          * such as memory mapped files.
          *
+         * @param properties the properties to read the configuration parameter from.
          * @return duration in nanoseconds to wait before deleting an expired resource.
          * @see #RESOURCE_LINGER_DURATION_PROP_NAME
          */
         @Config
-        public static long closeLingerDurationNs()
+        public static long closeLingerDurationNs(final Properties properties)
         {
-            return getDurationInNanos(CLOSE_LINGER_DURATION_PROP_NAME, CLOSE_LINGER_DURATION_DEFAULT_NS);
+            return getDurationNsProperty(properties, CLOSE_LINGER_DURATION_PROP_NAME, CLOSE_LINGER_DURATION_DEFAULT_NS);
         }
 
         /**
          * Should memory-mapped files be pre-touched so that they are already faulted into a process.
          *
+         * @param properties the properties to read the configuration parameter from.
          * @return true if memory mappings should be pre-touched, otherwise false.
          * @see #PRE_TOUCH_MAPPED_MEMORY_PROP_NAME
          */
         @Config
-        public static boolean preTouchMappedMemory()
+        public static boolean preTouchMappedMemory(final Properties properties)
         {
-            final String value = System.getProperty(PRE_TOUCH_MAPPED_MEMORY_PROP_NAME);
+            final String value = properties.getProperty(PRE_TOUCH_MAPPED_MEMORY_PROP_NAME);
             if (null != value)
             {
                 return Boolean.parseBoolean(value);
@@ -898,13 +903,14 @@ public class Aeron implements AutoCloseable
         /**
          * Get the configured client name.
          *
+         * @param properties the properties to read the configuration parameter from.
          * @return specified client name or empty string if not set.
          * @see #CLIENT_NAME_PROP_NAME
          */
         @Config
-        public static String clientName()
+        public static String clientName(final Properties properties)
         {
-            return getProperty(CLIENT_NAME_PROP_NAME, "");
+            return properties.getProperty(CLIENT_NAME_PROP_NAME, "");
         }
 
         /**
@@ -929,9 +935,9 @@ public class Aeron implements AutoCloseable
     public static class Context extends CommonContext
     {
         private long clientId;
-        private String clientName = Configuration.clientName();
+        private String clientName;
         private boolean useConductorAgentInvoker = false;
-        private boolean preTouchMappedMemory = Configuration.preTouchMappedMemory();
+        private boolean preTouchMappedMemory;
         private AgentInvoker driverAgentInvoker;
         private Lock clientLock;
         private EpochClock epochClock;
@@ -954,11 +960,35 @@ public class Aeron implements AutoCloseable
         private Runnable closeHandler;
         private long keepAliveIntervalNs = Configuration.KEEPALIVE_INTERVAL_NS;
         private long interServiceTimeoutNs = 0;
-        private long idleSleepDurationNs = Configuration.idleSleepDurationNs();
-        private long resourceLingerDurationNs = Configuration.resourceLingerDurationNs();
-        private long closeLingerDurationNs = Configuration.closeLingerDurationNs();
+        private long idleSleepDurationNs;
+        private long resourceLingerDurationNs;
+        private long closeLingerDurationNs;
 
         private ThreadFactory threadFactory = Thread::new;
+
+        /**
+         * Creates a context using system properties.
+         */
+        public Context()
+        {
+            this(System.getProperties());
+        }
+
+        /**
+         * Creates a context using given properties.
+         *
+         * @param properties the properties to read from when populating this context
+         */
+        public Context(final Properties properties)
+        {
+            super(properties);
+
+            clientName = Configuration.clientName(properties);
+            preTouchMappedMemory = Configuration.preTouchMappedMemory(properties);
+            idleSleepDurationNs = Configuration.idleSleepDurationNs(properties);
+            resourceLingerDurationNs = Configuration.resourceLingerDurationNs(properties);
+            closeLingerDurationNs = Configuration.closeLingerDurationNs(properties);
+        }
 
         /**
          * Perform a shallow copy of the object.

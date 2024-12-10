@@ -75,7 +75,7 @@ class ExtendRecordingTest
 {
     private static final String MY_ALIAS = "my-log";
     private static final String MESSAGE_PREFIX = "Message-Prefix-";
-    private static final int MTU_LENGTH = Configuration.mtuLength();
+    private static final int MTU_LENGTH = Configuration.mtuLength(System.getProperties());
 
     private static final int RECORDED_STREAM_ID = 33;
     private static final String RECORDED_CHANNEL = new ChannelUriStringBuilder()

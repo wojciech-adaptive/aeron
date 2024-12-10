@@ -460,13 +460,13 @@ public final class Archive implements AutoCloseable
 
         /**
          * Default for long to linger a replay connection which defaults to
-         * {@link io.aeron.driver.Configuration#publicationLingerTimeoutNs()}.
+         * {@link io.aeron.driver.Configuration#publicationLingerTimeoutNs(java.util.Properties)}.
          *
          * @see #REPLAY_LINGER_TIMEOUT_PROP_NAME
          */
         @Config(defaultType = DefaultType.LONG, defaultLong = 5L * 1000 * 1000 * 1000)
         public static final long REPLAY_LINGER_TIMEOUT_DEFAULT_NS =
-            io.aeron.driver.Configuration.publicationLingerTimeoutNs();
+            io.aeron.driver.Configuration.publicationLingerTimeoutNs(System.getProperties());
 
         /**
          * Property name for threshold value for the conductor work cycle threshold to track for being exceeded.
@@ -1577,7 +1577,7 @@ public final class Archive implements AutoCloseable
                 markFile.force();
             }
 
-            if (io.aeron.driver.Configuration.printConfigurationOnStart())
+            if (io.aeron.driver.Configuration.printConfigurationOnStart(System.getProperties()))
             {
                 System.out.println(this);
             }

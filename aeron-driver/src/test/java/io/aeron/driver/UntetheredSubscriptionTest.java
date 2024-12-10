@@ -40,8 +40,10 @@ class UntetheredSubscriptionTest
     private static final int TERM_BUFFER_LENGTH = LogBufferDescriptor.TERM_MIN_LENGTH;
     private static final int TERM_WINDOW_LENGTH = TERM_BUFFER_LENGTH / 2;
     private static final long TIME_NS = 1000;
-    private static final long UNTETHERED_WINDOW_LIMIT_TIMEOUT_NS = Configuration.untetheredWindowLimitTimeoutNs();
-    private static final long UNTETHERED_RESTING_TIMEOUT_NS = Configuration.untetheredRestingTimeoutNs();
+    private static final long UNTETHERED_WINDOW_LIMIT_TIMEOUT_NS =
+        Configuration.untetheredWindowLimitTimeoutNs(System.getProperties());
+    private static final long UNTETHERED_RESTING_TIMEOUT_NS =
+        Configuration.untetheredRestingTimeoutNs(System.getProperties());
 
     private final RawLog rawLog = TestLogFactory.newLogBuffers(TERM_BUFFER_LENGTH);
     private final AtomicLongPosition publisherLimit = new AtomicLongPosition();

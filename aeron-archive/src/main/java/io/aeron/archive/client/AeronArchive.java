@@ -2753,7 +2753,8 @@ public final class AeronArchive implements AutoCloseable
          * MTU to reflect default for the control streams.
          */
         @Config(defaultType = DefaultType.INT, defaultValueString = "io.aeron.driver.Configuration.mtuLength()")
-        public static final int CONTROL_MTU_LENGTH_DEFAULT = io.aeron.driver.Configuration.mtuLength();
+        public static final int CONTROL_MTU_LENGTH_DEFAULT =
+            io.aeron.driver.Configuration.mtuLength(System.getProperties());
 
         /**
          * Default no operation {@link RecordingSignalConsumer} to be used when not set explicitly.

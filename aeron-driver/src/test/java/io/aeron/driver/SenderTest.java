@@ -134,7 +134,7 @@ class SenderTest
         final PublicationParams params = new PublicationParams();
         params.entityTag = 101;
         params.mtuLength = MAX_FRAME_LENGTH;
-        params.lingerTimeoutNs = Configuration.publicationLingerTimeoutNs();
+        params.lingerTimeoutNs = Configuration.publicationLingerTimeoutNs(System.getProperties());
         params.signalEos = true;
 
         publication = new NetworkPublication(
@@ -143,7 +143,8 @@ class SenderTest
             params,
             mockSendChannelEndpoint,
             rawLog,
-            Configuration.producerWindowLength(TERM_BUFFER_LENGTH, Configuration.publicationTermWindowLength()),
+            Configuration.producerWindowLength(TERM_BUFFER_LENGTH,
+                Configuration.publicationTermWindowLength(System.getProperties())),
             new AtomicLongPosition(),
             new AtomicLongPosition(),
             new AtomicLongPosition(),

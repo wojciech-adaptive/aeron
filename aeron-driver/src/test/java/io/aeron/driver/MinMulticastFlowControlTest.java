@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class MinMulticastFlowControlTest
 {
     private static final int DEFAULT_GROUP_SIZE = 3;
-    private static final long DEFAULT_TIMEOUT = Configuration.flowControlReceiverTimeoutNs();
+    private static final long DEFAULT_TIMEOUT = Configuration.flowControlReceiverTimeoutNs(System.getProperties());
     private static final int WINDOW_LENGTH = 16 * 1024;
     private static final int COUNTERS_BUFFER_LENGTH = 16 * 1024;
 

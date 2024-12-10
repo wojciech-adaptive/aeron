@@ -37,14 +37,15 @@ import java.nio.MappedByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static io.aeron.CncFileDescriptor.cncVersionOffset;
-import static java.lang.Long.getLong;
 import static java.lang.System.getProperty;
+import static java.util.Objects.requireNonNull;
 
 /**
  * This class provides the Media Driver and client with common configuration for the Aeron directory.
@@ -122,7 +123,7 @@ public class CommonContext implements Cloneable
     /**
      * Timeout in which the driver is expected to respond or heartbeat.
      */
-    public static final long DRIVER_TIMEOUT_MS = getLong(DRIVER_TIMEOUT_PROP_NAME, DEFAULT_DRIVER_TIMEOUT_MS);
+    public static final long DRIVER_TIMEOUT_MS = driverTimeoutMs(System.getProperties());
 
     /**
      * Value to represent a sessionId that is not to be used.
@@ -495,13 +496,17 @@ public class CommonContext implements Cloneable
     }
 
     private volatile boolean isConcluded;
-    private long driverTimeoutMs = DRIVER_TIMEOUT_MS;
-    private String aeronDirectoryName = getAeronDirectoryName();
+    /**
+     * Properties used to create this context.
+     */
+    protected final Properties properties;
+    private long driverTimeoutMs;
+    private String aeronDirectoryName;
     private File aeronDirectory;
     private File cncFile;
     private UnsafeBuffer countersMetaDataBuffer;
     private UnsafeBuffer countersValuesBuffer;
-    private boolean enableExperimentalFeatures = Boolean.getBoolean(ENABLE_EXPERIMENTAL_FEATURES_PROP_NAME);
+    private boolean enableExperimentalFeatures;
 
     static
     {
@@ -522,6 +527,28 @@ public class CommonContext implements Cloneable
         }
 
         AERON_DIR_PROP_DEFAULT = baseDirName + '-' + System.getProperty("user.name", "default");
+    }
+
+    /**
+     * Creates a context using system properties.
+     */
+    public CommonContext()
+    {
+        this(System.getProperties());
+    }
+
+    /**
+     * Creates a context using given properties.
+     *
+     * @param properties the properties to read from when populating this context
+     */
+    public CommonContext(final Properties properties)
+    {
+        this.properties = requireNonNull(properties);
+
+        aeronDirectoryName = aeronDirectoryName(properties);
+        driverTimeoutMs = driverTimeoutMs(properties);
+        enableExperimentalFeatures = enableExperimentalFeatures(properties);
     }
 
     /**
@@ -550,7 +577,7 @@ public class CommonContext implements Cloneable
     @Config(id = "AERON_DIR")
     public static String getAeronDirectoryName()
     {
-        return getProperty(AERON_DIR_PROP_NAME, AERON_DIR_PROP_DEFAULT);
+        return aeronDirectoryName(System.getProperties());
     }
 
     /**
@@ -1221,5 +1248,177 @@ public class CommonContext implements Cloneable
             loggingErrorHandler.onError(throwable);
             userErrorHandler.onError(throwable);
         }
+    }
+
+    private static String aeronDirectoryName(final Properties properties)
+    {
+        return properties.getProperty(AERON_DIR_PROP_NAME, AERON_DIR_PROP_DEFAULT);
+    }
+
+    private static long driverTimeoutMs(final Properties properties)
+    {
+        return getLongProperty(properties, DRIVER_TIMEOUT_PROP_NAME, DEFAULT_DRIVER_TIMEOUT_MS);
+    }
+
+    private static boolean enableExperimentalFeatures(final Properties properties)
+    {
+        return getBooleanProperty(properties, ENABLE_EXPERIMENTAL_FEATURES_PROP_NAME, false);
+    }
+
+    /**
+     * Reads boolean property.
+     *
+     * @param properties the properties map to read
+     * @param propertyName the name of the property to read
+     * @param defaultValue the default value to use when property is absent
+     * @return the property value if set or the default
+     */
+    public static boolean getBooleanProperty(
+        final Properties properties,
+        final String propertyName,
+        final boolean defaultValue)
+    {
+        final String propertyValue = properties.getProperty(propertyName);
+        if (null != propertyValue)
+        {
+            return Boolean.parseBoolean(propertyValue);
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * Reads int property.
+     *
+     * @param properties the properties map to read
+     * @param propertyName the name of the property to read
+     * @param defaultValue the default value to use when property is absent
+     * @return the property value if set or the default
+     */
+    public static int getIntProperty(final Properties properties, final String propertyName, final int defaultValue)
+    {
+        final String propertyValue = properties.getProperty(propertyName);
+        if (null != propertyValue)
+        {
+            try
+            {
+                return Integer.decode(propertyValue);
+            }
+            catch (final NumberFormatException ignore)
+            {
+            }
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * Reads long property.
+     *
+     * @param properties the properties map to read
+     * @param propertyName the name of the property to read
+     * @param defaultValue the default value to use when property is absent
+     * @return the property value if set or the default
+     */
+    public static long getLongProperty(final Properties properties, final String propertyName, final long defaultValue)
+    {
+        final String propertyValue = properties.getProperty(propertyName);
+        if (null != propertyValue)
+        {
+            try
+            {
+                return Long.decode(propertyValue);
+            }
+            catch (final NumberFormatException ignore)
+            {
+            }
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * Reads nanosecond duration property.
+     *
+     * @param properties the properties map to read
+     * @param propertyName the name of the property to read
+     * @param defaultValue the default value to use when property is absent
+     * @return the property value if set or the default
+     */
+    public static long getDurationNsProperty(
+        final Properties properties,
+        final String propertyName,
+        final long defaultValue)
+    {
+        final String propertyValue = properties.getProperty(propertyName);
+        if (propertyValue != null)
+        {
+            final long value = SystemUtil.parseDuration(propertyName, propertyValue);
+            if (value < 0)
+            {
+                throw new NumberFormatException(propertyName + " must be positive: " + value);
+            }
+
+            return value;
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * Reads int size property.
+     *
+     * @param properties the properties map to read
+     * @param propertyName the name of the property to read
+     * @param defaultValue the default value to use when property is absent
+     * @return the property value if set or the default
+     */
+    public static int getIntSizeProperty(
+        final Properties properties,
+        final String propertyName,
+        final int defaultValue)
+    {
+        final String propertyValue = properties.getProperty(propertyName);
+        if (propertyValue != null)
+        {
+            final long value = SystemUtil.parseSize(propertyName, propertyValue);
+            if (value < 0 || value > Integer.MAX_VALUE)
+            {
+                throw new NumberFormatException(
+                    propertyName + " must positive and less than Integer.MAX_VALUE: " + value);
+            }
+
+            return (int)value;
+        }
+
+        return defaultValue;
+    }
+
+    /**
+     * Reads long size property.
+     *
+     * @param properties the properties map to read
+     * @param propertyName the name of the property to read
+     * @param defaultValue the default value to use when property is absent
+     * @return the property value if set or the default
+     */
+    public static long getLongSizeProperty(
+        final Properties properties,
+        final String propertyName,
+        final long defaultValue)
+    {
+        final String propertyValue = properties.getProperty(propertyName);
+        if (propertyValue != null)
+        {
+            final long value = SystemUtil.parseSize(propertyName, propertyValue);
+            if (value < 0)
+            {
+                throw new NumberFormatException(propertyName + " must be positive: " + value);
+            }
+
+            return value;
+        }
+
+        return defaultValue;
     }
 }
