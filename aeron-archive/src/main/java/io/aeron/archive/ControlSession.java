@@ -47,6 +47,7 @@ final class ControlSession implements Session
     private long sessionLivenessCheckDeadlineMs;
     private String abortReason;
 
+    @SuppressWarnings("JavadocVariable")
     enum State
     {
         INIT, CONNECTING, CONNECTED, CHALLENGED, AUTHENTICATED, ACTIVE, INACTIVE, REJECTED, DONE
