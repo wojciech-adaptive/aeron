@@ -69,7 +69,6 @@ jobs:
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
-        if: ${{ matrix.language == 'java' || matrix.language == 'cpp' }}
 
       - name: Perform CodeQL Analysis
         id: analyze
