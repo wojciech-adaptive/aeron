@@ -56,8 +56,6 @@ import org.agrona.collections.IntHashSet;
 import org.agrona.collections.MutableBoolean;
 import org.agrona.collections.MutableInteger;
 import org.agrona.collections.MutableLong;
-import org.agrona.concurrent.BackoffIdleStrategy;
-import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.status.CountersReader;
 import org.hamcrest.CoreMatchers;
@@ -2685,10 +2683,9 @@ class ClusterTest
         }
     }
 
-
     @Test
     @InterruptAfter(15)
-    void allNodesShouldHaveIdenticalSnapshots()
+    void shouldAddCommittedNextSessionIdToTheConsensusModuleSnapshot()
     {
         final MutableInteger sessionCounter = new MutableInteger(0);
 
@@ -2748,35 +2745,33 @@ class ClusterTest
         // Another session -> also OK
         try (AeronCluster client2 = AeronCluster.connect(clientContext.clone()))
         {
-            assertNotEquals(client2, null);
+            assertNotNull(client2);
         }
 
         // Any further connections are rejected
         assertThrowsExactly(AuthenticationException.class, () -> AeronCluster.connect(clientContext.clone()));
         assertThrowsExactly(AuthenticationException.class, () -> AeronCluster.connect(clientContext.clone()));
 
-
         cluster.takeSnapshot(leader);
         cluster.awaitSnapshotCount(1);
 
-        final MutableLong[] sessionIdsByNode = new MutableLong[3];
-
+        final long[] sessionIdsByNode = new long[3];
         for (int nodeIdx = 0; nodeIdx < 3; nodeIdx++)
         {
-            sessionIdsByNode[nodeIdx] = new MutableLong();
-            readSnapshot(cluster.node(nodeIdx), sessionIdsByNode[nodeIdx]);
+            sessionIdsByNode[nodeIdx] = readSnapshot(cluster.node(nodeIdx));
         }
-        assertEquals(sessionIdsByNode[0].get(), sessionIdsByNode[1].get());
-        assertEquals(sessionIdsByNode[1].get(), sessionIdsByNode[2].get());
+        assertEquals(sessionIdsByNode[0], sessionIdsByNode[1]);
+        assertEquals(sessionIdsByNode[0], sessionIdsByNode[2]);
     }
 
-    private void readSnapshot(final TestNode node, final MutableLong sessionIdHolder)
+    private long readSnapshot(final TestNode node)
     {
         final long recordingId;
         try (RecordingLog recordingLog = new RecordingLog(node.consensusModule().context().clusterDir(),
             false))
         {
-            final RecordingLog.Entry snapshot = recordingLog.getLatestSnapshot(-1);
+            final RecordingLog.Entry snapshot = recordingLog.getLatestSnapshot(
+                ConsensusModule.Configuration.SERVICE_ID);
             assertNotNull(snapshot);
             recordingId = snapshot.recordingId;
         }
@@ -2787,28 +2782,15 @@ class ClusterTest
             .controlRequestStreamId(node.archive().context().localControlStreamId())
             .aeronDirectoryName(node.mediaDriver().aeronDirectoryName());
 
-        try (
-            AeronArchive archive = AeronArchive.connect(archiveCtx);
-            Subscription subscription = archive.replay(recordingId, NULL_POSITION, Long.MAX_VALUE,
-                "aeron:ipc", 12345)
-        )
+        try (AeronArchive archive = AeronArchive.connect(archiveCtx);
+            Subscription subscription = archive.replay(
+                recordingId, NULL_POSITION, Long.MAX_VALUE, "aeron:ipc", 12345))
         {
-            final IdleStrategy idleStrategy = new BackoffIdleStrategy();
-
-            while (subscription.imageCount() == 0)
-            {
-                if (Thread.interrupted())
-                {
-                    fail("interrupted");
-                }
-                idleStrategy.idle();
-            }
-            idleStrategy.reset();
+            Tests.awaitConnected(subscription);
             final Image image = subscription.imageAtIndex(0);
 
-            final ConsensusModuleSnapshotAdapter adapter =
-                new ConsensusModuleSnapshotAdapter(image,
-                    new MyConsensusModuleSnapshotListener(sessionIdHolder));
+            final MyConsensusModuleSnapshotListener listener = new MyConsensusModuleSnapshotListener();
+            final ConsensusModuleSnapshotAdapter adapter = new ConsensusModuleSnapshotAdapter(image, listener);
 
             while (true)
             {
@@ -2827,17 +2809,14 @@ class ClusterTest
                     Thread.yield();
                 }
             }
+
+            return listener.nextSessionId;
         }
     }
 
-    private static class MyConsensusModuleSnapshotListener implements ConsensusModuleSnapshotListener
+    private static final class MyConsensusModuleSnapshotListener implements ConsensusModuleSnapshotListener
     {
-        private final MutableLong sessionIdHolder;
-
-        MyConsensusModuleSnapshotListener(final MutableLong sessionIdHolder)
-        {
-            this.sessionIdHolder = sessionIdHolder;
-        }
+        long nextSessionId = Aeron.NULL_VALUE;
 
         @Override
         public void onLoadBeginSnapshot(final int appVersion, final TimeUnit timeUnit,
@@ -2851,7 +2830,7 @@ class ClusterTest
             final int pendingMessageCapacity, final DirectBuffer buffer,
             final int offset, final int length)
         {
-            sessionIdHolder.set(nextSessionId);
+            this.nextSessionId = nextSessionId;
         }
 
         @Override

@@ -660,8 +660,8 @@ final class ConsensusModuleAgent
         final byte[] encodedCredentials)
     {
         final long clusterSessionId = Cluster.Role.LEADER == role ? nextSessionId++ : NULL_VALUE;
-        final ClusterSession session = new ClusterSession(clusterSessionId, responseStreamId,
-            refineResponseChannel(responseChannel));
+        final ClusterSession session = new ClusterSession(
+            clusterSessionId, responseStreamId, refineResponseChannel(responseChannel));
 
         session.asyncConnect(aeron);
         final long nowNs = clusterClock.timeNanos();
@@ -1151,7 +1151,7 @@ final class ConsensusModuleAgent
             if (state == ConsensusModule.State.ACTIVE || state == ConsensusModule.State.SUSPENDED)
             {
                 final ClusterSession session = new ClusterSession(
-                    Aeron.NULL_VALUE,
+                    NULL_VALUE,
                     responseStreamId,
                     refineResponseChannel(responseChannel));
 
@@ -1188,7 +1188,7 @@ final class ConsensusModuleAgent
             if (state == ConsensusModule.State.ACTIVE || state == ConsensusModule.State.SUSPENDED)
             {
                 final ClusterSession session = new ClusterSession(
-                    Aeron.NULL_VALUE,
+                    NULL_VALUE,
                     responseStreamId,
                     refineResponseChannel(responseChannel));
 
@@ -1233,7 +1233,7 @@ final class ConsensusModuleAgent
             if (state == ConsensusModule.State.ACTIVE || state == ConsensusModule.State.SUSPENDED)
             {
                 final ClusterSession session = new ClusterSession(
-                    Aeron.NULL_VALUE,
+                    NULL_VALUE,
                     responseStreamId,
                     refineResponseChannel(responseChannel));
 
@@ -2608,8 +2608,7 @@ final class ConsensusModuleAgent
                     case CLIENT:
                     {
                         if (session.appendSessionToLogAndSendOpen(
-                            logPublisher, egressPublisher, leadershipTermId,
-                            memberId, nowNs, clusterClock.time()))
+                            logPublisher, egressPublisher, leadershipTermId, memberId, nowNs, clusterClock.time()))
                         {
                             if (session.id() >= nextCommittedSessionId)
                             {
@@ -3410,8 +3409,11 @@ final class ConsensusModuleAgent
         if (pendingServiceMessageTrackers.length > 0)
         {
             final PendingServiceMessageTracker trackerOne = pendingServiceMessageTrackers[0];
-            snapshotTaker.snapshotConsensusModuleState(nextCommittedSessionId, trackerOne.nextServiceSessionId(),
-                trackerOne.logServiceSessionId(), trackerOne.size());
+            snapshotTaker.snapshotConsensusModuleState(
+                nextCommittedSessionId,
+                trackerOne.nextServiceSessionId(),
+                trackerOne.logServiceSessionId(),
+                trackerOne.size());
         }
         else
         {
