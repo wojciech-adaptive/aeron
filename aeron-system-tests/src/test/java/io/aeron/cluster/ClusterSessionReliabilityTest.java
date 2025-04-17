@@ -125,6 +125,11 @@ class ClusterSessionReliabilityTest
             final int previousLeaderIndex = leader.index();
             leader = cluster.awaitLeader();
             assertNotEquals(previousLeaderIndex, leader.index());
+
+            while (!client.sendKeepAlive())
+            {
+                Tests.yieldingIdle("failed to send keep-alive");
+            }
         }
 
         final SequenceCheckingService leaderService = (SequenceCheckingService)leader.service();
