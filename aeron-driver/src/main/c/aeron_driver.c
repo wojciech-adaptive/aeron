@@ -1065,7 +1065,7 @@ int aeron_driver_start(aeron_driver_t *driver, bool manual_main_loop)
         aeron_agent_runner_t first_runner = driver->runners[0];
         if (NULL != first_runner.on_start)
         {
-            aeron_thread_set_name(first_runner.role_name);
+//            aeron_thread_set_name(first_runner.role_name);
             first_runner.on_start(first_runner.on_start_state, first_runner.role_name);
         }
 
