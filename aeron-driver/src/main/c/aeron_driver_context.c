@@ -3175,19 +3175,3 @@ int32_t aeron_driver_context_get_receiver_cpu_affinity(aeron_driver_context_t *c
 {
     return NULL != context ? context->receiver_cpu_affinity_no :AERON_CPU_AFFINITY_DEFAULT;
 }
-
-int aeron_driver_context_set_async_executor_cpu_affinity(aeron_driver_context_t *context, int32_t value)
-{
-    if (NULL == context)
-    {
-        return -1;
-    }
-
-    context->async_executor_cpu_affinity_no = value;
-    return 0;
-}
-
-int32_t aeron_driver_context_get_async_executor_cpu_affinity(aeron_driver_context_t *context)
-{
-    return NULL != context ? context->async_executor_cpu_affinity_no : AERON_DRIVER_ASYNC_EXECUTOR_CPU_AFFINITY_DEFAULT;
-}
