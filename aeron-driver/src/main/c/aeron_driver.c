@@ -1063,17 +1063,19 @@ int aeron_driver_start(aeron_driver_t *driver, bool manual_main_loop)
     }
     else
     {
-        if (NULL != driver->runners[0].on_start)
+        aeron_agent_runner_t first_runner = driver->runners[0];
+        if (NULL != first_runner.on_start)
         {
-            driver->runners[0].on_start(driver->runners[0].on_start_state, driver->runners[0].role_name);
+            aeron_thread_set_name(first_runner.role_name);
+            first_runner.on_start(first_runner.on_start_state, first_runner.role_name);
         }
 
-        driver->runners[0].state = AERON_AGENT_STATE_MANUAL;
+        first_runner.state = AERON_AGENT_STATE_MANUAL;
     }
 
     for (int i = 1; i < AERON_AGENT_RUNNER_MAX; i++)
     {
-        if (driver->runners[i].state == AERON_AGENT_STATE_INITED)
+        if (AERON_AGENT_STATE_INITED == driver->runners[i].state)
         {
             if (aeron_agent_start(&driver->runners[i]) < 0)
             {
