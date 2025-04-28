@@ -1421,6 +1421,5 @@ tasks.named('dependencyUpdates').configure {
 }
 
 wrapper {
-    gradleVersion = libs.versions.gradle.get()
     distributionType = 'ALL'
 }
