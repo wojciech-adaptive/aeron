@@ -22,6 +22,7 @@ import io.aeron.driver.media.UdpTransportPoller;
 import io.aeron.driver.status.SystemCounterDescriptor;
 import io.aeron.exceptions.ConfigurationException;
 import org.agrona.ErrorHandler;
+import org.agrona.collections.ObjectHashSet;
 import org.agrona.concurrent.CountedErrorHandler;
 import org.agrona.concurrent.status.AtomicCounter;
 import org.hamcrest.CoreMatchers;
@@ -220,10 +221,13 @@ class MediaDriverContextTest
 
         assertEquals(asyncExecutorThreadCount, threads.size());
         assertEquals(asyncExecutorThreadCount, threadPoolExecutor.getPoolSize());
+
+        final ObjectHashSet<String> uniqueNames = new ObjectHashSet<>(asyncExecutorThreadCount);
         for (final Thread t : threads)
         {
-            MatcherAssert.assertThat(t.getName(), CoreMatchers.startsWith("async-task-executor-"));
+            MatcherAssert.assertThat(t.getName(), CoreMatchers.startsWith("async-executor"));
             assertTrue(t.isDaemon());
+            assertTrue(uniqueNames.add(t.getName()));
         }
     }
 

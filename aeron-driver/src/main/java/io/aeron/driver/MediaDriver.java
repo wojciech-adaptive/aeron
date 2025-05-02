@@ -4071,9 +4071,13 @@ public final class MediaDriver implements AutoCloseable
                 new LinkedBlockingQueue<>(),
                 (r) ->
                 {
-                    final Thread thread = new Thread(
-                        r,
-                        "async-task-executor-" + id.getAndIncrement() + " " + dirName);
+                    String threadName = "async-executor";
+                    if (threadCount > 1)
+                    {
+                        threadName += "-" + id.getAndIncrement();
+                    }
+                    threadName += " " + dirName;
+                    final Thread thread = new Thread(r, threadName);
                     thread.setDaemon(true);
                     return thread;
                 });
