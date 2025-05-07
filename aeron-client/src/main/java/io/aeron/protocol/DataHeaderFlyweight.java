@@ -156,7 +156,7 @@ public class DataHeaderFlyweight extends HeaderFlyweight
      */
     public static boolean isEndOfStream(final UnsafeBuffer packet)
     {
-        return (packet.getByte(FLAGS_FIELD_OFFSET) & EOS_FLAG) != 0;
+        return 0 != (packet.getByte(FLAGS_FIELD_OFFSET) & EOS_FLAG);
     }
 
     /**
