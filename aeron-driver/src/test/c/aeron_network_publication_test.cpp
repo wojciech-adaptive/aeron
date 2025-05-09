@@ -183,10 +183,10 @@ protected:
                     (size_t)aeron_number_of_trailing_zeroes((int32_t)params.term_length),
                     params.initial_term_id);
 
-            aeron_counter_set_ordered(pub_pos_position.value_addr, initial_position);
-            aeron_counter_set_ordered(pub_lmt_position.value_addr, initial_position);
-            aeron_counter_set_ordered(snd_pos_position.value_addr, initial_position);
-            aeron_counter_set_ordered(snd_lmt_position.value_addr, initial_position);
+            aeron_counter_set_release(pub_pos_position.value_addr, initial_position);
+            aeron_counter_set_release(pub_lmt_position.value_addr, initial_position);
+            aeron_counter_set_release(snd_pos_position.value_addr, initial_position);
+            aeron_counter_set_release(snd_lmt_position.value_addr, initial_position);
         }
 
         aeron_flow_control_strategy_t *flow_control;
@@ -348,10 +348,10 @@ TEST_F(NetworkPublicationTest, shouldCleanDirtyTermBuffersOneTermBehindTheMinCon
             .append("|term-id=").append(std::to_string(term_id))
             .append("|term-offset=").append(std::to_string(term_offset));
     aeron_network_publication_t *publication = createPublication(uri.c_str());
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->pub_pos_position.value_addr));
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->pub_lmt_position.value_addr));
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->snd_pos_position.value_addr));
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->snd_lmt_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->pub_pos_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->snd_pos_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->snd_lmt_position.value_addr));
     ASSERT_EQ(initial_position, publication->conductor_fields.clean_position);
 
     aeron_driver_conductor_t conductor = {};
@@ -369,42 +369,42 @@ TEST_F(NetworkPublicationTest, shouldCleanDirtyTermBuffersOneTermBehindTheMinCon
 
     // initial pub-lmt increase
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position, publication->conductor_fields.clean_position);
 
     // snd-pos increase less than a term
-    aeron_counter_set_ordered(publication->snd_pos_position.value_addr, initial_position + 4128);
+    aeron_counter_set_release(publication->snd_pos_position.value_addr, initial_position + 4128);
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + 4128 + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + 4128 + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position, publication->conductor_fields.clean_position);
 
     // snd-pos increase exactly one term
-    aeron_counter_set_ordered(publication->snd_pos_position.value_addr, initial_position + term_length);
+    aeron_counter_set_release(publication->snd_pos_position.value_addr, initial_position + term_length);
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + term_length + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + term_length + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position, publication->conductor_fields.clean_position);
 
     // snd-pos increase beyond a term
-    aeron_counter_set_ordered(publication->snd_pos_position.value_addr, initial_position + term_length + 192);
+    aeron_counter_set_release(publication->snd_pos_position.value_addr, initial_position + term_length + 192);
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + term_length + 192 + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + term_length + 192 + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position + 192, publication->conductor_fields.clean_position);
 
     // clean the rest of the first term
-    aeron_counter_set_ordered(publication->snd_pos_position.value_addr, initial_position + 2 * term_length + 32);
+    aeron_counter_set_release(publication->snd_pos_position.value_addr, initial_position + 2 * term_length + 32);
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + 2 * term_length + 32 + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + 2 * term_length + 32 + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position - term_offset + term_length, publication->conductor_fields.clean_position);
 
     // snd-pos didn't change => no op
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + 2 * term_length + 32 + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + 2 * term_length + 32 + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position - term_offset + term_length, publication->conductor_fields.clean_position);
 
     // clean the next buffer
-    aeron_counter_set_ordered(publication->snd_pos_position.value_addr, initial_position + 2 * term_length + 8192);
+    aeron_counter_set_release(publication->snd_pos_position.value_addr, initial_position + 2 * term_length + 8192);
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + 2 * term_length + 8192 + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + 2 * term_length + 8192 + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position + term_length + 8192, publication->conductor_fields.clean_position);
 }
 
@@ -422,10 +422,10 @@ TEST_F(NetworkPublicationTest, publicationLimitShouldNotCrossIntoPreviousTermIfT
             .append("|term-id=").append(std::to_string(term_id))
             .append("|term-offset=").append(std::to_string(term_offset));
     aeron_network_publication_t *publication = createPublication(uri.c_str());
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->pub_pos_position.value_addr));
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->pub_lmt_position.value_addr));
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->snd_pos_position.value_addr));
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->snd_lmt_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->pub_pos_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->snd_pos_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->snd_lmt_position.value_addr));
     ASSERT_EQ(initial_position, publication->conductor_fields.clean_position);
 
     aeron_driver_conductor_t conductor = {};
@@ -442,20 +442,20 @@ TEST_F(NetworkPublicationTest, publicationLimitShouldNotCrossIntoPreviousTermIfT
     EXPECT_EQ(1, aeron_network_publication_update_pub_pos_and_lmt(publication));
 
     // pub-lmt can be in the previous term if clean position offset is not zero
-    aeron_counter_set_ordered(publication->snd_pos_position.value_addr, initial_position + term_length);
+    aeron_counter_set_release(publication->snd_pos_position.value_addr, initial_position + term_length);
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + term_length + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + term_length + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position, publication->conductor_fields.clean_position);
 
     // pub-lmt cannot be in the previous term if clean position points to the start of the dirty buffer
-    aeron_counter_set_ordered(publication->snd_pos_position.value_addr, initial_position + 2 * term_length + 64);
+    aeron_counter_set_release(publication->snd_pos_position.value_addr, initial_position + 2 * term_length + 64);
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + term_length + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + term_length + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position - term_offset + term_length, publication->conductor_fields.clean_position);
 
     // after cleanup the pub-lmt can move again
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + 2 * term_length + 64 + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + 2 * term_length + 64 + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position + term_length + 64, publication->conductor_fields.clean_position);
 }
 
@@ -467,10 +467,10 @@ TEST_F(NetworkPublicationTest, publicationLimitShouldNotCrossIntoTheDirtyTerm)
     const std::string uri = std::string("aeron:udp?endpoint=localhost:23245")
             .append("|term-length=").append(std::to_string(term_length));
     aeron_network_publication_t *publication = createPublication(uri.c_str());
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->pub_pos_position.value_addr));
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->pub_lmt_position.value_addr));
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->snd_pos_position.value_addr));
-    ASSERT_EQ(initial_position, aeron_counter_get(publication->snd_lmt_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->pub_pos_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->snd_pos_position.value_addr));
+    ASSERT_EQ(initial_position, aeron_counter_get_plain(publication->snd_lmt_position.value_addr));
     ASSERT_EQ(initial_position, publication->conductor_fields.clean_position);
 
     aeron_driver_conductor_t conductor = {};
@@ -487,19 +487,19 @@ TEST_F(NetworkPublicationTest, publicationLimitShouldNotCrossIntoTheDirtyTerm)
     EXPECT_EQ(1, aeron_network_publication_update_pub_pos_and_lmt(publication));
 
     // initial pub-lmt
-    aeron_counter_set_ordered(publication->snd_pos_position.value_addr, initial_position + 256);
+    aeron_counter_set_release(publication->snd_pos_position.value_addr, initial_position + 256);
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + 256 + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + 256 + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position, publication->conductor_fields.clean_position);
 
     // new pub-lmt intersects with the clean position
-    aeron_counter_set_ordered(publication->snd_pos_position.value_addr, initial_position + 2 * term_length + 192 + publication_window_length);
+    aeron_counter_set_release(publication->snd_pos_position.value_addr, initial_position + 2 * term_length + 192 + publication_window_length);
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + 256 + publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + 256 + publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position + term_length, publication->conductor_fields.clean_position);
 
     // after cleanup the pub-lmt can move again
     aeron_network_publication_update_pub_pos_and_lmt(publication);
-    EXPECT_EQ(initial_position + 2 * term_length + 192 + 2 * publication_window_length, aeron_counter_get(publication->pub_lmt_position.value_addr));
+    EXPECT_EQ(initial_position + 2 * term_length + 192 + 2 * publication_window_length, aeron_counter_get_plain(publication->pub_lmt_position.value_addr));
     EXPECT_EQ(initial_position + term_length + 192 + publication_window_length, publication->conductor_fields.clean_position);
 }
