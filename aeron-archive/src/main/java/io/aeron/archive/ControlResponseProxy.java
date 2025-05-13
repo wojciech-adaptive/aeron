@@ -197,6 +197,29 @@ class ControlResponseProxy
         return false;
     }
 
+    public boolean sendPing(final long controlSessionId, final Publication controlPublication)
+    {
+        final int length = MESSAGE_HEADER_LENGTH + PingEncoder.BLOCK_LENGTH;
+
+        int attempts = SEND_ATTEMPTS;
+        do
+        {
+            final long result = controlPublication.tryClaim(length, bufferClaim);
+            if (result > 0)
+            {
+                final MutableDirectBuffer buffer = bufferClaim.buffer();
+                final int offset = bufferClaim.offset();
+                pingEncoder.wrapAndApplyHeader(buffer, offset, messageHeaderEncoder)
+                    .controlSessionId(controlSessionId);
+                bufferClaim.commit();
+                return true;
+            }
+        }
+        while (--attempts > 0);
+
+        return false;
+    }
+
     private boolean send(final ControlSession session, final DirectBuffer buffer, final int length)
     {
         int attempts = SEND_ATTEMPTS;
@@ -243,34 +266,4 @@ class ControlResponseProxy
     private void logSendSignal(final DirectBuffer buffer, final int offset, final int length)
     {
     }
-
-    public boolean sendPing(final long controlSessionId, final Publication controlPublication)
-    {
-        final int length = MESSAGE_HEADER_LENGTH + PingEncoder.BLOCK_LENGTH;
-
-        int attempts = SEND_ATTEMPTS;
-        do
-        {
-            final long result = controlPublication.tryClaim(length, bufferClaim);
-            if (result > 0)
-            {
-                final MutableDirectBuffer buffer = bufferClaim.buffer();
-                final int offset = bufferClaim.offset();
-                pingEncoder.wrapAndApplyHeader(buffer, offset, messageHeaderEncoder)
-                        .controlSessionId(controlSessionId);
-                bufferClaim.commit();
-
-                logPing(buffer, offset, length);
-                return true;
-            }
-        }
-        while (--attempts > 0);
-
-        return false;
-    }
-
-    private void logPing(final DirectBuffer buffer, final int offset, final int length)
-    {
-    }
-
 }

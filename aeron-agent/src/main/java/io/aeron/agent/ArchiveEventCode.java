@@ -234,12 +234,7 @@ public enum ArchiveEventCode implements EventCode
      * Archive logging event for {@code max-recorded-position} command.
      */
     CMD_IN_MAX_RECORDED_POSITION(
-        45, MaxRecordedPositionRequestDecoder.TEMPLATE_ID, ArchiveEventDissector::dissectControlRequest),
-    /**
-     * Archive logging event for ping.
-     */
-    PING(46, PingDecoder.TEMPLATE_ID,
-        (event, buffer, offset, builder) -> dissectPing(buffer, offset, builder));
+        45, MaxRecordedPositionRequestDecoder.TEMPLATE_ID, ArchiveEventDissector::dissectControlRequest);
 
     static final int EVENT_CODE_TYPE = EventCodeType.ARCHIVE.getTypeCode();
     private static final ArchiveEventCode[] EVENT_CODE_BY_ID;
