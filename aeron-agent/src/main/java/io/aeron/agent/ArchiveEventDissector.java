@@ -87,6 +87,7 @@ final class ArchiveEventDissector
     private static final ControlResponseDecoder CONTROL_RESPONSE_DECODER = new ControlResponseDecoder();
     private static final RecordingSignalEventDecoder RECORDING_SIGNAL_EVENT_DECODER = new RecordingSignalEventDecoder();
     private static final ReplayTokenRequestDecoder REPLAY_TOKEN_REQUEST_DECODER = new ReplayTokenRequestDecoder();
+    private static final PingDecoder PING_DECODER = new PingDecoder();
 
     private ArchiveEventDissector()
     {
@@ -651,6 +652,22 @@ final class ArchiveEventDissector
         builder.append(" entries (").append(catalogLength).append(" bytes)");
         builder.append(" => ").append(newMaxEntries);
         builder.append(" entries (").append(newCatalogLength).append(" bytes)");
+    }
+
+    static void dissectPing(final MutableDirectBuffer buffer, final int offset, final StringBuilder builder)
+    {
+        int encodedLength = dissectLogHeader(CONTEXT, PING, buffer, offset, builder);
+
+        HEADER_DECODER.wrap(buffer, offset + encodedLength);
+        encodedLength += MessageHeaderDecoder.ENCODED_LENGTH;
+
+        PING_DECODER.wrap(
+            buffer,
+            offset + encodedLength,
+            HEADER_DECODER.blockLength(),
+            HEADER_DECODER.version());
+
+        builder.append(": controlSessionId=").append(PING_DECODER.controlSessionId());
     }
 
     private static void appendConnect(final StringBuilder builder)
