@@ -943,6 +943,20 @@ public final class Configuration
         "aeron.MinMulticastFlowControl.receiverTimeout";
 
     /**
+     * Property name for default retransmit receiver window multiple used by the unicast flow control strategy.
+     */
+    @Config(defaultType = DefaultType.INT, defaultInt = 16)
+    public static final String UNICAST_FLOW_CONTROL_RETRANSMIT_RECEIVER_WINDOW_MULTIPLE_PROP_NAME =
+        "aeron.unicast.flow.control.rrwm";
+
+    /**
+     * Property name for default retransmit receiver window multiple used by multicast flow control strategies.
+     */
+    @Config(defaultType = DefaultType.INT, defaultInt = 4)
+    public static final String MULTICAST_FLOW_CONTROL_RETRANSMIT_RECEIVER_WINDOW_MULTIPLE_PROP_NAME =
+        "aeron.multicast.flow.control.rrwm";
+
+    /**
      * Property name for resolver name of the Media Driver used in name resolution.
      */
     @Config(defaultType = DefaultType.STRING, defaultString = "", skipCDefaultValidation = true)
@@ -1436,6 +1450,28 @@ public final class Configuration
         return getDurationInNanos(
             FLOW_CONTROL_RECEIVER_TIMEOUT_PROP_NAME,
             getDurationInNanos(MIN_FLOW_CONTROL_TIMEOUT_OLD_PROP_NAME, FLOW_CONTROL_RECEIVER_TIMEOUT_DEFAULT_NS));
+    }
+
+    /**
+     * Retransmit receiver window multiple used by the unicast flow control strategy to determine the maximum
+     * amount of data to retransmit.
+     *
+     * @return multiple.
+     */
+    public static int unicastFlowControlRetransmitReceiverWindowMultiple()
+    {
+        return getInteger(UNICAST_FLOW_CONTROL_RETRANSMIT_RECEIVER_WINDOW_MULTIPLE_PROP_NAME, 16);
+    }
+
+    /**
+     * Retransmit receiver window multiple used by multicast flow control strategies to determine the maximum
+     * amount of data to retransmit.
+     *
+     * @return multiple.
+     */
+    public static int multicastFlowControlRetransmitReceiverWindowMultiple()
+    {
+        return getInteger(MULTICAST_FLOW_CONTROL_RETRANSMIT_RECEIVER_WINDOW_MULTIPLE_PROP_NAME, 4);
     }
 
     /**
