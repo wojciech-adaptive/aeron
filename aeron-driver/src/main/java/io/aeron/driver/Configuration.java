@@ -936,13 +936,6 @@ public final class Configuration
     public static final String FLOW_CONTROL_RECEIVER_TIMEOUT_PROP_NAME = "aeron.flow.control.receiver.timeout";
 
     /**
-     */
-    // TODO is this supposed to be deprecated?
-    @Config(defaultType = DefaultType.LONG, defaultLong = 5_000_000_000L, hasContext = false, existsInC = false)
-    private static final String MIN_FLOW_CONTROL_TIMEOUT_OLD_PROP_NAME =
-        "aeron.MinMulticastFlowControl.receiverTimeout";
-
-    /**
      * Property name for default retransmit receiver window multiple used by the unicast flow control strategy.
      */
     @Config(defaultType = DefaultType.INT, defaultInt = 16)
@@ -1447,9 +1440,7 @@ public final class Configuration
      */
     public static long flowControlReceiverTimeoutNs()
     {
-        return getDurationInNanos(
-            FLOW_CONTROL_RECEIVER_TIMEOUT_PROP_NAME,
-            getDurationInNanos(MIN_FLOW_CONTROL_TIMEOUT_OLD_PROP_NAME, FLOW_CONTROL_RECEIVER_TIMEOUT_DEFAULT_NS));
+        return getDurationInNanos(FLOW_CONTROL_RECEIVER_TIMEOUT_PROP_NAME, FLOW_CONTROL_RECEIVER_TIMEOUT_DEFAULT_NS);
     }
 
     /**
