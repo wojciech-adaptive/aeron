@@ -28,6 +28,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class ExperimentalDriverFeaturesTest
 {
@@ -58,6 +59,8 @@ public class ExperimentalDriverFeaturesTest
     @Test
     void shouldFailToCreateResponsePublicationIfExperimentalFeaturesAreDisabled()
     {
+        assumeTrue(TestMediaDriver.shouldRunCMediaDriver());
+
         try (Aeron aeron = Aeron.connect(new Aeron.Context().aeronDirectoryName(driver.aeronDirectoryName())))
         {
             final Exception ex1 = assertThrows(Exception.class, () -> aeron.addPublication(
@@ -72,6 +75,8 @@ public class ExperimentalDriverFeaturesTest
     @Test
     void shouldFailToCreateResponseSubscriptionIfExperimentalFeaturesAreDisabled()
     {
+        assumeTrue(TestMediaDriver.shouldRunCMediaDriver());
+
         try (Aeron aeron = Aeron.connect(new Aeron.Context().aeronDirectoryName(driver.aeronDirectoryName())))
         {
             final Exception ex1 = assertThrows(Exception.class, () -> aeron.addSubscription(

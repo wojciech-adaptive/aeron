@@ -2825,19 +2825,12 @@ public final class DriverConductor implements Agent
         }
     }
 
+    @SuppressWarnings({ "unused", "UnnecessaryReturnStatement" })
     private static void validateExperimentalFeatures(final boolean enableExperimentalFeatures, final UdpChannel channel)
     {
         if (enableExperimentalFeatures)
         {
             return;
-        }
-
-        if (null != channel.channelUri().get(RESPONSE_CORRELATION_ID_PARAM_NAME) ||
-            ControlMode.RESPONSE == channel.controlMode())
-        {
-            throw new IllegalArgumentException(
-                "Response Channels is an experimental feature, and " +
-                "MediaDriver.Context.enableExperimentalFeatures is false");
         }
     }
 
