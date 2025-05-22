@@ -709,19 +709,9 @@ static int aeron_driver_conductor_validate_experimental_features(
         return 0;
     }
 
-    if (NULL != aeron_uri_find_param_value(
-        &udp_channel->uri.params.udp.additional_params,
-        AERON_URI_RESPONSE_CORRELATION_ID_KEY) ||
-        AERON_UDP_CHANNEL_CONTROL_MODE_RESPONSE == udp_channel->control_mode)
-    {
-        AERON_SET_ERR(
-            EINVAL,
-            "%s",
-            "Response Channels is an experimental feature, and "
-            "MediaDriver.Context.enableExperimentalFeatures is false");
-
-        return -1;
-    }
+    /*
+     * Put experimental feature validation here.
+     */
 
     return 0;
 }
