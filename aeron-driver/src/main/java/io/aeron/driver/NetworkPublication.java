@@ -134,6 +134,7 @@ public final class NetworkPublication
     private final long connectionTimeoutNs;
     private final long lingerTimeoutNs;
     private final long untetheredWindowLimitTimeoutNs;
+    private final long untetheredLingerTimeoutNs;
     private final long untetheredRestingTimeoutNs;
     private final long tag;
     private final long responseCorrelationId;
@@ -213,6 +214,7 @@ public final class NetworkPublication
         this.connectionTimeoutNs = ctx.publicationConnectionTimeoutNs();
         this.lingerTimeoutNs = params.lingerTimeoutNs;
         this.untetheredWindowLimitTimeoutNs = params.untetheredWindowLimitTimeoutNs;
+        this.untetheredLingerTimeoutNs = params.untetheredLingerTimeoutNs;
         this.untetheredRestingTimeoutNs = params.untetheredRestingTimeoutNs;
         this.tag = params.entityTag;
         this.channelEndpoint = channelEndpoint;
@@ -1064,7 +1066,7 @@ public final class NetworkPublication
                 }
                 else if (UntetheredSubscription.State.LINGER == untethered.state)
                 {
-                    if ((untethered.timeOfLastUpdateNs + untetheredWindowLimitTimeoutNs) - nowNs <= 0)
+                    if ((untethered.timeOfLastUpdateNs + untetheredLingerTimeoutNs) - nowNs <= 0)
                     {
                         spyPositions = ArrayUtil.remove(spyPositions, untethered.position);
                         untethered.state(UntetheredSubscription.State.RESTING, nowNs, streamId, sessionId);
