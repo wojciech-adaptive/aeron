@@ -17,40 +17,41 @@ package io.aeron;
 
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
-import io.aeron.logbuffer.*;
+import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.test.*;
 import io.aeron.test.driver.TestMediaDriver;
 import org.agrona.CloseHelper;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.status.CountersReader;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import static io.aeron.Publication.BACK_PRESSURED;
 import static io.aeron.Publication.CLOSED;
 import static io.aeron.driver.status.SystemCounterDescriptor.PUBLICATIONS_REVOKED;
 import static io.aeron.driver.status.SystemCounterDescriptor.PUBLICATION_IMAGES_REVOKED;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.agrona.BitUtil.SIZE_OF_INT;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 
-@ExtendWith(InterruptingTestCallback.class)
+@ExtendWith({ EventLogExtension.class, InterruptingTestCallback.class })
 class PublicationRevokeTest
 {
-    @RegisterExtension
-    final SystemTestWatcher watcher = new SystemTestWatcher();
-
+    private static final int TERM_BUFFER_LENGTH = 1024 * 1024;
+    private static final int STREAM_ID = 1001;
     private static final String UDP_CHANNEL = "aeron:udp?endpoint=localhost:24325";
     private static final String IPC_CHANNEL = "aeron:ipc";
     private static final String MCAST_CHANNEL = "aeron:udp?endpoint=224.20.30.39:24326|interface=localhost";
@@ -58,18 +59,12 @@ class PublicationRevokeTest
     private static final String SUB1_MDC_MANUAL_URI = "aeron:udp?endpoint=localhost:24326|group=true";
     private static final String SUB2_MDC_MANUAL_URI = "aeron:udp?endpoint=localhost:24327|group=true";
 
-    private static Stream<Arguments> channels()
-    {
-        return Stream.of(
-            Arguments.of(UDP_CHANNEL, UDP_CHANNEL, 1),
-            Arguments.of(IPC_CHANNEL, IPC_CHANNEL, 0),
-            Arguments.of(CommonContext.SPY_PREFIX + UDP_CHANNEL, UDP_CHANNEL + "|ssc=true", 0)
-        );
-    }
-
-    private static final int STREAM_ID = 1001;
+    @RegisterExtension
+    final SystemTestWatcher watcher = new SystemTestWatcher();
 
     private final MediaDriver.Context driverContext = new MediaDriver.Context()
+        .ipcTermBufferLength(TERM_BUFFER_LENGTH)
+        .publicationTermBufferLength(TERM_BUFFER_LENGTH)
         .publicationConnectionTimeoutNs(MILLISECONDS.toNanos(300))
         .imageLivenessTimeoutNs(MILLISECONDS.toNanos(500))
         .publicationLingerTimeoutNs(SECONDS.toNanos(1))
@@ -268,41 +263,41 @@ class PublicationRevokeTest
 
         Tests.awaitConnected(subscription);
         Tests.awaitConnected(exclusivePublication);
+        Tests.await(() -> exclusivePublication.availableWindow() > 0);
 
-        int messagesSent = 0;
-        long position;
-        while ((position = exclusivePublication.offer(buffer, 0, SIZE_OF_INT)) != BACK_PRESSURED)
+        final long availableWindow = exclusivePublication.availableWindow();
+        while (exclusivePublication.position() < availableWindow)
         {
-            if (position > 0)
+            if (exclusivePublication.offer(buffer, 0, SIZE_OF_INT) < 0)
             {
-                messagesSent++;
+                Tests.yield();
             }
-
-            Tests.yield();
         }
+        assertEquals(availableWindow, exclusivePublication.position());
 
         int messagesReceived = 0;
         while (unavailableImages.get() == 0)
         {
-            messagesReceived += subscription.poll((buffer1, offset, length, header) -> Tests.sleep(1), 1);
+            messagesReceived += subscription.poll(fragmentHandler, 1);
 
-            if (messagesReceived == 100)
+            if (100 == messagesReceived)
             {
                 exclusivePublication.revoke();
+                break;
             }
 
             Tests.yield();
         }
 
+        Tests.await(() -> 1 == unavailableImages.get());
+
         assertEquals(1, countersReader.getCounterValue(PUBLICATIONS_REVOKED.id()));
         assertEquals(expectedPublicationImagesRevoked, countersReader.getCounterValue(PUBLICATION_IMAGES_REVOKED.id()));
-        assertTrue(messagesSent > messagesReceived);
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = { true, false })
+    @Test
     @InterruptAfter(10)
-    void shouldRevokeMultipleSubscribers(final boolean useMDC)
+    void shouldRevokeMultipleSubscribersMulticast()
     {
         final AtomicInteger unavailableImages = new AtomicInteger(0);
         doAnswer(invocation ->
@@ -316,55 +311,109 @@ class PublicationRevokeTest
 
         launch2();
 
-        final Subscription subscription;
-        final Subscription subscriptionB;
-        final ExclusivePublication exclusivePublication;
-
-        if (useMDC)
-        {
-            subscription = client.addSubscription(
-                SUB1_MDC_MANUAL_URI, STREAM_ID, availableImageHandler, unavailableImageHandler);
-            subscriptionB = clientB.addSubscription(
-                SUB2_MDC_MANUAL_URI, STREAM_ID, availableImageHandler, unavailableImageHandler);
-            exclusivePublication = client.addExclusivePublication(PUB_MDC_MANUAL_URI, STREAM_ID);
-            exclusivePublication.addDestination(SUB1_MDC_MANUAL_URI);
-            exclusivePublication.addDestination(SUB2_MDC_MANUAL_URI);
-        }
-        else
-        {
-            subscription = client.addSubscription(
-                MCAST_CHANNEL, STREAM_ID, availableImageHandler, unavailableImageHandler);
-            subscriptionB = clientB.addSubscription(
-                MCAST_CHANNEL, STREAM_ID, availableImageHandler, unavailableImageHandler);
-            exclusivePublication = client.addExclusivePublication(MCAST_CHANNEL, STREAM_ID);
-        }
+        final Subscription subscription = client.addSubscription(
+            MCAST_CHANNEL, STREAM_ID, availableImageHandler, unavailableImageHandler);
+        final Subscription subscriptionB = clientB.addSubscription(
+            MCAST_CHANNEL, STREAM_ID, availableImageHandler, unavailableImageHandler);
+        final ExclusivePublication exclusivePublication = client.addExclusivePublication(MCAST_CHANNEL, STREAM_ID);
 
         Tests.awaitConnected(subscription);
         Tests.awaitConnected(subscriptionB);
         Tests.awaitConnected(exclusivePublication);
+        Tests.await(() -> exclusivePublication.availableWindow() > 0);
 
-        while (exclusivePublication.offer(buffer, 0, SIZE_OF_INT) != BACK_PRESSURED)
+        final long availableWindow = exclusivePublication.availableWindow();
+        while (exclusivePublication.position() < availableWindow)
         {
-            Tests.yield();
+            if (exclusivePublication.offer(buffer, 0, SIZE_OF_INT) < 0)
+            {
+                Tests.yield();
+            }
         }
+        assertEquals(availableWindow, exclusivePublication.position());
 
         int messagesReceived = 0;
-        while (unavailableImages.get() == 0)
+        int messagesReceivedB = 0;
+        while (true)
         {
-            messagesReceived += subscription.poll((buffer1, offset, length, header) -> Tests.sleep(1), 1);
+            messagesReceived += subscription.poll(fragmentHandler, 1);
+            messagesReceivedB += subscriptionB.poll(fragmentHandler, 1);
 
-            if (messagesReceived == 100)
+            if (messagesReceived >= 100 && messagesReceivedB >= 100)
             {
                 exclusivePublication.revoke();
+                Tests.sleep(100);
+                break;
             }
 
             Tests.yield();
         }
 
-        while (unavailableImages.get() != 2)
+        Tests.await(() -> 2 == unavailableImages.get());
+
+        assertEquals(1, countersReader.getCounterValue(PUBLICATIONS_REVOKED.id()));
+        assertEquals(1, countersReader.getCounterValue(PUBLICATION_IMAGES_REVOKED.id()));
+        assertEquals(0, countersReaderB.getCounterValue(PUBLICATIONS_REVOKED.id()));
+        assertEquals(1, countersReaderB.getCounterValue(PUBLICATION_IMAGES_REVOKED.id()));
+    }
+
+    @Test
+    @InterruptAfter(10)
+    void shouldRevokeMultipleSubscribersMdc()
+    {
+        final AtomicInteger unavailableImages = new AtomicInteger(0);
+        doAnswer(invocation ->
         {
+            final Image image = invocation.getArgument(0, Image.class);
+            assertTrue(image.isPublicationRevoked());
+
+            unavailableImages.incrementAndGet();
+            return null;
+        }).when(unavailableImageHandler).onUnavailableImage(any(Image.class));
+
+        launch2();
+
+        final Subscription subscription = client.addSubscription(
+            SUB1_MDC_MANUAL_URI, STREAM_ID, availableImageHandler, unavailableImageHandler);
+        final Subscription subscriptionB = clientB.addSubscription(
+            SUB2_MDC_MANUAL_URI, STREAM_ID, availableImageHandler, unavailableImageHandler);
+        final ExclusivePublication exclusivePublication = client.addExclusivePublication(PUB_MDC_MANUAL_URI, STREAM_ID);
+        exclusivePublication.addDestination(SUB1_MDC_MANUAL_URI);
+        exclusivePublication.addDestination(SUB2_MDC_MANUAL_URI);
+
+        Tests.awaitConnected(subscription);
+        Tests.awaitConnected(subscriptionB);
+        Tests.awaitConnected(exclusivePublication);
+        Tests.await(() -> exclusivePublication.availableWindow() > 0);
+
+        final long availableWindow = exclusivePublication.availableWindow();
+        while (exclusivePublication.position() < availableWindow)
+        {
+            if (exclusivePublication.offer(buffer, 0, SIZE_OF_INT) < 0)
+            {
+                Tests.yield();
+            }
+        }
+        assertEquals(availableWindow, exclusivePublication.position());
+
+        int messagesReceived = 0;
+        int messagesReceivedB = 0;
+        while (true)
+        {
+            messagesReceived += subscription.poll(fragmentHandler, 1);
+            messagesReceivedB += subscriptionB.poll(fragmentHandler, 1);
+
+            if (messagesReceived >= 100 && messagesReceivedB >= 100)
+            {
+                exclusivePublication.revoke();
+                Tests.sleep(100);
+                break;
+            }
+
             Tests.yield();
         }
+
+        Tests.await(() -> 2 == unavailableImages.get());
 
         assertEquals(1, countersReader.getCounterValue(PUBLICATIONS_REVOKED.id()));
         assertEquals(1, countersReader.getCounterValue(PUBLICATION_IMAGES_REVOKED.id()));
@@ -402,5 +451,14 @@ class PublicationRevokeTest
 
             Tests.yield();
         }
+    }
+
+    private static Stream<Arguments> channels()
+    {
+        return Stream.of(
+            Arguments.of(UDP_CHANNEL, UDP_CHANNEL, 1),
+            Arguments.of(IPC_CHANNEL, IPC_CHANNEL, 0),
+            Arguments.of(CommonContext.SPY_PREFIX + UDP_CHANNEL, UDP_CHANNEL + "|ssc=true", 0)
+        );
     }
 }
