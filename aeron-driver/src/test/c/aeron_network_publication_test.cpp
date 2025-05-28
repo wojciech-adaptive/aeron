@@ -195,7 +195,7 @@ protected:
         }
 
         aeron_flow_control_strategy_t *flow_control;
-        aeron_unicast_flow_control_strategy_supplier(&flow_control, nullptr, nullptr, nullptr, 0, 0, 0, 0, 0);
+        aeron_unicast_flow_control_strategy_supplier(&flow_control, m_context, nullptr, nullptr, 0, 0, 0, 0, 0);
 
         aeron_network_publication_t *publication = nullptr;
         if (aeron_network_publication_create(
@@ -217,7 +217,7 @@ protected:
             is_exclusive,
             &m_system_counters) < 0)
         {
-            aeron_free(flow_control);
+            flow_control->fini(flow_control);
             return nullptr;
         }
 
