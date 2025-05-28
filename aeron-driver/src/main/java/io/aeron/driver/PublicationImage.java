@@ -193,6 +193,7 @@ public final class PublicationImage
     private final AtomicCounter heartbeatsReceived;
     private final AtomicCounter statusMessagesSent;
     private final AtomicCounter nakMessagesSent;
+    private final AtomicCounter receiverNaksSent;
     private final AtomicCounter flowControlUnderRuns;
     private final AtomicCounter flowControlOverRuns;
     private final AtomicCounter lossGapFills;
@@ -218,11 +219,13 @@ public final class PublicationImage
         final ArrayList<SubscriberPosition> subscriberPositions,
         final Position hwmPosition,
         final Position rebuildPosition,
+        final AtomicCounter receiverNaksSent,
         final String sourceIdentity,
         final CongestionControl congestionControl)
     {
         this.correlationId = correlationId;
         this.imageLivenessTimeoutNs = ctx.imageLivenessTimeoutNs();
+        this.receiverNaksSent = receiverNaksSent;
         this.untetheredWindowLimitTimeoutNs = getTimeoutNsFromChannel(
             channelEndpoint, UNTETHERED_WINDOW_LIMIT_TIMEOUT_PARAM_NAME, ctx.untetheredWindowLimitTimeoutNs());
         this.untetheredRestingTimeoutNs = getTimeoutNsFromChannel(
@@ -298,6 +301,7 @@ public final class PublicationImage
     {
         CloseHelper.close(errorHandler, hwmPosition);
         CloseHelper.close(errorHandler, rebuildPosition);
+        CloseHelper.close(errorHandler, receiverNaksSent);
         CloseHelper.closeAll(errorHandler, subscriberPositions);
 
         for (int i = 0, size = untetheredSubscriptions.size(); i < size; i++)
@@ -824,7 +828,9 @@ public final class PublicationImage
                 if (isReliable)
                 {
                     channelEndpoint.sendNakMessage(imageConnections, sessionId, streamId, termId, termOffset, length);
+                    // FIXME: Increment only if sent successfully
                     nakMessagesSent.incrementRelease();
+                    receiverNaksSent.incrementRelease();
                 }
                 else
                 {

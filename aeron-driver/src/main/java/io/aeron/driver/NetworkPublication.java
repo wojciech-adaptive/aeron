@@ -184,6 +184,7 @@ public final class NetworkPublication
     private final AtomicCounter retransmittedBytes;
     private final AtomicCounter senderFlowControlLimits;
     private final AtomicCounter senderBpe;
+    private final AtomicCounter senderNaksReceived;
     private final AtomicCounter shortSends;
     private final AtomicCounter unblockedPublications;
     private final AtomicCounter publicationsRevoked;
@@ -201,6 +202,7 @@ public final class NetworkPublication
         final Position senderPosition,
         final Position senderLimit,
         final AtomicCounter senderBpe,
+        final AtomicCounter senderNaksReceived,
         final int sessionId,
         final int streamId,
         final int initialTermId,
@@ -222,6 +224,7 @@ public final class NetworkPublication
         this.cachedNanoClock = ctx.senderCachedNanoClock();
         this.senderPosition = senderPosition;
         this.senderLimit = senderLimit;
+        this.senderNaksReceived = senderNaksReceived;
         this.flowControl = flowControl;
         this.retransmitHandler = retransmitHandler;
         this.publisherPos = publisherPos;
@@ -299,6 +302,7 @@ public final class NetworkPublication
         CloseHelper.close(errorHandler, senderPosition);
         CloseHelper.close(errorHandler, senderLimit);
         CloseHelper.close(errorHandler, senderBpe);
+        CloseHelper.close(errorHandler, senderNaksReceived);
         CloseHelper.closeAll(errorHandler, spyPositions);
 
         for (int i = 0, size = untetheredSubscriptions.size(); i < size; i++)
@@ -434,6 +438,7 @@ public final class NetworkPublication
      */
     public void onNak(final int termId, final int termOffset, final int length)
     {
+        senderNaksReceived.incrementRelease();
         retransmitHandler.onNak(termId, termOffset, length, termBufferLength, mtuLength, flowControl, this);
     }
 

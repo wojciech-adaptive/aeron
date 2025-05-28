@@ -204,7 +204,7 @@ public final class Configuration
      * Default length of the buffer for the counters file.
      */
     @Config(expectedCDefaultFieldName = "AERON_COUNTERS_VALUES_BUFFER_LENGTH_DEFAULT")
-    public static final int COUNTERS_VALUES_BUFFER_LENGTH_DEFAULT = 1024 * 1024;
+    public static final int COUNTERS_VALUES_BUFFER_LENGTH_DEFAULT = 8 * 1024 * 1024;
 
     /**
      * Maximum length of the buffer for the counters file.
@@ -221,7 +221,7 @@ public final class Configuration
      * Default buffer length for the error buffer for the media driver.
      */
     @Config
-    public static final int ERROR_BUFFER_LENGTH_DEFAULT = 1024 * 1024;
+    public static final int ERROR_BUFFER_LENGTH_DEFAULT = 4 * 1024 * 1024;
 
     /**
      * Property name for length of the memory mapped buffer for the {@link io.aeron.driver.reports.LossReport}.
