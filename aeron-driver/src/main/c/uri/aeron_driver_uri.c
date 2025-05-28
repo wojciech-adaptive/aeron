@@ -223,6 +223,7 @@ int aeron_diver_uri_publication_params(
 
     params->linger_timeout_ns = context->publication_linger_timeout_ns;
     params->untethered_window_limit_timeout_ns = context->untethered_window_limit_timeout_ns;
+    params->untethered_linger_timeout_ns = context->untethered_linger_timeout_ns;
     params->untethered_resting_timeout_ns = context->untethered_resting_timeout_ns;
     params->term_length = AERON_URI_IPC == uri->type ? context->ipc_term_buffer_length : context->term_buffer_length;
     params->has_term_length = false;
@@ -419,6 +420,25 @@ int aeron_diver_uri_publication_params(
     {
         AERON_APPEND_ERR("%s", "");
         return -1;
+    }
+
+    uint64_t cur_val = 0;
+    if (aeron_uri_get_timeout(
+            uri_params,
+            AERON_URI_UNTETHERED_LINGER_TIMEOUT_KEY,
+            &cur_val) < 0)
+    {
+        AERON_APPEND_ERR("%s", "");
+        return -1;
+    }
+
+    if (cur_val > 0)
+    {
+        params->untethered_linger_timeout_ns = cur_val;
+    }
+    else if (params->untethered_linger_timeout_ns == AERON_NULL_VALUE)
+    {
+        params->untethered_linger_timeout_ns = params->untethered_window_limit_timeout_ns;
     }
 
     if (aeron_uri_get_timeout(

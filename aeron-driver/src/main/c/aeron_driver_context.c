@@ -414,6 +414,7 @@ int aeron_driver_context_init(aeron_driver_context_t **context)
     _context->publication_connection_timeout_ns = AERON_PUBLICATION_CONNECTION_TIMEOUT_NS_DEFAULT;
     _context->counter_free_to_reuse_ns = AERON_COUNTERS_FREE_TO_REUSE_TIMEOUT_NS_DEFAULT;
     _context->untethered_window_limit_timeout_ns = AERON_UNTETHERED_WINDOW_LIMIT_TIMEOUT_NS_DEFAULT;
+    _context->untethered_linger_timeout_ns = AERON_NULL_VALUE;
     _context->untethered_resting_timeout_ns = AERON_UNTETHERED_RESTING_TIMEOUT_NS_DEFAULT;
     _context->max_resend = AERON_RETRANSMIT_HANDLER_MAX_RESEND;
     _context->retransmit_unicast_delay_ns = AERON_RETRANSMIT_UNICAST_DELAY_NS_DEFAULT;
@@ -762,6 +763,13 @@ int aeron_driver_context_init(aeron_driver_context_t **context)
         AERON_UNTETHERED_WINDOW_LIMIT_TIMEOUT_ENV_VAR,
         getenv(AERON_UNTETHERED_WINDOW_LIMIT_TIMEOUT_ENV_VAR),
         _context->untethered_window_limit_timeout_ns,
+        1000,
+        INT64_MAX);
+
+    _context->untethered_linger_timeout_ns = aeron_config_parse_duration_ns(
+        AERON_UNTETHERED_LINGER_TIMEOUT_ENV_VAR,
+        getenv(AERON_UNTETHERED_LINGER_TIMEOUT_ENV_VAR),
+        _context->untethered_linger_timeout_ns,
         1000,
         INT64_MAX);
 
@@ -1388,6 +1396,18 @@ int aeron_driver_validate_untethered_timeouts(aeron_driver_context_t *context)
             context->untethered_resting_timeout_ns, context->timer_interval_ns);
         return -1;
     }
+
+    if (context->untethered_linger_timeout_ns > AERON_NULL_VALUE &&
+        (uint64_t)context->untethered_linger_timeout_ns <= context->timer_interval_ns)
+    {
+        errno = EINVAL;
+        AERON_SET_ERR(
+            EINVAL,
+            "untethered_linger_timeout_ns=%" PRIu64 " <= timer_interval_ns=%" PRIu64,
+            context->untethered_linger_timeout_ns, context->timer_interval_ns);
+        return -1;
+    }
+
 
     return 0;
 }
@@ -2418,6 +2438,20 @@ uint64_t aeron_driver_context_get_untethered_window_limit_timeout_ns(aeron_drive
 {
     return NULL != context ?
         context->untethered_window_limit_timeout_ns : AERON_UNTETHERED_WINDOW_LIMIT_TIMEOUT_NS_DEFAULT;
+}
+
+int aeron_driver_context_set_untethered_linger_timeout_ns(aeron_driver_context_t *context, uint64_t value)
+{
+    AERON_DRIVER_CONTEXT_SET_CHECK_ARG_AND_RETURN(-1, context);
+
+    context->untethered_linger_timeout_ns = value;
+    return 0;
+}
+
+int64_t aeron_driver_context_get_untethered_linger_timeout_ns(aeron_driver_context_t *context)
+{
+    return NULL != context ?
+        context->untethered_linger_timeout_ns : AERON_NULL_VALUE;
 }
 
 int aeron_driver_context_set_untethered_resting_timeout_ns(aeron_driver_context_t *context, uint64_t value)

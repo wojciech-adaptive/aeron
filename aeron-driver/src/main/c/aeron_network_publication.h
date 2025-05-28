@@ -91,6 +91,7 @@ typedef struct aeron_network_publication_stct
     int64_t unblock_timeout_ns;
     int64_t connection_timeout_ns;
     int64_t untethered_window_limit_timeout_ns;
+    int64_t untethered_linger_timeout_ns;
     int64_t untethered_resting_timeout_ns;
 
     int64_t tag;

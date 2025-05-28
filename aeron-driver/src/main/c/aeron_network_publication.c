@@ -313,6 +313,7 @@ int aeron_network_publication_create(
     _pub->term_window_length = params->publication_window_length;
     _pub->linger_timeout_ns = (int64_t)params->linger_timeout_ns;
     _pub->untethered_window_limit_timeout_ns = (int64_t)params->untethered_window_limit_timeout_ns;
+    _pub->untethered_linger_timeout_ns = params->untethered_linger_timeout_ns;
     _pub->untethered_resting_timeout_ns = (int64_t)params->untethered_resting_timeout_ns;
     _pub->unblock_timeout_ns = (int64_t)context->publication_unblock_timeout_ns;
     _pub->connection_timeout_ns = (int64_t)context->publication_connection_timeout_ns;
@@ -1162,6 +1163,7 @@ void aeron_network_publication_check_untethered_subscriptions(
         {
             int64_t window_limit_timeout_ns = publication->untethered_window_limit_timeout_ns;
             int64_t resting_timeout_ns = publication->untethered_resting_timeout_ns;
+            int64_t linger_timeout_ns = publication->untethered_linger_timeout_ns;
 
             switch (tetherable_position->state)
             {
@@ -1193,7 +1195,7 @@ void aeron_network_publication_check_untethered_subscriptions(
                     break;
 
                 case AERON_SUBSCRIPTION_TETHER_LINGER:
-                    if (now_ns > (tetherable_position->time_of_last_update_ns + window_limit_timeout_ns))
+                    if (now_ns > (tetherable_position->time_of_last_update_ns + linger_timeout_ns))
                     {
                         aeron_driver_subscribable_state(
                             subscribable, tetherable_position, AERON_SUBSCRIPTION_TETHER_RESTING, now_ns);

@@ -159,6 +159,7 @@ typedef struct aeron_driver_context_stct
     uint64_t timer_interval_ns;                             /* aeron.timer.interval = 1s */
     uint64_t counter_free_to_reuse_ns;                      /* aeron.counters.free.to.reuse.timeout = 1s */
     uint64_t untethered_window_limit_timeout_ns;            /* aeron.untethered.window.limit.timeout = 5s */
+    int64_t untethered_linger_timeout_ns;                  /* aeron.untethered.linger.timeout = 5s */
     uint64_t untethered_resting_timeout_ns;                 /* aeron.untethered.resting.timeout = 10s */
     uint64_t retransmit_unicast_delay_ns;                   /* aeron.retransmit.unicast.delay = 0 */
     uint64_t retransmit_unicast_linger_ns;                  /* aeron.retransmit.unicast.linger = 60ms */
