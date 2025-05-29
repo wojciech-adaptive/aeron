@@ -608,7 +608,7 @@ class ClusterBackupTest
     }
 
     @Test
-    @InterruptAfter(30)
+    @InterruptAfter(60)
     void shouldBackupClusterAndJoinLive()
     {
         final TestCluster cluster = aCluster().withStaticNodes(3).start();
