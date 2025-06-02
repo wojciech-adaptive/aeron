@@ -29,10 +29,10 @@ import static io.aeron.CommonContext.*;
 
 final class PublicationParams
 {
-    long untetheredLingerTimeoutNs;
     long lingerTimeoutNs;
     long entityTag = ChannelUri.INVALID_TAG;
     long untetheredWindowLimitTimeoutNs;
+    long untetheredLingerTimeoutNs;
     long untetheredRestingTimeoutNs;
     long responseCorrelationId = Aeron.NULL_VALUE;
     int termLength;
@@ -495,7 +495,6 @@ final class PublicationParams
         final String timeoutString = channelUri.get(UNTETHERED_LINGER_TIMEOUT_PARAM_NAME);
         if (null != timeoutString)
         {
-            // Linger timeout was explicitly set for the channel.  Use the set value.
             untetheredLingerTimeoutNs = SystemUtil.parseDuration(UNTETHERED_LINGER_TIMEOUT_PARAM_NAME, timeoutString);
         }
         else if (Aeron.NULL_VALUE != ctx.untetheredLingerTimeoutNs())

@@ -28,7 +28,6 @@ import io.aeron.protocol.RttMeasurementFlyweight;
 import io.aeron.protocol.StatusMessageFlyweight;
 import org.agrona.CloseHelper;
 import org.agrona.ErrorHandler;
-import org.agrona.SystemUtil;
 import org.agrona.collections.ArrayListUtil;
 import org.agrona.collections.ArrayUtil;
 import org.agrona.concurrent.CachedNanoClock;
@@ -44,8 +43,6 @@ import java.lang.invoke.VarHandle;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
-import static io.aeron.CommonContext.UNTETHERED_RESTING_TIMEOUT_PARAM_NAME;
-import static io.aeron.CommonContext.UNTETHERED_WINDOW_LIMIT_TIMEOUT_PARAM_NAME;
 import static io.aeron.ErrorCode.IMAGE_REJECTED;
 import static io.aeron.driver.LossDetector.lossFound;
 import static io.aeron.driver.LossDetector.rebuildOffset;
@@ -166,6 +163,7 @@ public final class PublicationImage
     private final long correlationId;
     private final long imageLivenessTimeoutNs;
     private final long untetheredWindowLimitTimeoutNs;
+    private final long untetheredLingerTimeoutNs;
     private final long untetheredRestingTimeoutNs;
     private final int sessionId;
     private final int streamId;
@@ -215,6 +213,9 @@ public final class PublicationImage
         final int termOffset,
         final short flags,
         final RawLog rawLog,
+        final long untetheredWindowLimitTimeoutNs,
+        final long untetheredLingerTimeoutNs,
+        final long untetheredRestingTimeoutNs,
         final FeedbackDelayGenerator lossFeedbackDelayGenerator,
         final ArrayList<SubscriberPosition> subscriberPositions,
         final Position hwmPosition,
@@ -226,10 +227,9 @@ public final class PublicationImage
         this.correlationId = correlationId;
         this.imageLivenessTimeoutNs = ctx.imageLivenessTimeoutNs();
         this.receiverNaksSent = receiverNaksSent;
-        this.untetheredWindowLimitTimeoutNs = getTimeoutNsFromChannel(
-            channelEndpoint, UNTETHERED_WINDOW_LIMIT_TIMEOUT_PARAM_NAME, ctx.untetheredWindowLimitTimeoutNs());
-        this.untetheredRestingTimeoutNs = getTimeoutNsFromChannel(
-            channelEndpoint, UNTETHERED_RESTING_TIMEOUT_PARAM_NAME, ctx.untetheredRestingTimeoutNs());
+        this.untetheredWindowLimitTimeoutNs = untetheredWindowLimitTimeoutNs;
+        this.untetheredLingerTimeoutNs = untetheredLingerTimeoutNs;
+        this.untetheredRestingTimeoutNs = untetheredRestingTimeoutNs;
         this.smTimeoutNs = ctx.statusMessageTimeoutNs();
         this.channelEndpoint = channelEndpoint;
         this.sessionId = sessionId;
@@ -1175,7 +1175,7 @@ public final class PublicationImage
                 }
                 else if (UntetheredSubscription.State.LINGER == untethered.state)
                 {
-                    if ((untethered.timeOfLastUpdateNs + untetheredWindowLimitTimeoutNs) - nowNs <= 0)
+                    if ((untethered.timeOfLastUpdateNs + untetheredLingerTimeoutNs) - nowNs <= 0)
                     {
                         subscriberPositions = ArrayUtil.remove(subscriberPositions, untethered.position);
                         untethered.state(UntetheredSubscription.State.RESTING, nowNs, streamId, sessionId);
@@ -1258,15 +1258,6 @@ public final class PublicationImage
         }
 
         return positions;
-    }
-
-    private long getTimeoutNsFromChannel(
-        final ReceiveChannelEndpoint channelEndpoint,
-        final String paramName,
-        final long defaultValueNs)
-    {
-        final String timeoutStr = channelEndpoint.subscriptionUdpChannel().channelUri().get(paramName);
-        return null != timeoutStr ? SystemUtil.parseDuration(paramName, timeoutStr) : defaultValueNs;
     }
 
     /**

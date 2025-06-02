@@ -109,7 +109,8 @@ class PublicationImageTest
             .epochClock(epochClock)
             .imageLivenessTimeoutNs(TimeUnit.SECONDS.toNanos(10))
             .untetheredWindowLimitTimeoutNs(TimeUnit.SECONDS.toNanos(1))
-            .untetheredRestingTimeoutNs(TimeUnit.SECONDS.toNanos(1))
+            .untetheredLingerTimeoutNs(TimeUnit.MILLISECONDS.toNanos(150))
+            .untetheredRestingTimeoutNs(TimeUnit.MILLISECONDS.toNanos(800))
             .statusMessageTimeoutNs(TimeUnit.MILLISECONDS.toNanos(150))
             .systemCounters(new SystemCounters(countersManager))
             .lossReport(lossReport);
@@ -168,6 +169,9 @@ class PublicationImageTest
             TERM_OFFSET,
             FLAGS,
             rawLog,
+            ctx.untetheredWindowLimitTimeoutNs(),
+            ctx.untetheredLingerTimeoutNs(),
+            ctx.untetheredRestingTimeoutNs(),
             feedbackDelayGenerator,
             subscriberPositions,
             hwmPosition,

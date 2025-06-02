@@ -55,6 +55,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static io.aeron.logbuffer.LogBufferDescriptor.TERM_MIN_LENGTH;
@@ -80,6 +81,7 @@ class ReceiverTest
     private static final int POSITION_BITS_TO_SHIFT = LogBufferDescriptor.positionBitsToShift(TERM_BUFFER_LENGTH);
     private static final String URI = "aeron:udp?endpoint=localhost:4005";
     private static final UdpChannel UDP_CHANNEL = UdpChannel.parse(URI);
+    private static final long UNTETHERED_TIMEOUT_NS = TimeUnit.SECONDS.toNanos(1);
     private static final long CORRELATION_ID = 20;
     private static final int STREAM_ID = 1010;
     private static final int INITIAL_TERM_ID = 3;
@@ -237,6 +239,9 @@ class ReceiverTest
             INITIAL_TERM_OFFSET,
             (short)0,
             rawLog,
+            UNTETHERED_TIMEOUT_NS,
+            UNTETHERED_TIMEOUT_NS,
+            UNTETHERED_TIMEOUT_NS,
             mockFeedbackDelayGenerator,
             POSITIONS,
             mockHighestReceivedPosition,
@@ -305,6 +310,9 @@ class ReceiverTest
                     INITIAL_TERM_OFFSET,
                     (short)0,
                     rawLog,
+                    UNTETHERED_TIMEOUT_NS,
+                    UNTETHERED_TIMEOUT_NS,
+                    UNTETHERED_TIMEOUT_NS,
                     mockFeedbackDelayGenerator,
                     POSITIONS,
                     mockHighestReceivedPosition,
@@ -372,6 +380,9 @@ class ReceiverTest
                     INITIAL_TERM_OFFSET,
                     (short)0,
                     rawLog,
+                    UNTETHERED_TIMEOUT_NS,
+                    UNTETHERED_TIMEOUT_NS,
+                    UNTETHERED_TIMEOUT_NS,
                     mockFeedbackDelayGenerator,
                     POSITIONS,
                     mockHighestReceivedPosition,
@@ -441,6 +452,9 @@ class ReceiverTest
                     INITIAL_TERM_OFFSET,
                     (short)0,
                     rawLog,
+                    UNTETHERED_TIMEOUT_NS,
+                    UNTETHERED_TIMEOUT_NS,
+                    UNTETHERED_TIMEOUT_NS,
                     mockFeedbackDelayGenerator,
                     POSITIONS,
                     mockHighestReceivedPosition,
@@ -515,6 +529,9 @@ class ReceiverTest
                     initialTermOffset,
                     (short)0,
                     rawLog,
+                    UNTETHERED_TIMEOUT_NS,
+                    UNTETHERED_TIMEOUT_NS,
+                    UNTETHERED_TIMEOUT_NS,
                     mockFeedbackDelayGenerator,
                     POSITIONS,
                     mockHighestReceivedPosition,
