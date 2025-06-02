@@ -1405,11 +1405,10 @@ int aeron_driver_validate_untethered_timeouts(aeron_driver_context_t *context)
         errno = EINVAL;
         AERON_SET_ERR(
             EINVAL,
-            "untethered_linger_timeout_ns=%" PRIu64 " <= timer_interval_ns=%" PRIu64,
+            "untethered_linger_timeout_ns=%" PRIi64 " <= timer_interval_ns=%" PRIu64,
             context->untethered_linger_timeout_ns, context->timer_interval_ns);
         return -1;
     }
-
 
     return 0;
 }
