@@ -1885,6 +1885,7 @@ public final class DriverConductor implements Agent
             params.isResponse,
             params.publicationWindowLength,
             params.untetheredWindowLimitTimeoutNs,
+            params.untetheredLingerTimeoutNs,
             params.untetheredRestingTimeoutNs,
             params.maxResend,
             params.lingerTimeoutNs,
@@ -1933,6 +1934,7 @@ public final class DriverConductor implements Agent
             params.isResponse,
             params.publicationWindowLength,
             params.untetheredWindowLimitTimeoutNs,
+            params.untetheredLingerTimeoutNs,
             params.untetheredRestingTimeoutNs,
             params.maxResend,
             params.lingerTimeoutNs,
@@ -1964,6 +1966,7 @@ public final class DriverConductor implements Agent
         final boolean isResponse,
         final int publicationWindowLength,
         final long untetheredWindowLimitTimeoutNs,
+        final long untetheredLingerTimeoutNs,
         final long untetheredRestingTimeoutNs,
         final int maxResend,
         final long lingerTimeoutNs,
@@ -2011,6 +2014,7 @@ public final class DriverConductor implements Agent
         entityTag(logMetaData, entityTag);
         responseCorrelationId(logMetaData, responseCorrelationId);
         untetheredWindowLimitTimeoutNs(logMetaData, untetheredWindowLimitTimeoutNs);
+        untetheredLingerTimeoutNs(logMetaData, untetheredLingerTimeoutNs);
         untetheredRestingTimeoutNs(logMetaData, untetheredRestingTimeoutNs);
         lingerTimeoutNs(logMetaData, lingerTimeoutNs);
 
@@ -2067,8 +2071,6 @@ public final class DriverConductor implements Agent
         final RawLog rawLog = logFactory.newImage(correlationId, termBufferLength, isSparse);
 
         final int publicationWindowLength = 0;
-        final long untetheredWindowLimitTimeoutNs = 0;
-        final long untetheredRestingTimeoutNs = 0;
         final int maxResend = 0;
         final long lingerTimeoutNs = 0;
         final boolean signalEos = false;
@@ -2092,8 +2094,9 @@ public final class DriverConductor implements Agent
             hasGroupSemantics,
             params.isResponse,
             publicationWindowLength,
-            untetheredWindowLimitTimeoutNs,
-            untetheredRestingTimeoutNs,
+            params.untetheredWindowLimitTimeoutNs,
+            params.untetheredLingerTimeoutNs,
+            params.untetheredRestingTimeoutNs,
             maxResend,
             lingerTimeoutNs,
             signalEos,
