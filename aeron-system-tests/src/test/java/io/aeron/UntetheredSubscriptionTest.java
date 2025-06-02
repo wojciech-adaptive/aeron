@@ -254,7 +254,6 @@ class UntetheredSubscriptionTest
     @InterruptAfter(10)
     void shouldStoreUntetheredTimeoutsInLogBufferMetadata()
     {
-        TestMediaDriver.notSupportedOnCMediaDriver("not implemented yet");
         final String channel = "aeron:udp?term-length=64k|endpoint=localhost:5555";
         launch("aeron:ipc");
 
@@ -277,14 +276,14 @@ class UntetheredSubscriptionTest
             aeron.conductorAgentInvoker().invoke();
         }
 
-        assertUntetherParametersInLogBufferMetadata(
+        assertUntetheredParametersInLogBufferMetadata(
             "publications",
             publication.registrationId(),
             publicationBuilder.untetheredWindowLimitTimeoutNs(),
             publicationBuilder.untetheredLingerTimeoutNs(),
             publicationBuilder.untetheredRestingTimeoutNs());
 
-        assertUntetherParametersInLogBufferMetadata(
+        assertUntetheredParametersInLogBufferMetadata(
             "images",
             subscription.imageAtIndex(0).correlationId(),
             subscriptionBuilder.untetheredWindowLimitTimeoutNs(),
@@ -292,7 +291,7 @@ class UntetheredSubscriptionTest
             subscriptionBuilder.untetheredRestingTimeoutNs());
     }
 
-    private void assertUntetherParametersInLogBufferMetadata(
+    private void assertUntetheredParametersInLogBufferMetadata(
         final String directory,
         final long registrationId,
         final long expectedWindowLimitTimeoutNs,
