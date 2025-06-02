@@ -257,6 +257,7 @@ int aeron_network_publication_create(
         (int64_t)params->response_correlation_id,
         (int64_t)params->linger_timeout_ns,
         (int64_t)params->untethered_window_limit_timeout_ns,
+        (int64_t)params->untethered_linger_timeout_ns,
         (int64_t)params->untethered_resting_timeout_ns,
         (uint8_t)has_group_semantics,
         (uint8_t)params->is_response,

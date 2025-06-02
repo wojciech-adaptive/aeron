@@ -61,6 +61,7 @@ typedef struct aeron_publication_image_stct
         int64_t time_of_last_state_change_ns;
         int64_t liveness_timeout_ns;
         int64_t untethered_window_limit_timeout_ns;
+        int64_t untethered_linger_timeout_ns;
         int64_t untethered_resting_timeout_ns;
         int64_t clean_position;
         int32_t loss_report_term_id;

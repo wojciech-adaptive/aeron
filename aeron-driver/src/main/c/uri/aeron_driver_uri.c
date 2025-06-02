@@ -434,11 +434,11 @@ int aeron_diver_uri_publication_params(
 
     if (cur_val > 0)
     {
-        params->untethered_linger_timeout_ns = cur_val;
+        params->untethered_linger_timeout_ns = (int64_t)cur_val;
     }
     else if (params->untethered_linger_timeout_ns == AERON_NULL_VALUE)
     {
-        params->untethered_linger_timeout_ns = params->untethered_window_limit_timeout_ns;
+        params->untethered_linger_timeout_ns = (int64_t)params->untethered_window_limit_timeout_ns;
     }
 
     if (aeron_uri_get_timeout(
@@ -463,6 +463,9 @@ int aeron_driver_uri_subscription_params(
     params->is_tether = context->tether_subscriptions;
     params->is_rejoin = context->rejoin_stream;
     params->initial_window_length = context->initial_window_length;
+    params->untethered_window_limit_timeout_ns = context->untethered_window_limit_timeout_ns;
+    params->untethered_linger_timeout_ns = context->untethered_linger_timeout_ns;
+    params->untethered_resting_timeout_ns = context->untethered_resting_timeout_ns;
 
     aeron_uri_params_t *uri_params = AERON_URI_IPC == uri->type ?
         &uri->params.ipc.additional_params : &uri->params.udp.additional_params;
@@ -504,6 +507,43 @@ int aeron_driver_uri_subscription_params(
         (AERON_URI_UDP == uri->type &&
         NULL != uri->params.udp.control_mode &&
         strcmp(uri->params.udp.control_mode, AERON_UDP_CHANNEL_CONTROL_MODE_RESPONSE_VALUE) == 0);
+
+    if (aeron_uri_get_timeout(
+        uri_params,
+        AERON_URI_UNTETHERED_WINDOW_LIMIT_TIMEOUT_KEY,
+        &params->untethered_window_limit_timeout_ns) < 0)
+    {
+        AERON_APPEND_ERR("%s", "");
+        return -1;
+    }
+
+    uint64_t cur_val = 0;
+    if (aeron_uri_get_timeout(
+        uri_params,
+        AERON_URI_UNTETHERED_LINGER_TIMEOUT_KEY,
+        &cur_val) < 0)
+    {
+        AERON_APPEND_ERR("%s", "");
+        return -1;
+    }
+
+    if (cur_val > 0)
+    {
+        params->untethered_linger_timeout_ns = (int64_t)cur_val;
+    }
+    else if (params->untethered_linger_timeout_ns == AERON_NULL_VALUE)
+    {
+        params->untethered_linger_timeout_ns = (int64_t)params->untethered_window_limit_timeout_ns;
+    }
+
+    if (aeron_uri_get_timeout(
+        uri_params,
+        AERON_URI_UNTETHERED_RESTING_TIMEOUT_KEY,
+        &params->untethered_resting_timeout_ns) < 0)
+    {
+        AERON_APPEND_ERR("%s", "");
+        return -1;
+    }
 
     return 0;
 }
