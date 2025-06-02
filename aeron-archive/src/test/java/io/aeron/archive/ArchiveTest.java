@@ -970,20 +970,13 @@ class ArchiveTest
                 while (AeronArchive.State.CONNECTED == client2.state())
                 {
                     assertNull(client1.pollForErrorResponse());
-                    final String errorResponse = client2.pollForErrorResponse();
-                    if (null != errorResponse)
-                    {
-                        assertEquals(AeronArchive.NOT_CONNECTED_MSG, errorResponse);
-                        break;
-                    }
+                    Tests.sleep(1);
                 }
 
+                // Closed via UnavailableImageHandler
                 assertEquals(AeronArchive.State.DISCONNECTED, client2.state());
                 assertFalse(client2.controlResponsePoller().subscription().isConnected());
                 Tests.await(() -> !client2.archiveProxy().publication().isConnected());
-
-                client2.close();
-                assertEquals(AeronArchive.State.CLOSED, client2.state());
 
                 assertEquals(AeronArchive.State.CONNECTED, client1.state());
                 assertTrue(client1.archiveProxy().publication().isConnected());
