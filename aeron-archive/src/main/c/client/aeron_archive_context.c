@@ -322,7 +322,7 @@ int aeron_archive_context_conclude(aeron_archive_context_t *ctx)
     }
 
     bool response_channels = true;
-    int32_t session_id;
+    int32_t session_id = -1;
     const char* control_mode =
         aeron_uri_string_builder_get(&response_channel, AERON_UDP_CHANNEL_CONTROL_MODE_KEY);
     if (NULL == control_mode ||
