@@ -741,7 +741,7 @@ public final class ClusterBackup implements AutoCloseable
                         .awaitingIdleStrategy(YieldingIdleStrategy.INSTANCE)
                         .subscriberErrorHandler(RethrowingErrorHandler.INSTANCE)
                         .clientLock(NoOpLock.INSTANCE)
-                        .clientName("cluster-backup-" + clusterId));
+                        .clientName("cluster-backup clusterId=" + clusterId));
 
                 if (null == errorCounter)
                 {
