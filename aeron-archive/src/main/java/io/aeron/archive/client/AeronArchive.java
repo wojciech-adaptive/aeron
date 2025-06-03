@@ -2989,11 +2989,28 @@ public final class AeronArchive implements AutoCloseable
                 throw new ConfigurationException("AeronArchive.Context.controlResponseChannel must be set");
             }
 
+            final ChannelUri requestChannel = applyDefaultParams(controlRequestChannel);
+            final ChannelUri responseChannel = applyDefaultParams(controlResponseChannel);
+            final String sessionId;
+            if (!CONTROL_MODE_RESPONSE.equals(responseChannel.get(MDC_CONTROL_MODE_PARAM_NAME)))
+            {
+                sessionId = Integer.toString(BitUtil.generateRandomisedId());
+                requestChannel.put(SESSION_ID_PARAM_NAME, sessionId);
+                responseChannel.put(SESSION_ID_PARAM_NAME, sessionId);
+            }
+            else
+            {
+                sessionId = CONTROL_MODE_RESPONSE;
+            }
+            controlRequestChannel = requestChannel.toString();
+            controlResponseChannel = responseChannel.toString();
+
             if (null == aeron)
             {
                 aeron = Aeron.connect(
                     new Aeron.Context()
                         .aeronDirectoryName(aeronDirectoryName)
+                        .clientName("archive-client session-id=" + sessionId)
                         .errorHandler(errorHandler));
                 ownsAeronClient = true;
             }
@@ -3013,17 +3030,6 @@ public final class AeronArchive implements AutoCloseable
             {
                 lock = new ReentrantLock();
             }
-
-            final ChannelUri requestChannel = applyDefaultParams(controlRequestChannel);
-            final ChannelUri responseChannel = applyDefaultParams(controlResponseChannel);
-            if (!CONTROL_MODE_RESPONSE.equals(responseChannel.get(MDC_CONTROL_MODE_PARAM_NAME)))
-            {
-                final String sessionId = Integer.toString(BitUtil.generateRandomisedId());
-                requestChannel.put(SESSION_ID_PARAM_NAME, sessionId);
-                responseChannel.put(SESSION_ID_PARAM_NAME, sessionId);
-            }
-            controlRequestChannel = requestChannel.toString();
-            controlResponseChannel = responseChannel.toString();
         }
 
         /**
