@@ -1230,6 +1230,8 @@ public final class Archive implements AutoCloseable
                 aeronDirectoryName = aeron.context().aeronDirectoryName();
             }
 
+            concludeArchiveId();
+
             if (null == markFile)
             {
                 if (errorBufferLength < ERROR_BUFFER_LENGTH_DEFAULT ||
@@ -1250,8 +1252,6 @@ public final class Archive implements AutoCloseable
 
                 errorHandler = CommonContext.setupErrorHandler(
                     errorHandler, new DistinctErrorLog(markFile.errorBuffer(), epochClock, US_ASCII));
-
-                concludeArchiveId();
 
                 final ExpandableArrayBuffer tempBuffer = new ExpandableArrayBuffer();
 
@@ -3732,7 +3732,6 @@ public final class Archive implements AutoCloseable
                     archiveId = CommonContext.nextCorrelationId(
                         new File(aeronDirectoryName), epochClock, new CommonContext().driverTimeoutMs());
                 }
-                markFile.encoder().archiveId(archiveId);
             }
         }
 
