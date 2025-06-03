@@ -831,9 +831,9 @@ class ArchiveTest
     }
 
     @ParameterizedTest
-    @CsvSource({ "-1, archive", "888, archive-888" })
+    @ValueSource(ints = { -1, 888 })
     @InterruptAfter(10)
-    void shouldAssignClientName(final int archiveId, final String expectedClientName) throws IOException
+    void shouldAssignClientName(final int archiveId) throws IOException
     {
         final Path root = Files.createTempDirectory("test");
         final String aeronDir = root.resolve("media-driver").toString();
@@ -842,7 +842,7 @@ class ArchiveTest
             Archive archive = Archive.launch(TestContexts.localhostArchive()
                 .archiveId(archiveId)
                 .archiveDir(root.resolve("archive1").toFile())
-                .aeronDirectoryName(aeronDir));
+                .aeronDirectoryName(driver.aeronDirectoryName()));
             Aeron aeron = Aeron.connect(new Aeron.Context().aeronDirectoryName(aeronDir)))
         {
             final long archiveClientId = archive.context().aeron().clientId();
@@ -863,7 +863,9 @@ class ArchiveTest
                 }
                 else
                 {
-                    assertThat(counterLabel, CoreMatchers.containsString(expectedClientName));
+                    assertThat(
+                        counterLabel,
+                        CoreMatchers.containsString("name=archive archiveId=" + archive.context().archiveId()));
                     break;
                 }
                 Tests.checkInterruptStatus();

@@ -995,6 +995,7 @@ public final class Archive implements AutoCloseable
     public static final class Context implements Cloneable
     {
         private static final VarHandle IS_CONCLUDED_VH;
+
         static
         {
             try
@@ -1250,6 +1251,8 @@ public final class Archive implements AutoCloseable
                 errorHandler = CommonContext.setupErrorHandler(
                     errorHandler, new DistinctErrorLog(markFile.errorBuffer(), epochClock, US_ASCII));
 
+                concludeArchiveId();
+
                 final ExpandableArrayBuffer tempBuffer = new ExpandableArrayBuffer();
 
                 if (null == aeron)
@@ -1267,11 +1270,10 @@ public final class Archive implements AutoCloseable
                             .subscriberErrorHandler(RethrowingErrorHandler.INSTANCE)
                             .awaitingIdleStrategy(YieldingIdleStrategy.INSTANCE)
                             .clientLock(NoOpLock.INSTANCE)
-                            .clientName(NULL_VALUE != archiveId ? "archive-" + archiveId : "archive"));
+                            .clientName("archive archiveId=" + archiveId));
 
                     if (null == errorCounter)
                     {
-                        concludeArchiveId();
                         if (NULL_VALUE !=
                             ArchiveCounters.find(aeron.countersReader(), ARCHIVE_ERROR_COUNT_TYPE_ID, archiveId))
                         {
@@ -1285,8 +1287,6 @@ public final class Archive implements AutoCloseable
                     throw new ArchiveException(
                         "Aeron client instance must set Aeron.Context.useConductorInvoker(true)");
                 }
-
-                concludeArchiveId();
 
                 if (!(aeron.context().subscriberErrorHandler() instanceof RethrowingErrorHandler))
                 {
@@ -3723,7 +3723,15 @@ public final class Archive implements AutoCloseable
         {
             if (NULL_VALUE == archiveId)
             {
-                archiveId = aeron.clientId();
+                if (null != aeron)
+                {
+                    archiveId = aeron.clientId();
+                }
+                else
+                {
+                    archiveId = CommonContext.nextCorrelationId(
+                        new File(aeronDirectoryName), epochClock, new CommonContext().driverTimeoutMs());
+                }
                 markFile.encoder().archiveId(archiveId);
             }
         }
