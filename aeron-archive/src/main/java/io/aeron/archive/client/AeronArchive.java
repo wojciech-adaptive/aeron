@@ -2991,16 +2991,17 @@ public final class AeronArchive implements AutoCloseable
 
             final ChannelUri requestChannel = applyDefaultParams(controlRequestChannel);
             final ChannelUri responseChannel = applyDefaultParams(controlResponseChannel);
-            final String sessionId;
+            final String nameSuffix;
             if (!CONTROL_MODE_RESPONSE.equals(responseChannel.get(MDC_CONTROL_MODE_PARAM_NAME)))
             {
-                sessionId = Integer.toString(BitUtil.generateRandomisedId());
+                final String sessionId = Integer.toString(BitUtil.generateRandomisedId());
+                nameSuffix = "session-id=" + sessionId;
                 requestChannel.put(SESSION_ID_PARAM_NAME, sessionId);
                 responseChannel.put(SESSION_ID_PARAM_NAME, sessionId);
             }
             else
             {
-                sessionId = CONTROL_MODE_RESPONSE;
+                nameSuffix = "control-mode=response";
             }
             controlRequestChannel = requestChannel.toString();
             controlResponseChannel = responseChannel.toString();
@@ -3010,7 +3011,7 @@ public final class AeronArchive implements AutoCloseable
                 aeron = Aeron.connect(
                     new Aeron.Context()
                         .aeronDirectoryName(aeronDirectoryName)
-                        .clientName("archive-client session-id=" + sessionId)
+                        .clientName("archive-client " + nameSuffix)
                         .errorHandler(errorHandler));
                 ownsAeronClient = true;
             }
