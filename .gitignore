@@ -32,7 +32,7 @@ build-local.properties
 .gradle/
 build/
 !buildSrc/
-!buildSrc/src/**
+!buildSrc/src/**/build
 cmake-build-debug/
 cmake-build-release/
 cmake-build-debug-*/
