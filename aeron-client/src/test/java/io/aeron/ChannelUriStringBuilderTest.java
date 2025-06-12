@@ -223,7 +223,7 @@ class ChannelUriStringBuilderTest
             "term-length=1048576|init-term-id=5|term-offset=64|term-id=4353|session-id=2314234|gtag=3|" +
             "linger=100000055000001|sparse=true|eos=true|tether=false|group=false|ssc=true|so-sndbuf=8388608|" +
             "so-rcvbuf=2097152|rcv-wnd=1048576|media-rcv-ts-offset=reserved|channel-rcv-ts-offset=0|" +
-            "channel-snd-ts-offset=8|response-correlation-id=12345|nak-delay=100000|" +
+            "channel-snd-ts-offset=8|response-endpoint=127.0.0.3:0|response-correlation-id=12345|nak-delay=100000|" +
             "untethered-window-limit-timeout=1000|untethered-resting-timeout=5000|stream-id=87|pub-wnd=10224";
 
         final ChannelUri fromString = ChannelUri.parse(uri);
