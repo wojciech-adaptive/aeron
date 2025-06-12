@@ -205,6 +205,7 @@ int aeron_ipc_publication_create(
     _pub->trip_gain = _pub->term_window_length / 8;
     _pub->unblock_timeout_ns = (int64_t)context->publication_unblock_timeout_ns;
     _pub->untethered_window_limit_timeout_ns = (int64_t)params->untethered_window_limit_timeout_ns;
+    _pub->untethered_linger_timeout_ns = params->untethered_linger_timeout_ns;
     _pub->untethered_resting_timeout_ns = (int64_t)params->untethered_resting_timeout_ns;
     _pub->liveness_timeout_ns = (int64_t)context->image_liveness_timeout_ns;
     _pub->is_exclusive = is_exclusive;
@@ -421,9 +422,6 @@ void aeron_ipc_publication_check_untethered_subscriptions(
         }
         else
         {
-            int64_t window_limit_timeout_ns = publication->untethered_window_limit_timeout_ns;
-            int64_t resting_timeout_ns = publication->untethered_resting_timeout_ns;
-
             switch (tetherable_position->state)
             {
                 case AERON_SUBSCRIPTION_TETHER_ACTIVE:
@@ -431,7 +429,7 @@ void aeron_ipc_publication_check_untethered_subscriptions(
                     {
                         tetherable_position->time_of_last_update_ns = now_ns;
                     }
-                    else if (now_ns > (tetherable_position->time_of_last_update_ns + window_limit_timeout_ns))
+                    else if (now_ns > (tetherable_position->time_of_last_update_ns + publication->untethered_window_limit_timeout_ns))
                     {
                         aeron_driver_conductor_on_unavailable_image(
                             conductor,
@@ -454,7 +452,7 @@ void aeron_ipc_publication_check_untethered_subscriptions(
                     break;
 
                 case AERON_SUBSCRIPTION_TETHER_LINGER:
-                    if (now_ns > (tetherable_position->time_of_last_update_ns + window_limit_timeout_ns))
+                    if (now_ns > (tetherable_position->time_of_last_update_ns + publication->untethered_linger_timeout_ns))
                     {
                         aeron_driver_subscribable_state(
                             subscribable, tetherable_position, AERON_SUBSCRIPTION_TETHER_RESTING, now_ns);
@@ -469,7 +467,7 @@ void aeron_ipc_publication_check_untethered_subscriptions(
                     break;
 
                 case AERON_SUBSCRIPTION_TETHER_RESTING:
-                    if (now_ns > (tetherable_position->time_of_last_update_ns + resting_timeout_ns))
+                    if (now_ns > (tetherable_position->time_of_last_update_ns + publication->untethered_resting_timeout_ns))
                     {
                         int64_t join_position = aeron_ipc_publication_join_position(publication);
                         aeron_counter_set_release(tetherable_position->value_addr, join_position);

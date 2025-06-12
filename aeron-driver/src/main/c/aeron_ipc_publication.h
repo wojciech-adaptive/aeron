@@ -59,6 +59,7 @@ typedef struct aeron_ipc_publication_stct
     int64_t trip_gain;
     int64_t unblock_timeout_ns;
     int64_t untethered_window_limit_timeout_ns;
+    int64_t untethered_linger_timeout_ns;
     int64_t untethered_resting_timeout_ns;
     int64_t liveness_timeout_ns;
     int32_t initial_term_id;
