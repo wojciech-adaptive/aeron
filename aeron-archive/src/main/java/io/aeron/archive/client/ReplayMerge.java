@@ -52,6 +52,7 @@ public final class ReplayMerge implements AutoCloseable
     private static final long MERGE_PROGRESS_TIMEOUT_DEFAULT_MS = TimeUnit.SECONDS.toMillis(5);
     private static final long INITIAL_GET_MAX_RECORDED_POSITION_BACKOFF_MS = 8;
     private static final long GET_MAX_RECORDED_POSITION_BACKOFF_MAX_MS = 500;
+    private static final long ARCHIVE_POLL_INTERVAL_MS = 100;
 
     @SuppressWarnings("JavadocVariable")
     enum State
@@ -76,6 +77,7 @@ public final class ReplayMerge implements AutoCloseable
     private long timeOfLastProgressMs;
     private long timeOfNextGetMaxRecordedPositionMs;
     private long getMaxRecordedPositionBackoffMs = INITIAL_GET_MAX_RECORDED_POSITION_BACKOFF_MS;
+    private long timeOfLastScheduledArchivePollMs;
     private boolean isLiveAdded = false;
     private boolean isReplayActive = false;
     private State state;
@@ -242,26 +244,31 @@ public final class ReplayMerge implements AutoCloseable
                 case RESOLVE_REPLAY_PORT:
                     workCount += resolveReplayPort(nowMs);
                     checkProgress(nowMs);
+                    pollArchiveEvents(nowMs);
                     break;
 
                 case GET_RECORDING_POSITION:
                     workCount += getRecordingPosition(nowMs);
                     checkProgress(nowMs);
+                    pollArchiveEvents(nowMs);
                     break;
 
                 case REPLAY:
                     workCount += replay(nowMs);
                     checkProgress(nowMs);
+                    pollArchiveEvents(nowMs);
                     break;
 
                 case CATCHUP:
                     workCount += catchup(nowMs);
                     checkProgress(nowMs);
+                    pollArchiveEvents(nowMs);
                     break;
 
                 case ATTEMPT_LIVE_JOIN:
                     workCount += attemptLiveJoin(nowMs);
                     checkProgress(nowMs);
+                    pollArchiveEvents(nowMs);
                     break;
 
                 case MERGED:
@@ -406,6 +413,7 @@ public final class ReplayMerge implements AutoCloseable
             isReplayActive = true;
             replaySessionId = polledRelevantId(archive);
             timeOfLastProgressMs = nowMs;
+            activeCorrelationId = Aeron.NULL_VALUE;
 
             // reset getRecordingPosition backoff when moving to CATCHUP state
             getMaxRecordedPositionBackoffMs = INITIAL_GET_MAX_RECORDED_POSITION_BACKOFF_MS;
@@ -575,10 +583,22 @@ public final class ReplayMerge implements AutoCloseable
         }
     }
 
+    private void pollArchiveEvents(final long nowMs)
+    {
+        if (activeCorrelationId == Aeron.NULL_VALUE &&
+            (nowMs > (timeOfLastScheduledArchivePollMs + ARCHIVE_POLL_INTERVAL_MS)))
+        {
+            pollForResponse(archive, Aeron.NULL_VALUE);
+            timeOfLastScheduledArchivePollMs = nowMs;
+        }
+    }
+
     private static boolean pollForResponse(final AeronArchive archive, final long correlationId)
     {
         final ControlResponsePoller poller = archive.controlResponsePoller();
-        if (poller.poll() > 0 && poller.isPollComplete())
+
+        final int pollCount = poller.poll();
+        if (poller.isPollComplete())
         {
             if (poller.controlSessionId() == archive.controlSessionId())
             {
@@ -592,6 +612,10 @@ public final class ReplayMerge implements AutoCloseable
 
                 return poller.correlationId() == correlationId;
             }
+        }
+        else if (pollCount == 0 && !poller.subscription().isConnected())
+        {
+            throw new ArchiveException("archive is not connected");
         }
 
         return false;

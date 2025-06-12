@@ -130,18 +130,7 @@ int ReplayMerge::getRecordingPosition(long long nowMs)
         m_nextTargetPosition = m_archive->controlResponsePoller().relevantId();
         m_activeCorrelationId = aeron::NULL_VALUE;
 
-        if (NULL_POSITION == m_nextTargetPosition)
-        {
-            const std::int64_t correlationId = m_archive->context().aeron()->nextCorrelationId();
-
-            if (m_archive->archiveProxy().getStopPosition(m_recordingId, correlationId, m_archive->controlSessionId()))
-            {
-                m_timeOfLastProgressMs = nowMs;
-                m_activeCorrelationId = correlationId;
-                workCount += 1;
-            }
-        }
-        else
+        if (NULL_POSITION != m_nextTargetPosition)
         {
             m_timeOfLastProgressMs = nowMs;
             state(State::REPLAY);
@@ -325,11 +314,23 @@ void ReplayMerge::checkProgress(long long nowMs)
     }
 }
 
+void ReplayMerge::pollArchiveEvents(long long nowMs)
+{
+    if (m_activeCorrelationId == aeron::NULL_VALUE &&
+        (nowMs > (m_timeOfLastScheduledArchivePollMs + REPLAY_MERGE_ARCHIVE_POLL_INTERVAL_MS)))
+    {
+        pollForResponse(*m_archive, aeron::NULL_VALUE);
+        m_timeOfLastScheduledArchivePollMs = nowMs;
+    }
+}
+
+
 bool ReplayMerge::pollForResponse(AeronArchive &archive, std::int64_t correlationId)
 {
     ControlResponsePoller &poller = archive.controlResponsePoller();
 
-    if (poller.poll() > 0 && poller.isPollComplete())
+    const int poll_count = poller.poll();
+    if (poller.isPollComplete())
     {
         if (poller.controlSessionId() == archive.controlSessionId())
         {
@@ -345,6 +346,10 @@ bool ReplayMerge::pollForResponse(AeronArchive &archive, std::int64_t correlatio
 
             return poller.correlationId() == correlationId;
         }
+    }
+    else if (poll_count == 0 && !poller.subscription()->isConnected())
+    {
+        throw ArchiveException("archive is not connected", SOURCEINFO);
     }
 
     return false;

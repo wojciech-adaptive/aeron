@@ -26,6 +26,7 @@ constexpr const std::int32_t REPLAY_MERGE_REPLAY_REMOVE_THRESHOLD = 0;
 constexpr const std::int64_t REPLAY_MERGE_PROGRESS_TIMEOUT_DEFAULT_MS = 5 * 1000;
 constexpr const std::int64_t REPLAY_MERGE_INITIAL_GET_MAX_RECORDED_POSITION_BACKOFF_MS = 8;
 constexpr const std::int64_t REPLAY_MERGE_GET_MAX_RECORDED_POSITION_BACKOFF_MAX_MS = 500;
+constexpr const std::int64_t REPLAY_MERGE_ARCHIVE_POLL_INTERVAL_MS = 100;
 
 /**
  * Replay a recorded stream from a starting position and merge with live stream to consume a full history of a stream.
@@ -88,26 +89,31 @@ public:
                 case State::RESOLVE_REPLAY_PORT:
                     workCount += resolveReplayPort(nowMs);
                     checkProgress(nowMs);
+                    pollArchiveEvents(nowMs);
                     break;
 
                 case State::GET_RECORDING_POSITION:
                     workCount += getRecordingPosition(nowMs);
                     checkProgress(nowMs);
+                    pollArchiveEvents(nowMs);
                     break;
 
                 case State::REPLAY:
                     workCount += replay(nowMs);
                     checkProgress(nowMs);
+                    pollArchiveEvents(nowMs);
                     break;
 
                 case State::CATCHUP:
                     workCount += catchup(nowMs);
                     checkProgress(nowMs);
+                    pollArchiveEvents(nowMs);
                     break;
 
                 case State::ATTEMPT_LIVE_JOIN:
                     workCount += attemptLiveJoin(nowMs);
                     checkProgress(nowMs);
+                    pollArchiveEvents(nowMs);
                     break;
 
                 default:
@@ -211,6 +217,7 @@ private:
     long long m_timeOfLastProgressMs = 0;
     long long m_timeOfNextGetMaxRecordedPositionMs;
     long long m_getMaxRecordedPositionBackoffMs = REPLAY_MERGE_INITIAL_GET_MAX_RECORDED_POSITION_BACKOFF_MS;
+    long long m_timeOfLastScheduledArchivePollMs = 0;
     bool m_isLiveAdded = false;
     bool m_isReplayActive = false;
 
@@ -248,6 +255,8 @@ private:
     void stopReplay();
 
     void checkProgress(long long nowMs);
+
+    void pollArchiveEvents(long long nowMs);
 
     static bool pollForResponse(AeronArchive &archive, std::int64_t correlationId);
 };
