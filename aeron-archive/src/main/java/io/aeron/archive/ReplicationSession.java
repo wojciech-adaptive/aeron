@@ -15,8 +15,20 @@
  */
 package io.aeron.archive;
 
-import io.aeron.*;
-import io.aeron.archive.client.*;
+import io.aeron.Aeron;
+import io.aeron.ChannelUri;
+import io.aeron.ChannelUriStringBuilder;
+import io.aeron.CommonContext;
+import io.aeron.ExclusivePublication;
+import io.aeron.Image;
+import io.aeron.Subscription;
+import io.aeron.archive.client.AeronArchive;
+import io.aeron.archive.client.ArchiveException;
+import io.aeron.archive.client.ArchiveProxy;
+import io.aeron.archive.client.ControlResponsePoller;
+import io.aeron.archive.client.RecordingDescriptorConsumer;
+import io.aeron.archive.client.RecordingDescriptorPoller;
+import io.aeron.archive.client.ReplayParams;
 import io.aeron.archive.codecs.ControlResponseCode;
 import io.aeron.archive.codecs.RecordingSignal;
 import io.aeron.archive.codecs.SourceLocation;
@@ -32,7 +44,10 @@ import java.util.concurrent.TimeUnit;
 import static io.aeron.Aeron.NULL_VALUE;
 import static io.aeron.archive.client.AeronArchive.NULL_POSITION;
 import static io.aeron.archive.client.ReplayMerge.LIVE_ADD_MAX_WINDOW;
-import static io.aeron.archive.codecs.RecordingSignal.*;
+import static io.aeron.archive.codecs.RecordingSignal.MERGE;
+import static io.aeron.archive.codecs.RecordingSignal.REPLICATE;
+import static io.aeron.archive.codecs.RecordingSignal.REPLICATE_END;
+import static io.aeron.archive.codecs.RecordingSignal.SYNC;
 
 class ReplicationSession implements Session, RecordingDescriptorConsumer
 {
@@ -160,7 +175,7 @@ class ReplicationSession implements Session, RecordingDescriptorConsumer
      */
     public boolean isDone()
     {
-        return state == State.DONE;
+        return State.DONE == state;
     }
 
     /**
@@ -213,57 +228,49 @@ class ReplicationSession implements Session, RecordingDescriptorConsumer
 
                 case REPLICATE_DESCRIPTOR:
                     workCount += replicateDescriptor();
-                    pollSourceArchiveEvents();
                     break;
 
                 case SRC_RECORDING_POSITION:
                     workCount += srcRecordingPosition();
-                    pollSourceArchiveEvents();
                     break;
 
                 case EXTEND:
                     workCount += extend();
-                    pollSourceArchiveEvents();
                     break;
 
                 case REPLAY_TOKEN:
                     workCount += replayToken();
-                    pollSourceArchiveEvents();
                     break;
 
                 case GET_ARCHIVE_PROXY:
                     workCount += getArchiveProxy();
-                    pollSourceArchiveEvents();
                     break;
 
                 case REPLAY:
                     workCount += replay();
-                    pollSourceArchiveEvents();
                     break;
 
                 case AWAIT_IMAGE:
                     workCount += awaitImage();
-                    pollSourceArchiveEvents();
                     break;
 
                 case REPLICATE:
                     workCount += replicate();
-                    pollSourceArchiveEvents();
                     break;
 
                 case CATCHUP:
                     workCount += catchup();
-                    pollSourceArchiveEvents();
                     break;
 
                 case ATTEMPT_LIVE_JOIN:
                     workCount += attemptLiveJoin();
-                    pollSourceArchiveEvents();
                     break;
 
                 case DONE:
                     break;
             }
+
+            pollSourceArchiveEvents();
         }
         catch (final Exception ex)
         {
@@ -969,17 +976,18 @@ class ReplicationSession implements Session, RecordingDescriptorConsumer
 
     private void pollSourceArchiveEvents()
     {
-        final long nowMs = epochClock.time();
-
-        if (activeCorrelationId == Aeron.NULL_VALUE &&
-            (nowMs > (timeOfLastScheduledSourceArchivePollMs + SOURCE_ARCHIVE_POLL_INTERVAL_MS)))
+        if (null != srcArchive && State.DONE != state && NULL_VALUE == activeCorrelationId)
         {
-            timeOfLastScheduledSourceArchivePollMs = nowMs;
-
-            final String errorMessage = srcArchive.pollForErrorResponse();
-            if (null != errorMessage)
+            final long nowMs = epochClock.time();
+            if (nowMs > (timeOfLastScheduledSourceArchivePollMs + SOURCE_ARCHIVE_POLL_INTERVAL_MS))
             {
-                throw new ArchiveException(errorMessage);
+                timeOfLastScheduledSourceArchivePollMs = nowMs;
+
+                final String errorMessage = srcArchive.pollForErrorResponse();
+                if (null != errorMessage)
+                {
+                    throw new ArchiveException(errorMessage);
+                }
             }
         }
     }
