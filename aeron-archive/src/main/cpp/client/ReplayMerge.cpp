@@ -312,18 +312,14 @@ void ReplayMerge::checkProgress(long long nowMs)
     {
         throw TimeoutException("ReplayMerge no progress: state=" + std::to_string(m_state), SOURCEINFO);
     }
-}
 
-void ReplayMerge::pollArchiveEvents(long long nowMs)
-{
-    if (m_activeCorrelationId == aeron::NULL_VALUE &&
+    if (aeron::NULL_VALUE == m_activeCorrelationId &&
         (nowMs > (m_timeOfLastScheduledArchivePollMs + REPLAY_MERGE_ARCHIVE_POLL_INTERVAL_MS)))
     {
-        pollForResponse(*m_archive, aeron::NULL_VALUE);
         m_timeOfLastScheduledArchivePollMs = nowMs;
+        pollForResponse(*m_archive, aeron::NULL_VALUE);
     }
 }
-
 
 bool ReplayMerge::pollForResponse(AeronArchive &archive, std::int64_t correlationId)
 {

@@ -89,31 +89,26 @@ public:
                 case State::RESOLVE_REPLAY_PORT:
                     workCount += resolveReplayPort(nowMs);
                     checkProgress(nowMs);
-                    pollArchiveEvents(nowMs);
                     break;
 
                 case State::GET_RECORDING_POSITION:
                     workCount += getRecordingPosition(nowMs);
                     checkProgress(nowMs);
-                    pollArchiveEvents(nowMs);
                     break;
 
                 case State::REPLAY:
                     workCount += replay(nowMs);
                     checkProgress(nowMs);
-                    pollArchiveEvents(nowMs);
                     break;
 
                 case State::CATCHUP:
                     workCount += catchup(nowMs);
                     checkProgress(nowMs);
-                    pollArchiveEvents(nowMs);
                     break;
 
                 case State::ATTEMPT_LIVE_JOIN:
                     workCount += attemptLiveJoin(nowMs);
                     checkProgress(nowMs);
-                    pollArchiveEvents(nowMs);
                     break;
 
                 default:
@@ -255,8 +250,6 @@ private:
     void stopReplay();
 
     void checkProgress(long long nowMs);
-
-    void pollArchiveEvents(long long nowMs);
 
     static bool pollForResponse(AeronArchive &archive, std::int64_t correlationId);
 };

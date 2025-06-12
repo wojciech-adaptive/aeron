@@ -355,21 +355,19 @@ int aeron_archive_replay_merge_do_work(int *work_count_p, aeron_archive_replay_m
             return -1;
         }
 
-        if (replay_merge->active_correlation_id == AERON_NULL_VALUE &&
+        if (AERON_NULL_VALUE == replay_merge->active_correlation_id &&
             (now_ms > (replay_merge->time_of_last_scheduled_archive_poll_ms + REPLAY_MERGE_ARCHIVE_POLL_INTERVAL_MS)))
         {
-            bool ignored;
+            replay_merge->time_of_last_scheduled_archive_poll_ms = now_ms;
 
+            bool ignored;
             if (aeron_archive_replay_merge_poll_for_response(&ignored, replay_merge) < 0)
             {
                 AERON_APPEND_ERR("%s", "");
                 aeron_archive_replay_merge_set_state(replay_merge, FAILED);
                 return -1;
             }
-
-            replay_merge->time_of_last_scheduled_archive_poll_ms = now_ms;
         }
-
     }
 
     return 0;
