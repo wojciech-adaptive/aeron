@@ -420,14 +420,6 @@ public class CommonContext implements Cloneable
     public static final String RESERVED_OFFSET = "reserved";
 
     /**
-     * Parameter name for the field that will be used to specify the response endpoint on a subscription and publication
-     * used in a response "server".
-     *
-     * @since 1.44.0
-     */
-    public static final String RESPONSE_ENDPOINT_PARAM_NAME = "response-endpoint";
-
-    /**
      * Parameter name for the field that will be used to specify the correlation id used on a publication to connect it
      * to a subscription's image in order to set up a response stream.
      *

@@ -54,7 +54,6 @@ public final class ChannelUriStringBuilder
     private String mediaReceiveTimestampOffset;
     private String channelReceiveTimestampOffset;
     private String channelSendTimestampOffset;
-    private String responseEndpoint;
     private Boolean reliable;
     private Boolean sparse;
     private Boolean eos;
@@ -143,7 +142,6 @@ public final class ChannelUriStringBuilder
         mediaReceiveTimestampOffset(channelUri);
         channelReceiveTimestampOffset(channelUri);
         channelSendTimestampOffset(channelUri);
-        responseEndpoint(channelUri);
         responseCorrelationId(channelUri);
         nakDelay(channelUri);
         untetheredWindowLimitTimeout(channelUri);
@@ -193,7 +191,6 @@ public final class ChannelUriStringBuilder
         mediaReceiveTimestampOffset = null;
         channelReceiveTimestampOffset = null;
         channelSendTimestampOffset = null;
-        responseEndpoint = null;
         responseCorrelationId = null;
         maxResend = null;
         streamId = null;
@@ -1969,43 +1966,6 @@ public final class ChannelUriStringBuilder
     }
 
     /**
-     * Set the response endpoint to be used for a response channel subscription or publication.
-     *
-     * @param responseEndpoint  response endpoint to be used in this channel URI.
-     * @return this for a fluent API.
-     * @see CommonContext#RESPONSE_ENDPOINT_PARAM_NAME
-     */
-    public ChannelUriStringBuilder responseEndpoint(final String responseEndpoint)
-    {
-        this.responseEndpoint = responseEndpoint;
-        return this;
-    }
-
-    /**
-     * Set the response endpoint to be used for a response channel subscription or publication by extracting it from the
-     * ChannelUri.
-     *
-     * @param channelUri the existing URI to extract the responseEndpoint from.
-     * @return this for a fluent API.
-     * @see CommonContext#RESPONSE_ENDPOINT_PARAM_NAME
-     */
-    public ChannelUriStringBuilder responseEndpoint(final ChannelUri channelUri)
-    {
-        return responseEndpoint(channelUri.get(RESPONSE_ENDPOINT_PARAM_NAME));
-    }
-
-    /**
-     * The response endpoint to be used for a response channel subscription or publication.
-     *
-     * @return response endpoint.
-     * @see CommonContext#RESPONSE_ENDPOINT_PARAM_NAME
-     */
-    public String responseEndpoint()
-    {
-        return this.responseEndpoint;
-    }
-
-    /**
      * Set the correlation id from the image received on the response "server's" subscription to be used by a response
      * publication.
      *
@@ -2450,7 +2410,6 @@ public final class ChannelUriStringBuilder
         appendParameter(sb, MEDIA_RCV_TIMESTAMP_OFFSET_PARAM_NAME, mediaReceiveTimestampOffset);
         appendParameter(sb, CHANNEL_RECEIVE_TIMESTAMP_OFFSET_PARAM_NAME, channelReceiveTimestampOffset);
         appendParameter(sb, CHANNEL_SEND_TIMESTAMP_OFFSET_PARAM_NAME, channelSendTimestampOffset);
-        appendParameter(sb, RESPONSE_ENDPOINT_PARAM_NAME, responseEndpoint);
         appendParameter(sb, RESPONSE_CORRELATION_ID_PARAM_NAME, responseCorrelationId);
         appendParameter(sb, NAK_DELAY_PARAM_NAME, nakDelay);
         appendParameter(sb, UNTETHERED_WINDOW_LIMIT_TIMEOUT_PARAM_NAME, untetheredWindowLimitTimeoutNs);

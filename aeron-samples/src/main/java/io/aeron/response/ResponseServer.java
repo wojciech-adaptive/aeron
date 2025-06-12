@@ -103,8 +103,7 @@ public class ResponseServer implements AutoCloseable, Agent
             new ChannelUriStringBuilder() : new ChannelUriStringBuilder(requestChannel);
         requestUriBuilder
             .media("udp")
-            .endpoint(requestEndpoint)
-            .responseEndpoint(responseControl);
+            .endpoint(requestEndpoint);
         responseUriBuilder = null == responseChannel ?
             new ChannelUriStringBuilder() : new ChannelUriStringBuilder(responseChannel);
         responseUriBuilder
