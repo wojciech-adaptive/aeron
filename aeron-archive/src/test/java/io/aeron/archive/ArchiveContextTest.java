@@ -807,7 +807,7 @@ class ArchiveContextTest
         inOrder.verifyNoMoreInteractions();
     }
 
-    @SuppressWarnings("MethodLength")
+    @SuppressWarnings({ "methodLength", "indentation" })
     @Test
     void closeOrderWhenAeronClientIsNotOwned() throws Exception
     {

@@ -121,7 +121,7 @@ class ArchiveMigration_2_3Test
     }
 
     @Test
-    @SuppressWarnings("methodLength")
+    @SuppressWarnings({ "methodLength", "indentation" })
     void migrateRemovesGapsBetweenRecordings() throws IOException
     {
         final Path catalogFile = archiveDir.toPath().resolve(Archive.Configuration.CATALOG_FILE_NAME);
