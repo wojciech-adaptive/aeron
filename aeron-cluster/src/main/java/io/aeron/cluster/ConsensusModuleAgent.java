@@ -371,6 +371,11 @@ final class ConsensusModuleAgent
             {
                 workCount += consensusWork(timestamp, nowNs);
             }
+
+            if (null != consensusModuleExtension)
+            {
+                workCount += consensusModuleExtension.doWorkEveryDutyCycle(nowNs);
+            }
         }
         catch (final AgentTerminationException ex)
         {
@@ -2359,6 +2364,11 @@ final class ConsensusModuleAgent
             {
                 workCount += checkNodeControlToggle();
             }
+        }
+
+        if (null != consensusModuleExtension)
+        {
+            workCount += consensusModuleExtension.slowTickWork(nowNs);
         }
 
         return workCount;

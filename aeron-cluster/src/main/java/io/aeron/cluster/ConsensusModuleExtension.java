@@ -54,6 +54,38 @@ public interface ConsensusModuleExtension extends AutoCloseable
     /**
      * An extension should implement this method to do its work. Long-running operations should be decomposed.
      * <p>
+     * This method will be called on every duty cycle, whether election in progress or not.
+     * <p>
+     * The return value is used for implementing an idle strategy that can be employed when no work is
+     * currently available for the extension to process.
+     * <p>
+     * If the extension wished to terminate and close then a {@link AgentTerminationException} can be thrown.
+     *
+     * @param nowNs is cluster time in nanoseconds.
+     * @return 0 to indicate no work was currently available, a positive value otherwise.
+     */
+    default int doWorkEveryDutyCycle(long nowNs)
+    {
+        return 0;
+    }
+
+    /**
+     * Similar to {@link #doWorkEveryDutyCycle(long)}, but executed on a "slow tick", i.e. less frequently than every
+     * duty cycle.
+     *
+     * @param nowNs is cluster time in nanoseconds.
+     * @return 0 to indicate no work was currently available, a positive value otherwise.
+     */
+    default int slowTickWork(long nowNs)
+    {
+        return 0;
+    }
+
+    /**
+     * An extension should implement this method to do its work. Long-running operations should be decomposed.
+     * <p>
+     * This method will be called only when there is no election in progress.
+     * <p>
      * The return value is used for implementing an idle strategy that can be employed when no work is
      * currently available for the extension to process.
      * <p>
