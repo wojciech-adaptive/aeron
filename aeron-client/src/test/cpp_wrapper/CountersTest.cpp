@@ -207,6 +207,29 @@ TEST_F(CountersTest, shouldCreateAStaticCounter)
     ASSERT_EQ(counter->id(), counter2->id());
 }
 
+TEST_F(CountersTest, shouldCreateAStaticCounterUsingAsyncApi)
+{
+    Context ctx;
+
+    std::shared_ptr<Aeron> aeron = Aeron::connect(ctx);
+    const std::int64_t registrationId = 42;
+    const std::int64_t nullCounterId = CountersReader::NULL_COUNTER_ID;
+    const std::int32_t allocatedState = CountersReader::RECORD_ALLOCATED;
+
+    auto asyncResource = aeron->addStaticCounterAsync(COUNTER_TYPE_ID, m_key, COUNTER_KEY_LENGTH, m_label, registrationId);
+    ASSERT_NE(nullptr, asyncResource);
+    ASSERT_GT(aeron->addCounterAsyncGetRegistrationId(asyncResource), 0);
+    WAIT_FOR_NON_NULL(counter, aeron->findCounter(asyncResource));
+    ASSERT_EQ(allocatedState, aeron->countersReader().getCounterState(counter->id()));
+    ASSERT_EQ(COUNTER_TYPE_ID, aeron->countersReader().getCounterTypeId(counter->id()));
+    ASSERT_EQ(registrationId, aeron->countersReader().getCounterRegistrationId(counter->id()));
+    ASSERT_NE(nullCounterId, counter->id());
+
+    std::int64_t counterId2 = aeron->addStaticCounter(COUNTER_TYPE_ID, m_key, COUNTER_KEY_LENGTH, m_label, registrationId);
+    WAIT_FOR_NON_NULL(counter2, aeron->findCounter(counterId2));
+    ASSERT_EQ(counter->id(), counter2->id());
+}
+
 TEST_F(CountersTest, shouldErrorCreatingAStaticCounterIfSessionCounterAlreadyExists)
 {
     Context ctx;
