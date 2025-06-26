@@ -65,6 +65,22 @@ public interface ConsensusModuleExtension extends AutoCloseable
     int doWork(long nowNs);
 
     /**
+     * Similar to {@link #doWork(long)}, but executed less frequently.
+     *
+     * @param nowNs is cluster time in nanoseconds.
+     * @return 0 to indicate no work was currently available, a positive value otherwise.
+     */
+    int slowTickWork(long nowNs);
+
+    /**
+     * Similar to {@link #doWork(long)}, but executed only when there's no election in progress.
+     *
+     * @param nowNs is cluster time in nanoseconds.
+     * @return 0 to indicate no work was currently available, a positive value otherwise.
+     */
+    int consensusWork(long nowNs);
+
+    /**
      * Cluster election is complete and new publication is added for the leadership term. If the node is a follower
      * then the publication will be null.
      *

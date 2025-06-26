@@ -230,6 +230,16 @@ class ClusterWithNoServicesTest
             return 0;
         }
 
+        public int slowTickWork(final long nowNs)
+        {
+            return 0;
+        }
+
+        public int consensusWork(final long nowNs)
+        {
+            return 0;
+        }
+
         public void onElectionComplete(final ConsensusControlState consensusControlState)
         {
         }
