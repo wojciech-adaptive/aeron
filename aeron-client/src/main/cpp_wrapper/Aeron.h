@@ -253,6 +253,18 @@ public:
     }
 
     /**
+     * Gets the registration id for addition of the publication. Note that using this after a call to poll the
+     * succeeds or errors is undefined behaviour. As the AsyncAddPublication may have been freed.
+     *
+     * @param addPublication used to check for completion.
+     * @return registration id for the publication.
+     */
+    inline std::int64_t addPublicationAsyncGetRegistrationId(AsyncAddPublication *addPublication)
+    {
+        return aeron_async_add_publication_get_registration_id(addPublication);
+    }
+
+    /**
      * Add an {@link ExclusivePublication} for publishing messages to subscribers from a single thread.
      *
      * @param channel  for sending the messages known to the media layer.
@@ -363,6 +375,18 @@ public:
         {
             return std::make_shared<ExclusivePublication>(m_aeron, publication);
         }
+    }
+
+    /**
+     * Gets the registration id for addition of the exclusive publication. Note that using this after a call to poll the
+     * succeeds or errors is undefined behaviour. As the AsyncAddExclusivePublication may have been freed.
+     *
+     * @param addPublication used to check for completion.
+     * @return registration id for the exclusive publication.
+     */
+    inline std::int64_t addExclusivePublicationAsyncGetRegistrationId(AsyncAddExclusivePublication *addPublication)
+    {
+        return aeron_async_add_exclusive_publication_get_registration_id(addPublication);
     }
 
     /**
@@ -535,6 +559,18 @@ public:
     }
 
     /**
+     * Gets the registration id for addition of the subscription. Note that using this after a call to poll the
+     * succeeds or errors is undefined behaviour. As the AsyncAddSubscription may have been freed.
+     *
+     * @param addSubscription used to check for completion.
+     * @return registration id for the subscription.
+     */
+    inline std::int64_t addSubscriptionAsyncGetRegistrationId(AsyncAddSubscription *addSubscription)
+    {
+        return aeron_async_add_subscription_get_registration_id(addSubscription->m_async);
+    }
+
+    /**
      * Generate the next correlation id that is unique for the connected Media Driver.
      *
      * This is useful generating correlation identifiers for pairing requests with responses in a clients own
@@ -672,6 +708,18 @@ public:
             aeron_counter_constants(counter, &counter_constants);
             return std::make_shared<Counter>(counter, m_countersReader, counter_constants.registration_id);
         }
+    }
+
+    /**
+     * Gets the registration id for addition of the counter. Note that using this after a call to poll the
+     * succeeds or errors is undefined behaviour. As the AsyncAddCounter may have been freed.
+     *
+     * @param addCounter used to check for completion.
+     * @return registration id for the counter.
+     */
+    inline std::int64_t addCounterAsyncGetRegistrationId(AsyncAddCounter *addCounter)
+    {
+        return aeron_async_add_counter_get_registration_id(addCounter);
     }
 
     /**

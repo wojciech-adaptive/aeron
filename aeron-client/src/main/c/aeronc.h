@@ -2509,8 +2509,19 @@ int64_t aeron_async_add_publication_get_registration_id(aeron_async_add_publicat
  *
  * @param add_exclusive_publication used to check for completion.
  * @return registration id for the exclusive_publication.
+ * @deprecated Use aeron_async_add_exclusive_publication_get_registration_id instead.
  */
 int64_t aeron_async_add_exclusive_exclusive_publication_get_registration_id(
+    aeron_async_add_exclusive_publication_t *add_exclusive_publication);
+
+/**
+ * Gets the registration id for addition of the exclusive_publication. Note that using this after a call to poll the
+ * succeeds or errors is undefined behaviour. As the async_add_exclusive_publication_t may have been freed.
+ *
+ * @param add_exclusive_publication used to check for completion.
+ * @return registration id for the exclusive_publication.
+ */
+int64_t aeron_async_add_exclusive_publication_get_registration_id(
     aeron_async_add_exclusive_publication_t *add_exclusive_publication);
 
 /**

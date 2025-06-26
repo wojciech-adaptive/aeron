@@ -296,7 +296,14 @@ int64_t aeron_async_add_publication_get_registration_id(aeron_async_add_publicat
     return add_publication->registration_id;
 }
 
+// deprecated
 int64_t aeron_async_add_exclusive_exclusive_publication_get_registration_id(
+    aeron_async_add_exclusive_publication_t *add_exclusive_publication)
+{
+    return add_exclusive_publication->registration_id;
+}
+
+int64_t aeron_async_add_exclusive_publication_get_registration_id(
     aeron_async_add_exclusive_publication_t *add_exclusive_publication)
 {
     return add_exclusive_publication->registration_id;
