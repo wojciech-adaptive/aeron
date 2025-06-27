@@ -323,6 +323,8 @@ int aeron_driver_context_init(aeron_driver_context_t **context)
 
     _context->agent_on_start_func = NULL;
     _context->agent_on_start_state = NULL;
+    _context->agent_on_start_func_delegate = NULL;
+    _context->agent_on_start_state_delegate = NULL;
 
     if ((_context->unicast_flow_control_supplier_func = aeron_flow_control_strategy_supplier_load(
         AERON_UNICAST_FLOWCONTROL_SUPPLIER_DEFAULT)) == NULL)
@@ -3160,8 +3162,15 @@ void aeron_set_thread_affinity_on_start(void *state, const char *role_name)
         }
         aeron_err_clear();
     }
-}
 
+    // if start function was overridden call it here with the explicitly set state
+    if (NULL != context->agent_on_start_func_delegate)
+    {
+        context->agent_on_start_func_delegate(
+            NULL != context->agent_on_start_state_delegate ? context->agent_on_start_state_delegate : state,
+            role_name);
+    }
+}
 
 int aeron_driver_context_set_conductor_cpu_affinity(aeron_driver_context_t *context, int32_t value)
 {

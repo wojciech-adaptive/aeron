@@ -126,6 +126,9 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
+    // preserve overridden start function and state
+    context->agent_on_start_func_delegate = context->agent_on_start_func;
+    context->agent_on_start_state_delegate = context->agent_on_start_state;
     if (aeron_driver_context_set_agent_on_start_function(context, aeron_set_thread_affinity_on_start, context))
     {
         fprintf(stderr, "ERROR: unable to set on_start function(%d) %s\n", aeron_errcode(), aeron_errmsg());
