@@ -2548,8 +2548,14 @@ public final class AeronArchive implements AutoCloseable
     {
         if (State.CONNECTED != state)
         {
-            close();
-            throw new ArchiveException("client is closed");
+            if (State.CLOSED == state)
+            {
+                throw new ArchiveException("client is closed");
+            }
+            else
+            {
+                close();
+            }
         }
     }
 
