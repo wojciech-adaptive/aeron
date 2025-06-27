@@ -48,9 +48,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.LongConsumer;
 
 import static io.aeron.Aeron.NULL_VALUE;
+import static io.aeron.ChannelUri.transformAlias;
 import static io.aeron.CommonContext.*;
 import static io.aeron.archive.client.AeronArchive.NULL_LENGTH;
 import static io.aeron.archive.client.AeronArchive.NULL_POSITION;
@@ -333,7 +335,14 @@ final class ConsensusModuleAgent
 
         if (null != consensusModuleExtension)
         {
-            extensionArchive = AeronArchive.connect(ctx.archiveContext().clone());
+            final AeronArchive.Context extensionArchiveCtx = ctx.archiveContext().clone();
+
+            final Function<String, String> suffix = (alias) -> null != alias ? alias + "-ext" : null;
+            extensionArchiveCtx
+                .controlRequestChannel(transformAlias(extensionArchiveCtx.controlRequestChannel(), suffix))
+                .controlResponseChannel(transformAlias(extensionArchiveCtx.controlResponseChannel(), suffix));
+
+            extensionArchive = AeronArchive.connect(extensionArchiveCtx);
         }
 
         unavailableCounterHandlerRegistrationId = aeron.addUnavailableCounterHandler(this::onUnavailableCounter);

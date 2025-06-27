@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import static io.aeron.CommonContext.*;
 import static io.aeron.logbuffer.FrameDescriptor.FRAME_ALIGNMENT;
@@ -519,6 +520,31 @@ public final class ChannelUri
             }
         }
         return uri;
+    }
+
+    /**
+     * Transforms an alias of the given uri using the given function. The function will be invoked with the original
+     * alias or null if absent. The function's return value will be used as the alias in the returned uri. If the
+     * function returns null or an empty string, the alias will be removed.
+     *
+     * @param uri      the uri to transform the alias of.
+     * @param function the transformation function.
+     * @return uri equivalent to the one passed in with its alias transformed.
+     */
+    public static String transformAlias(final String uri, final Function<String, String> function)
+    {
+        final ChannelUri channelUri = ChannelUri.parse(uri);
+        final String originalAlias = channelUri.get(CommonContext.ALIAS_PARAM_NAME);
+        final String transformedAlias = function.apply(originalAlias);
+        if (Strings.isEmpty(transformedAlias))
+        {
+            channelUri.remove(CommonContext.ALIAS_PARAM_NAME);
+        }
+        else
+        {
+            channelUri.put(CommonContext.ALIAS_PARAM_NAME, transformedAlias);
+        }
+        return channelUri.toString();
     }
 
     /**

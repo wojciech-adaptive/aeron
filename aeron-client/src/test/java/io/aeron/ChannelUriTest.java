@@ -26,8 +26,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import static io.aeron.ChannelUri.MAX_URI_LENGTH;
+import static io.aeron.ChannelUri.transformAlias;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -291,6 +293,18 @@ class ChannelUriTest
         final String result = ChannelUri.addAliasIfAbsent(uri, alias);
         assertNotNull(result);
         assertEquals(channelUri, ChannelUri.parse(result));
+    }
+
+    @Test
+    void shouldTransformAlias()
+    {
+        assertEquals("aeron:ipc", transformAlias("aeron:ipc", (alias) -> alias));
+        assertEquals("aeron:ipc?alias=foo", transformAlias("aeron:ipc?alias=foo", (alias) -> alias));
+        assertEquals("aeron:ipc", transformAlias("aeron:ipc?alias=foo", (alias) -> null));
+        assertEquals("aeron:ipc", transformAlias("aeron:ipc?alias=foo", (alias) -> ""));
+        final Function<String, String> fun = (alias) -> null == alias ? "default" : alias + "bar";
+        assertEquals("aeron:ipc?alias=default", transformAlias("aeron:ipc", fun));
+        assertEquals("aeron:ipc?alias=foobar", transformAlias("aeron:ipc?alias=foo", fun));
     }
 
     private static void assertSubstitution(
