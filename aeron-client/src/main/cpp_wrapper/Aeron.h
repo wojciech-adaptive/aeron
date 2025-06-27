@@ -255,6 +255,8 @@ public:
     /**
      * Gets the registration id for addition of the publication. Note that using this after a call to poll the
      * succeeds or errors is undefined behaviour. As the AsyncAddPublication may have been freed.
+     * <p>
+     * <em>Note:<em> The return value cannot be used to call `findPublication` method.
      *
      * @param addPublication used to check for completion.
      * @return registration id for the publication.
@@ -380,6 +382,8 @@ public:
     /**
      * Gets the registration id for addition of the exclusive publication. Note that using this after a call to poll the
      * succeeds or errors is undefined behaviour. As the AsyncAddExclusivePublication may have been freed.
+     * <p>
+     * <em>Note:<em> The return value cannot be used to call `findPublication` method.
      *
      * @param addPublication used to check for completion.
      * @return registration id for the exclusive publication.
@@ -561,6 +565,8 @@ public:
     /**
      * Gets the registration id for addition of the subscription. Note that using this after a call to poll the
      * succeeds or errors is undefined behaviour. As the AsyncAddSubscription may have been freed.
+     * <p>
+     * <em>Note:<em> The return value cannot be used to call `findPublication` method.
      *
      * @param addSubscription used to check for completion.
      * @return registration id for the subscription.
@@ -713,6 +719,8 @@ public:
     /**
      * Gets the registration id for addition of the counter. Note that using this after a call to poll the
      * succeeds or errors is undefined behaviour. As the AsyncAddCounter may have been freed.
+     * <p>
+     * <em>Note:<em> The return value cannot be used to call `findPublication` method.
      *
      * @param addCounter used to check for completion.
      * @return registration id for the counter.

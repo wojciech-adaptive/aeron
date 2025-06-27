@@ -663,3 +663,53 @@ TEST_F(PubSubTest, shouldFragmentAndReassembleMessagesIfNeeded)
     invoker.invoke();
 }
 
+TEST_F(PubSubTest, shouldCreatePublicationUsingAsyncApi)
+{
+    const int32_t streamId = 1000;
+
+    Context ctx;
+    ctx.useConductorAgentInvoker(true);
+    std::shared_ptr<Aeron> aeron = Aeron::connect(ctx);
+    AgentInvoker<ClientConductor> &invoker = aeron->conductorAgentInvoker();
+
+    auto asyncPublication = aeron->addPublicationAsync(IPC_CHANNEL, streamId);
+    ASSERT_NE(nullptr, asyncPublication);
+    const int64_t registrationId = aeron->addPublicationAsyncGetRegistrationId(asyncPublication);
+
+    POLL_FOR_NON_NULL(publication, aeron->findPublication(asyncPublication), invoker);
+    ASSERT_EQ(registrationId, publication->registrationId());
+}
+
+TEST_F(PubSubTest, shouldCreateExclusivePublicationUsingAsyncApi)
+{
+    const int32_t streamId = 231;
+
+    Context ctx;
+    ctx.useConductorAgentInvoker(true);
+    std::shared_ptr<Aeron> aeron = Aeron::connect(ctx);
+    AgentInvoker<ClientConductor> &invoker = aeron->conductorAgentInvoker();
+
+    auto asyncPublication = aeron->addExclusivePublicationAsync(IPC_CHANNEL, streamId);
+    ASSERT_NE(nullptr, asyncPublication);
+    const int64_t registrationId = aeron->addExclusivePublicationAsyncGetRegistrationId(asyncPublication);
+
+    POLL_FOR_NON_NULL(publication, aeron->findExclusivePublication(asyncPublication), invoker);
+    ASSERT_EQ(registrationId, publication->registrationId());
+}
+
+TEST_F(PubSubTest, shouldCreateSubscriptionUsingAsyncApi)
+{
+    const int32_t streamId = 231;
+
+    Context ctx;
+    ctx.useConductorAgentInvoker(true);
+    std::shared_ptr<Aeron> aeron = Aeron::connect(ctx);
+    AgentInvoker<ClientConductor> &invoker = aeron->conductorAgentInvoker();
+
+    auto asyncSubscription = aeron->addSubscriptionAsync(IPC_CHANNEL, streamId);
+    ASSERT_NE(nullptr, asyncSubscription);
+    const int64_t registrationId = aeron->addSubscriptionAsyncGetRegistrationId(asyncSubscription);
+
+    POLL_FOR_NON_NULL(subscription, aeron->findSubscription(asyncSubscription), invoker);
+    ASSERT_EQ(registrationId, subscription->registrationId());
+}
