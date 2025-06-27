@@ -107,7 +107,8 @@ inline bool aeron_cnc_is_file_length_sufficient(aeron_mapped_file_t *cnc_mmap)
         (size_t)metadata->to_driver_buffer_length +
         (size_t)metadata->to_clients_buffer_length +
         (size_t)metadata->counter_metadata_buffer_length +
-        (size_t)metadata->counter_values_buffer_length;
+        (size_t)metadata->counter_values_buffer_length +
+        (size_t)metadata->error_log_buffer_length;
 
     return cnc_mmap->length >= cnc_length;
 }
