@@ -1,5 +1,5 @@
 [versions]
-agrona = "2.2.3"
+agrona = "2.2.4"
 asciidoctorj = "2.5.13"
 asm = "9.8"
 bnd = "7.1.0"
