@@ -293,6 +293,18 @@ public final class Header
         this.fragmentedFrameLength = fragmentedFrameLength;
     }
 
+    /**
+     * Total amount of space occupied by this message when it is within the term buffer. When fragmented this
+     * will include the length of the header for each fragment. Used when doing reassembly of fragmented packets. If
+     * the packet is not fragmented this will be {@link Aeron#NULL_VALUE}.
+     *
+     * @return total fragmented length of this message or <code>Aeron.NULL_VALUE</code> if not fragmented.
+     */
+    public int fragmentedFrameLength()
+    {
+        return fragmentedFrameLength;
+    }
+
     private int termOccupancyLength()
     {
         return Aeron.NULL_VALUE == fragmentedFrameLength ? frameLength() : fragmentedFrameLength;
