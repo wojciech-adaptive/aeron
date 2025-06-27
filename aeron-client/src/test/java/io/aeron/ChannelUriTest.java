@@ -284,7 +284,7 @@ class ChannelUriTest
         "aeron:ipc",
         "aeron:udp?custom=alias",
     })
-    void shouldReturnNewUriWtihAnAliasAdded(final String uri)
+    void shouldReturnNewUriWithAnAliasAdded(final String uri)
     {
         final String alias = "my alias";
         final ChannelUri channelUri = ChannelUri.parse(uri);
