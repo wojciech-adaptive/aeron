@@ -15,6 +15,7 @@
  */
 package io.aeron.logbuffer;
 
+import io.aeron.Aeron;
 import io.aeron.protocol.DataHeaderFlyweight;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,7 @@ class HeaderTest
         dataHeaderFlyweight.termOffset(termOffset);
 
         assertEquals(expectedPosition, header.position());
+        assertEquals(Aeron.NULL_VALUE, header.fragmentedFrameLength());
     }
 
     @Test

@@ -494,6 +494,7 @@ class BufferBuilderTest
         final Header completeHeader = bufferBuilder.completeHeader(header);
 
         assertEquals(expectedFrameLength, completeHeader.frameLength());
+        assertEquals(fragmentedFrameLength, completeHeader.fragmentedFrameLength());
         assertEquals(expectedPosition, completeHeader.position());
     }
 
