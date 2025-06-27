@@ -76,7 +76,7 @@ int aeron_alloc_aligned(void **ptr, size_t *offset, size_t size, size_t alignmen
         return -1;
     }
 
-#if defined(__linux__) || defined(Darwin)
+#if defined(__linux__) || defined(__APPLE__)
     int alloc_result;
     if ((alloc_result = posix_memalign(ptr, alignment, size)) < 0)
     {

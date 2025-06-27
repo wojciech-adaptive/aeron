@@ -114,7 +114,7 @@ int aeron_thread_set_affinity(const char *role_name, uint8_t cpu_affinity_no)
 
 void aeron_thread_set_name(const char *role_name)
 {
-#if defined(Darwin)
+#if defined(__APPLE__)
     pthread_setname_np(role_name);
 #else
     pthread_setname_np(pthread_self(), role_name);

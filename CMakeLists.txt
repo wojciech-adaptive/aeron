@@ -161,7 +161,6 @@ endif ()
 # platform specific flags
 if (APPLE)
     add_compile_options(-Wsign-compare)
-    add_definitions(-DDarwin)
     add_compile_options(-Wno-deprecated-register)
 
     if (SANITISE_BUILD)

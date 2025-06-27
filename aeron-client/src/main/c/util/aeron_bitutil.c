@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if defined(__linux__) || defined(Darwin)
+#if defined(__linux__) || defined(__APPLE__)
 #include <unistd.h>
 #endif
 

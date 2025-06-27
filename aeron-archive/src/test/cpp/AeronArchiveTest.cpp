@@ -32,7 +32,7 @@
 #include "CncFileReader.h"
 #include "aeron_archive_client/RecordingSignal.h"
 
-#if defined(__linux__) || defined(Darwin)
+#if defined(__linux__) || defined(__APPLE__)
 #include <unistd.h>
 #include <ftw.h>
 #include <cstdio>

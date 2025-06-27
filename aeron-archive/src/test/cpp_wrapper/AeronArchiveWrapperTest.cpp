@@ -34,7 +34,7 @@
 #include "concurrent/SleepingIdleStrategy.h"
 #include "CncFileReader.h"
 
-#if defined(__linux__) || defined(Darwin)
+#if defined(__linux__) || defined(__APPLE__)
 #include <ftw.h>
 #include <spawn.h>
 #include <cstdint>
