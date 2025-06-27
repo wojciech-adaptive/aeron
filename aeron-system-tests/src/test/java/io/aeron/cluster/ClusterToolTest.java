@@ -393,7 +393,7 @@ class ClusterToolTest
     void listMembersShouldReturnFalseIfNoMarkFileExists(@TempDir final File emptyClusterDir)
     {
         final ClusterMembership clusterMembership = new ClusterMembership();
-        assertFalse(ClusterTool.listMembers(clusterMembership, emptyClusterDir, 1));
+        assertFalse(ClusterTool.listMembers(clusterMembership, emptyClusterDir, 0));
     }
 
     @Test
