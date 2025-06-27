@@ -589,11 +589,11 @@ public class ClusterToolOperator
             final long correlationId = aeron.nextCorrelationId();
             id.set(correlationId);
 
-            while (!publication.isConnected())
+            while (publication.availableWindow() <= 0)
             {
                 if (System.currentTimeMillis() > deadlineMs)
                 {
-                    break;
+                    return false;
                 }
                 Thread.yield();
             }
@@ -602,7 +602,7 @@ public class ClusterToolOperator
             {
                 if (System.currentTimeMillis() > deadlineMs)
                 {
-                    break;
+                    return false;
                 }
                 Thread.yield();
             }
@@ -613,14 +613,14 @@ public class ClusterToolOperator
                 {
                     if (System.currentTimeMillis() > deadlineMs)
                     {
-                        break;
+                        return false;
                     }
                     Thread.yield();
                 }
             }
-        }
 
-        return true;
+            return true;
+        }
     }
 
     /**

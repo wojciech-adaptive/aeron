@@ -15,6 +15,11 @@
  */
 package io.aeron.cluster;
 
+import io.aeron.CommonContext;
+import io.aeron.cluster.codecs.mark.ClusterComponentType;
+import io.aeron.cluster.service.ClusterMarkFile;
+import io.aeron.driver.MediaDriver;
+import io.aeron.logbuffer.LogBufferDescriptor;
 import io.aeron.test.CapturingPrintStream;
 import io.aeron.test.EventLogExtension;
 import io.aeron.test.InterruptAfter;
@@ -23,12 +28,15 @@ import io.aeron.test.SlowTest;
 import io.aeron.test.SystemTestWatcher;
 import io.aeron.test.cluster.TestCluster;
 import io.aeron.test.cluster.TestNode;
+import org.agrona.concurrent.SystemEpochClock;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -44,7 +52,11 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.matchesRegex;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @SlowTest
@@ -374,6 +386,40 @@ class ClusterToolTest
         for (final TestNode follower : cluster.followers())
         {
             assertEquals(1, ClusterTool.isLeader(out, follower.consensusModule().context().clusterDir()));
+        }
+    }
+
+    @Test
+    void listMembersShouldReturnFalseIfNoMarkFileExists(@TempDir final File emptyClusterDir)
+    {
+        final ClusterMembership clusterMembership = new ClusterMembership();
+        assertFalse(ClusterTool.listMembers(clusterMembership, emptyClusterDir, 1));
+    }
+
+    @Test
+    void listMembersShouldReturnFalseIfQueryTimesOut(@TempDir final Path clusterDir)
+    {
+        final SystemEpochClock clock = SystemEpochClock.INSTANCE;
+        try (MediaDriver driver = MediaDriver.launch(
+            new MediaDriver.Context().aeronDirectoryName(CommonContext.generateRandomDirName()));
+            ClusterMarkFile clusterMarkFile = new ClusterMarkFile(
+                clusterDir.resolve(ClusterMarkFile.FILENAME).toFile(),
+                ClusterComponentType.BACKUP,
+                1024 * 1024,
+                clock,
+                1000,
+                LogBufferDescriptor.PAGE_MIN_SIZE))
+        {
+            clusterMarkFile.encoder()
+                .activityTimestamp(clock.time())
+                .consensusModuleStreamId(111)
+                .serviceStreamId(222)
+                .aeronDirectory(driver.aeronDirectoryName())
+                .controlChannel("aeron:udp?endpoint=localhost:7799");
+            clusterMarkFile.signalReady();
+
+            final ClusterMembership clusterMembership = new ClusterMembership();
+            assertFalse(ClusterTool.listMembers(clusterMembership, clusterMarkFile.parentDirectory(), 1));
         }
     }
 
