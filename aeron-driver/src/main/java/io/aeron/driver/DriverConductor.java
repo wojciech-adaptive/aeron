@@ -2526,6 +2526,8 @@ public final class DriverConductor implements Agent
                 isExclusive,
                 params);
 
+            findAndUpdateResponseIpcSubscription(params, publication);
+
             ipcPublications.add(publication);
             activeSessionSet.add(new SessionKey(params.sessionId, streamId, IPC_MEDIA));
 
@@ -2535,6 +2537,46 @@ public final class DriverConductor implements Agent
         {
             CloseHelper.quietCloseAll(rawLog, publisherPosition, publisherLimit);
             throw ex;
+        }
+    }
+
+    private void findAndUpdateResponseIpcSubscription(final PublicationParams params, final IpcPublication publication)
+    {
+        if (Aeron.NULL_VALUE != params.responseCorrelationId)
+        {
+            for (final IpcPublication ipcPublication : ipcPublications)
+            {
+                if (ipcPublication.registrationId() == params.responseCorrelationId)
+                {
+                    for (int i = 0, n = subscriptionLinks.size(); i < n; i++)
+                    {
+                        final SubscriptionLink subscriptionLink = subscriptionLinks.get(i);
+                        if (ipcPublication.responseCorrelationId() == subscriptionLink.registrationId &&
+                            subscriptionLink instanceof final IpcSubscriptionLink ipcSubscriptionLink)
+                        {
+                            final SubscriptionParams newParams = new SubscriptionParams();
+                            newParams.hasSessionId = true;
+                            newParams.sessionId = publication.sessionId();
+                            newParams.isSparse = ipcSubscriptionLink.isSparse();
+                            newParams.isTether = ipcSubscriptionLink.isTether();
+                            newParams.group = ipcSubscriptionLink.group();
+
+                            final IpcSubscriptionLink newIpcSubscriptionLink = new IpcSubscriptionLink(
+                                ipcSubscriptionLink.registrationId,
+                                ipcSubscriptionLink.streamId,
+                                ipcSubscriptionLink.channel,
+                                ipcSubscriptionLink.aeronClient,
+                                newParams);
+
+                            subscriptionLinks.set(i, newIpcSubscriptionLink);
+
+                            break;
+                        }
+                    }
+
+                    break;
+                }
+            }
         }
     }
 

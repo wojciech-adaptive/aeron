@@ -21,7 +21,6 @@ class NetworkSubscriptionLink extends SubscriptionLink
 {
     private final boolean isReliable;
     private final boolean isRejoin;
-    private final boolean isResponse;
     private final ReceiveChannelEndpoint channelEndpoint;
 
     NetworkSubscriptionLink(
@@ -36,7 +35,6 @@ class NetworkSubscriptionLink extends SubscriptionLink
 
         this.isReliable = params.isReliable;
         this.isRejoin = params.isRejoin;
-        this.isResponse = params.isResponse;
         this.channelEndpoint = channelEndpoint;
     }
 
@@ -48,11 +46,6 @@ class NetworkSubscriptionLink extends SubscriptionLink
     boolean isRejoin()
     {
         return isRejoin;
-    }
-
-    boolean isResponse()
-    {
-        return isResponse;
     }
 
     ReceiveChannelEndpoint channelEndpoint()

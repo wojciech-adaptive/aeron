@@ -60,6 +60,7 @@ public final class IpcPublication implements DriverManagedResource, Subscribable
     private final long untetheredLingerTimeoutNs;
     private final long untetheredRestingTimeoutNs;
     private final long imageLivenessTimeoutNs;
+    private final long responseCorrelationId;
     private final String channel;
     private final int sessionId;
     private final int streamId;
@@ -132,6 +133,7 @@ public final class IpcPublication implements DriverManagedResource, Subscribable
         untetheredLingerTimeoutNs = params.untetheredLingerTimeoutNs;
         untetheredRestingTimeoutNs = params.untetheredRestingTimeoutNs;
         this.imageLivenessTimeoutNs = ctx.imageLivenessTimeoutNs();
+        this.responseCorrelationId = params.responseCorrelationId;
 
         final SystemCounters systemCounters = ctx.systemCounters();
         this.unblockedPublications = systemCounters.get(UNBLOCKED_PUBLICATIONS);
@@ -512,6 +514,11 @@ public final class IpcPublication implements DriverManagedResource, Subscribable
     boolean isAcceptingSubscriptions()
     {
         return !inCoolDown && (State.ACTIVE == state || (State.DRAINING == state && !isDrained(producerPosition())));
+    }
+
+    long responseCorrelationId()
+    {
+        return responseCorrelationId;
     }
 
     private void checkUntetheredSubscriptions(final long nowNs, final DriverConductor conductor)

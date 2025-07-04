@@ -56,6 +56,11 @@ final class SubscriptionParams
             params.hasSessionId = true;
         }
 
+        if (CONTROL_MODE_RESPONSE.equals(channelUri.get(MDC_CONTROL_MODE_PARAM_NAME)))
+        {
+            params.isResponse = true;
+        }
+
         int count = 0;
 
         final String initialTermIdStr = channelUri.get(INITIAL_TERM_ID_PARAM_NAME);
@@ -125,8 +130,6 @@ final class SubscriptionParams
             0 != publisherTermBufferLength ? publisherTermBufferLength :
             (channelUri.isIpc() ? context.ipcTermBufferLength() : context.publicationTermBufferLength()),
             0 != rcvWndLength ? rcvWndLength : context.initialWindowLength());
-
-        params.isResponse = CONTROL_MODE_RESPONSE.equals(channelUri.get(MDC_CONTROL_MODE_PARAM_NAME));
 
         params.getUntetheredWindowLimitTimeout(channelUri, context);
         params.getUntetheredLingerTimeout(channelUri, context);

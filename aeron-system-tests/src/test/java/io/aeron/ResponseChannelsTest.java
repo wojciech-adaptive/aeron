@@ -49,6 +49,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static io.aeron.CommonContext.*;
@@ -179,6 +180,72 @@ public class ResponseChannelsTest
             {
                 Tests.awaitConnected(subRsp);
                 Tests.awaitConnected(pubRsp);
+            }
+        }
+    }
+
+    @Test
+    @InterruptAfter(5)
+    void shouldConnectResponsePublicationUsingImageAndIpc()
+    {
+        try (Aeron server = Aeron.connect(new Aeron.Context().aeronDirectoryName(driver1.aeronDirectoryName()));
+            Aeron client = Aeron.connect(new Aeron.Context().aeronDirectoryName(driver1.aeronDirectoryName()));
+            Subscription subReq = server.addSubscription("aeron:ipc", REQUEST_STREAM_ID))
+        {
+            try (Subscription subRsp1 = client.addSubscription(
+                "aeron:ipc?control-mode=response|alias=client1", RESPONSE_STREAM_ID);
+                Publication pubReq1 = client.addExclusivePublication(
+                    "aeron:ipc?response-correlation-id=" + subRsp1.registrationId(),
+                    REQUEST_STREAM_ID);
+                Subscription subRsp2 = client.addSubscription(
+                    "aeron:ipc?control-mode=response|alias=client2", RESPONSE_STREAM_ID);
+                Publication pubReq2 = client.addExclusivePublication(
+                    "aeron:ipc?response-correlation-id=" + subRsp2.registrationId(),
+                    REQUEST_STREAM_ID))
+            {
+                Tests.awaitConnected(pubReq1);
+                Tests.awaitConnected(pubReq2);
+                Tests.await(() -> 2 == subReq.imageCount());
+
+                final String url1 = "aeron:ipc?control-mode=response|response-correlation-id=" +
+                    subReq.imageAtIndex(0).correlationId();
+                final String url2 = "aeron:ipc?control-mode=response|response-correlation-id=" +
+                    subReq.imageAtIndex(1).correlationId();
+
+                try (Publication pubRsp1 = server.addExclusivePublication(url1, RESPONSE_STREAM_ID);
+                    Publication pubRsp2 = server.addExclusivePublication(url2, RESPONSE_STREAM_ID))
+                {
+                    Tests.awaitConnected(subRsp1);
+                    Tests.awaitConnected(subRsp2);
+                    Tests.awaitConnected(pubRsp1);
+                    Tests.awaitConnected(pubRsp2);
+
+                    final DirectBuffer msg1 = new UnsafeBuffer("msg1".getBytes(UTF_8));
+                    final DirectBuffer msg2 = new UnsafeBuffer("msg2".getBytes(UTF_8));
+
+                    while (pubRsp1.offer(msg1) < 0)
+                    {
+                        Tests.yield();
+                    }
+
+                    while (pubRsp2.offer(msg2) < 0)
+                    {
+                        Tests.yield();
+                    }
+
+                    final long deadlineMs = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(1);
+                    int sub1FragmentCount = 0;
+                    int sub2FragmentCount = 0;
+                    while (System.currentTimeMillis() < deadlineMs)
+                    {
+                        sub1FragmentCount += subRsp1.poll((buffer, offset, length, header) -> {}, 10);
+                        sub2FragmentCount += subRsp2.poll((buffer, offset, length, header) -> {}, 10);
+                        Tests.yield();
+
+                        assertTrue(sub1FragmentCount < 2);
+                        assertTrue(sub2FragmentCount < 2);
+                    }
+                }
             }
         }
     }
