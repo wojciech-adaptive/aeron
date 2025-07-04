@@ -911,6 +911,7 @@ TEST_F(AeronCArchiveTest, shouldConnectFromTwoClientsUsingIpc)
         nullptr,
         &default_creds_clientd));
     ASSERT_EQ_ERR(0, aeron_archive_connect(&archive1, ctx1));
+    ASSERT_EQ_ERR(0, aeron_archive_context_close(ctx1));
 
     ASSERT_EQ_ERR(0, aeron_archive_context_init(&ctx2));
     ASSERT_EQ_ERR(0, aeron_archive_context_set_control_request_channel(ctx2, "aeron:ipc"));
@@ -924,6 +925,7 @@ TEST_F(AeronCArchiveTest, shouldConnectFromTwoClientsUsingIpc)
         nullptr,
         &default_creds_clientd));
     ASSERT_EQ_ERR(0, aeron_archive_connect(&archive2, ctx2));
+    ASSERT_EQ_ERR(0, aeron_archive_context_close(ctx2));
 
     ASSERT_EQ(42, aeron_archive_get_archive_id(archive1));
     ASSERT_EQ(42, aeron_archive_get_archive_id(archive2));
@@ -937,6 +939,8 @@ TEST_F(AeronCArchiveTest, shouldConnectFromTwoClientsUsingIpc)
     ASSERT_EQ(0, aeron_uri_parse(strlen(responseChannel1), responseChannel1, &respChannel1));
     const char *sessionId1 = aeron_uri_find_param_value(&reqChannel1.params.ipc.additional_params, AERON_URI_SESSION_ID_KEY);
     ASSERT_STREQ(sessionId1, aeron_uri_find_param_value(&respChannel1.params.ipc.additional_params, AERON_URI_SESSION_ID_KEY));
+    aeron_uri_close(&reqChannel1);
+    aeron_uri_close(&respChannel1);
 
     const auto *requestChannel2 = aeron_archive_context_get_control_request_channel(ctx2);
     aeron_uri_t reqChannel2;
@@ -946,6 +950,8 @@ TEST_F(AeronCArchiveTest, shouldConnectFromTwoClientsUsingIpc)
     ASSERT_EQ(0, aeron_uri_parse(strlen(responseChannel2), responseChannel2, &respChannel2));
     const char *sessionId2 = aeron_uri_find_param_value(&reqChannel2.params.ipc.additional_params, AERON_URI_SESSION_ID_KEY);
     ASSERT_STREQ(sessionId2, aeron_uri_find_param_value(&respChannel2.params.ipc.additional_params, AERON_URI_SESSION_ID_KEY));
+    aeron_uri_close(&reqChannel2);
+    aeron_uri_close(&respChannel2);
 
     ASSERT_STRNE(sessionId1, sessionId2);
 
