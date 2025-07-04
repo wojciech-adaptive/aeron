@@ -188,6 +188,8 @@ public class ResponseChannelsTest
     @InterruptAfter(5)
     void shouldConnectResponsePublicationUsingImageAndIpc()
     {
+        TestMediaDriver.notSupportedOnCMediaDriver("not implemented yet");
+
         try (Aeron server = Aeron.connect(new Aeron.Context().aeronDirectoryName(driver1.aeronDirectoryName()));
             Aeron client = Aeron.connect(new Aeron.Context().aeronDirectoryName(driver1.aeronDirectoryName()));
             Subscription subReq = server.addSubscription("aeron:ipc", REQUEST_STREAM_ID))
