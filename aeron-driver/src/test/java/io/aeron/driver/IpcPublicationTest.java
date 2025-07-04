@@ -15,6 +15,7 @@
  */
 package io.aeron.driver;
 
+import io.aeron.Aeron;
 import io.aeron.CommonContext;
 import io.aeron.DriverProxy;
 import io.aeron.driver.buffer.TestLogFactory;
@@ -94,7 +95,7 @@ class IpcPublicationTest
         driverProxy.addPublication(CommonContext.IPC_CHANNEL, STREAM_ID);
         driverConductor.doWork();
 
-        ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID);
+        ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID, Aeron.NULL_VALUE);
         publisherLimit = new UnsafeBufferPosition(
             (UnsafeBuffer)countersManager.valuesBuffer(), ipcPublication.publisherLimitId());
     }

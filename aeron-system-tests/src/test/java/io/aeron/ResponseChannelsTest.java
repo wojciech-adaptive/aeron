@@ -212,8 +212,8 @@ public class ResponseChannelsTest
                 final String url2 = "aeron:ipc?control-mode=response|response-correlation-id=" +
                     subReq.imageAtIndex(1).correlationId();
 
-                try (Publication pubRsp1 = server.addExclusivePublication(url1, RESPONSE_STREAM_ID);
-                    Publication pubRsp2 = server.addExclusivePublication(url2, RESPONSE_STREAM_ID))
+                try (Publication pubRsp1 = server.addPublication(url1, RESPONSE_STREAM_ID);
+                    Publication pubRsp2 = server.addPublication(url2, RESPONSE_STREAM_ID))
                 {
                     Tests.awaitConnected(subRsp1);
                     Tests.awaitConnected(subRsp2);

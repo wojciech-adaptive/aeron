@@ -894,7 +894,7 @@ class DriverConductorTest
 
         driverConductor.doWork();
 
-        assertNotNull(driverConductor.getSharedIpcPublication(STREAM_ID_1));
+        assertNotNull(driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE));
         verify(mockClientProxy).onPublicationReady(
             anyLong(), eq(id), eq(STREAM_ID_1), anyInt(), any(), anyInt(), anyInt(), eq(false));
     }
@@ -908,7 +908,7 @@ class DriverConductorTest
         driverConductor.doWork();
         driverConductor.doWork();
 
-        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublication);
 
         final InOrder inOrder = inOrder(mockClientProxy);
@@ -928,7 +928,7 @@ class DriverConductorTest
         driverConductor.doWork();
         driverConductor.doWork();
 
-        final IpcPublication ipcPublicationOne = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        final IpcPublication ipcPublicationOne = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublicationOne);
 
         final long idPubOneRemove = driverProxy.removePublication(idPubOne, false);
@@ -937,7 +937,7 @@ class DriverConductorTest
         final long idPubTwo = driverProxy.addPublication(CHANNEL_IPC, STREAM_ID_1);
         driverConductor.doWork();
 
-        final IpcPublication ipcPublicationTwo = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        final IpcPublication ipcPublicationTwo = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublicationTwo);
 
         final InOrder inOrder = inOrder(mockClientProxy);
@@ -964,7 +964,7 @@ class DriverConductorTest
         driverConductor.doWork();
         driverConductor.doWork();
 
-        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublication);
 
         final InOrder inOrder = inOrder(mockClientProxy);
@@ -984,7 +984,7 @@ class DriverConductorTest
 
         doWorkUntil(() -> nanoClock.nanoTime() >= CLIENT_LIVENESS_TIMEOUT_NS);
 
-        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNull(ipcPublication);
     }
 
@@ -996,7 +996,7 @@ class DriverConductorTest
 
         doWorkUntil(() -> nanoClock.nanoTime() >= CLIENT_LIVENESS_TIMEOUT_NS);
 
-        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNull(ipcPublication);
     }
 
@@ -1009,14 +1009,14 @@ class DriverConductorTest
 
         driverConductor.doWork();
 
-        IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublication);
 
         driverProxy.removePublication(idAdd2, false);
 
         doWorkUntil(() -> CLIENT_LIVENESS_TIMEOUT_NS - nanoClock.nanoTime() <= 0);
 
-        ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNull(ipcPublication);
     }
 
@@ -1031,14 +1031,14 @@ class DriverConductorTest
         driverConductor.doWork();
         driverConductor.doWork();
 
-        IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublication);
 
         driverProxy.removePublication(idAdd2, false);
 
         doWorkUntil(() -> CLIENT_LIVENESS_TIMEOUT_NS - nanoClock.nanoTime() <= 0);
 
-        ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNull(ipcPublication);
     }
 
@@ -1049,12 +1049,12 @@ class DriverConductorTest
 
         driverConductor.doWork();
 
-        IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublication);
 
         doWorkUntil(() -> (CLIENT_LIVENESS_TIMEOUT_NS * 2) - nanoClock.nanoTime() <= 0);
 
-        ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNull(ipcPublication);
     }
 
@@ -1065,7 +1065,7 @@ class DriverConductorTest
 
         driverConductor.doWork();
 
-        IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublication);
 
         doWorkUntil(() -> CLIENT_LIVENESS_TIMEOUT_NS - nanoClock.nanoTime() <= 0);
@@ -1075,7 +1075,7 @@ class DriverConductorTest
 
         doWorkUntil(() -> CLIENT_LIVENESS_TIMEOUT_NS - nanoClock.nanoTime() <= 0);
 
-        ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublication);
     }
 
@@ -1584,7 +1584,7 @@ class DriverConductorTest
         driverConductor.doWork();
         driverConductor.doWork();
 
-        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublication);
 
         verify(mockClientProxy).onAvailableImage(
@@ -1605,7 +1605,7 @@ class DriverConductorTest
         driverConductor.doWork();
         driverConductor.doWork();
 
-        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublication);
 
         verify(mockClientProxy).onAvailableImage(
@@ -1626,7 +1626,7 @@ class DriverConductorTest
 
         driverConductor.doWork();
 
-        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublication);
 
         verify(mockClientProxy, never()).onAvailableImage(
@@ -1647,7 +1647,7 @@ class DriverConductorTest
         driverConductor.doWork();
         driverConductor.doWork();
 
-        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1);
+        final IpcPublication ipcPublication = driverConductor.getSharedIpcPublication(STREAM_ID_1, Aeron.NULL_VALUE);
         assertNotNull(ipcPublication);
 
         verify(mockClientProxy, never()).onAvailableImage(

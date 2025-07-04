@@ -491,9 +491,9 @@ public final class DriverConductor implements Agent
             });
     }
 
-    IpcPublication getSharedIpcPublication(final long streamId)
+    IpcPublication getSharedIpcPublication(final long streamId, final long responseCorrelationId)
     {
-        return findSharedIpcPublication(ipcPublications, streamId);
+        return findSharedIpcPublication(ipcPublications, streamId, responseCorrelationId);
     }
 
     IpcPublication getIpcPublication(final long registrationId)
@@ -897,7 +897,7 @@ public final class DriverConductor implements Agent
 
         if (!isExclusive)
         {
-            publication = findSharedIpcPublication(ipcPublications, streamId);
+            publication = findSharedIpcPublication(ipcPublications, streamId, params.responseCorrelationId);
         }
 
         boolean isNewPublication = false;
@@ -2602,7 +2602,9 @@ public final class DriverConductor implements Agent
     }
 
     private static IpcPublication findSharedIpcPublication(
-        final ArrayList<IpcPublication> ipcPublications, final long streamId)
+        final ArrayList<IpcPublication> ipcPublications,
+        final long streamId,
+        final long responseCorrelationId)
     {
         IpcPublication ipcPublication = null;
 
@@ -2611,7 +2613,8 @@ public final class DriverConductor implements Agent
             final IpcPublication publication = ipcPublications.get(i);
             if (publication.streamId() == streamId &&
                 !publication.isExclusive() &&
-                IpcPublication.State.ACTIVE == publication.state())
+                IpcPublication.State.ACTIVE == publication.state() &&
+                publication.responseCorrelationId() == responseCorrelationId)
             {
                 ipcPublication = publication;
                 break;
