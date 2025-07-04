@@ -894,6 +894,65 @@ TEST_F(AeronCArchiveTest, shouldConnectToArchiveAndCallInvoker)
     ASSERT_EQ_ERR(0, aeron_archive_close(archive));
 }
 
+TEST_F(AeronCArchiveTest, shouldConnectFromTwoClientsUsingIpc)
+{
+    aeron_archive_context_t *ctx1, *ctx2;
+    aeron_archive_t *archive1 = nullptr, *archive2 = nullptr;
+
+    ASSERT_EQ_ERR(0, aeron_archive_context_init(&ctx1));
+    ASSERT_EQ_ERR(0, aeron_archive_context_set_control_request_channel(ctx1, "aeron:ipc"));
+    ASSERT_EQ_ERR(0, aeron_archive_context_set_control_response_channel(ctx1, "aeron:ipc"));
+    ASSERT_EQ_ERR(0, aeron_archive_context_set_idle_strategy(
+        ctx1, aeron_idle_strategy_sleeping_idle, (void *)&m_idle_duration_ns));
+    ASSERT_EQ_ERR(0, aeron_archive_context_set_credentials_supplier(
+        ctx1,
+        encoded_credentials_supplier,
+        nullptr,
+        nullptr,
+        &default_creds_clientd));
+    ASSERT_EQ_ERR(0, aeron_archive_connect(&archive1, ctx1));
+
+    ASSERT_EQ_ERR(0, aeron_archive_context_init(&ctx2));
+    ASSERT_EQ_ERR(0, aeron_archive_context_set_control_request_channel(ctx2, "aeron:ipc"));
+    ASSERT_EQ_ERR(0, aeron_archive_context_set_control_response_channel(ctx2, "aeron:ipc"));
+    ASSERT_EQ_ERR(0, aeron_archive_context_set_idle_strategy(
+        ctx2, aeron_idle_strategy_sleeping_idle, (void *)&m_idle_duration_ns));
+    ASSERT_EQ_ERR(0, aeron_archive_context_set_credentials_supplier(
+        ctx2,
+        encoded_credentials_supplier,
+        nullptr,
+        nullptr,
+        &default_creds_clientd));
+    ASSERT_EQ_ERR(0, aeron_archive_connect(&archive2, ctx2));
+
+    ASSERT_EQ(42, aeron_archive_get_archive_id(archive1));
+    ASSERT_EQ(42, aeron_archive_get_archive_id(archive2));
+    ctx1 = aeron_archive_get_archive_context(archive1);
+    ctx2 = aeron_archive_get_archive_context(archive2);
+    const auto *requestChannel1 = aeron_archive_context_get_control_request_channel(ctx1);
+    aeron_uri_t reqChannel1;
+    ASSERT_EQ(0, aeron_uri_parse(strlen(requestChannel1), requestChannel1, &reqChannel1));
+    const auto *responseChannel1 = aeron_archive_context_get_control_response_channel(ctx1);
+    aeron_uri_t respChannel1;
+    ASSERT_EQ(0, aeron_uri_parse(strlen(responseChannel1), responseChannel1, &respChannel1));
+    const char *sessionId1 = aeron_uri_find_param_value(&reqChannel1.params.ipc.additional_params, AERON_URI_SESSION_ID_KEY);
+    ASSERT_STREQ(sessionId1, aeron_uri_find_param_value(&respChannel1.params.ipc.additional_params, AERON_URI_SESSION_ID_KEY));
+
+    const auto *requestChannel2 = aeron_archive_context_get_control_request_channel(ctx2);
+    aeron_uri_t reqChannel2;
+    ASSERT_EQ(0, aeron_uri_parse(strlen(requestChannel2), requestChannel2, &reqChannel2));
+    const auto *responseChannel2 = aeron_archive_context_get_control_response_channel(ctx2);
+    aeron_uri_t respChannel2;
+    ASSERT_EQ(0, aeron_uri_parse(strlen(responseChannel2), responseChannel2, &respChannel2));
+    const char *sessionId2 = aeron_uri_find_param_value(&reqChannel2.params.ipc.additional_params, AERON_URI_SESSION_ID_KEY);
+    ASSERT_STREQ(sessionId2, aeron_uri_find_param_value(&respChannel2.params.ipc.additional_params, AERON_URI_SESSION_ID_KEY));
+
+    ASSERT_STRNE(sessionId1, sessionId2);
+
+    ASSERT_EQ_ERR(0, aeron_archive_close(archive1));
+    ASSERT_EQ_ERR(0, aeron_archive_close(archive2));
+}
+
 TEST_F(AeronCArchiveTest, shouldObserveErrorOnBadDataOnControlResponseChannel)
 {
     aeron_archive_context_t *ctx;
