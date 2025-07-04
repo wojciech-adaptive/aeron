@@ -101,6 +101,12 @@ public abstract class SubscriptionLink implements DriverManagedResource
         return sessionId;
     }
 
+    void sessionId(final int sessionId)
+    {
+        this.hasSessionId = true;
+        this.sessionId = sessionId;
+    }
+
     boolean isResponse()
     {
         return isResponse;

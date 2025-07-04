@@ -672,7 +672,7 @@ public final class DriverConductor implements Agent
         {
             final SubscriptionLink subscriptionLink = subscriptionLinks.get(i);
             if (subscriptionLink.registrationId() == responseCorrelationId &&
-                subscriptionLink instanceof NetworkSubscriptionLink)
+                subscriptionLink instanceof final NetworkSubscriptionLink link)
             {
                 if (subscriptionLink.hasSessionId())
                 {
@@ -681,27 +681,9 @@ public final class DriverConductor implements Agent
                 }
                 else
                 {
-                    final NetworkSubscriptionLink link = (NetworkSubscriptionLink)subscriptionLink;
-                    final SubscriptionParams params = new SubscriptionParams();
-                    params.hasSessionId = true;
-                    params.sessionId = responseSessionId;
-                    params.isSparse = link.isSparse();
-                    params.isTether = link.isTether();
-                    params.group = link.group();
-                    params.isReliable = link.isReliable();
-                    params.isRejoin = link.isRejoin();
-
-                    final NetworkSubscriptionLink newSubscriptionLink = new NetworkSubscriptionLink(
-                        subscriptionLink.registrationId(),
-                        subscriptionLink.channelEndpoint(),
-                        subscriptionLink.streamId(),
-                        subscriptionLink.channel(),
-                        subscriptionLink.aeronClient(),
-                        params);
-
-                    subscriptionLinks.set(i, newSubscriptionLink);
-                    addNetworkSubscriptionToReceiver(newSubscriptionLink);
-                    newSubscriptionLink.channelEndpoint().decResponseRefToStream(newSubscriptionLink.streamId);
+                    link.sessionId(responseSessionId);
+                    addNetworkSubscriptionToReceiver(link);
+                    link.channelEndpoint().decResponseRefToStream(subscriptionLink.streamId);
                 }
 
                 break;
@@ -2552,24 +2534,9 @@ public final class DriverConductor implements Agent
                     {
                         final SubscriptionLink subscriptionLink = subscriptionLinks.get(i);
                         if (ipcPublication.responseCorrelationId() == subscriptionLink.registrationId &&
-                            subscriptionLink instanceof final IpcSubscriptionLink ipcSubscriptionLink)
+                            subscriptionLink instanceof IpcSubscriptionLink)
                         {
-                            final SubscriptionParams newParams = new SubscriptionParams();
-                            newParams.hasSessionId = true;
-                            newParams.sessionId = publication.sessionId();
-                            newParams.isSparse = ipcSubscriptionLink.isSparse();
-                            newParams.isTether = ipcSubscriptionLink.isTether();
-                            newParams.group = ipcSubscriptionLink.group();
-
-                            final IpcSubscriptionLink newIpcSubscriptionLink = new IpcSubscriptionLink(
-                                ipcSubscriptionLink.registrationId,
-                                ipcSubscriptionLink.streamId,
-                                ipcSubscriptionLink.channel,
-                                ipcSubscriptionLink.aeronClient,
-                                newParams);
-
-                            subscriptionLinks.set(i, newIpcSubscriptionLink);
-
+                            subscriptionLink.sessionId(publication.sessionId());
                             break;
                         }
                     }
