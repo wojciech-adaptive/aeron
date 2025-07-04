@@ -45,6 +45,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -184,9 +185,10 @@ public class ResponseChannelsTest
         }
     }
 
-    @Test
+    @ParameterizedTest
     @InterruptAfter(5)
-    void shouldConnectResponsePublicationUsingImageAndIpc()
+    @ValueSource(booleans = { true, false })
+    void shouldConnectResponsePublicationUsingImageAndIpc(final boolean useExclusive)
     {
         TestMediaDriver.notSupportedOnCMediaDriver("not implemented yet");
 
@@ -196,12 +198,16 @@ public class ResponseChannelsTest
         {
             try (Subscription subRsp1 = client.addSubscription(
                 "aeron:ipc?control-mode=response|alias=client1", RESPONSE_STREAM_ID);
-                Publication pubReq1 = client.addExclusivePublication(
+                Publication pubReq1 = newPublication(
+                    useExclusive,
+                    client,
                     "aeron:ipc?response-correlation-id=" + subRsp1.registrationId(),
                     REQUEST_STREAM_ID);
                 Subscription subRsp2 = client.addSubscription(
                     "aeron:ipc?control-mode=response|alias=client2", RESPONSE_STREAM_ID);
-                Publication pubReq2 = client.addExclusivePublication(
+                Publication pubReq2 = newPublication(
+                    useExclusive,
+                    client,
                     "aeron:ipc?response-correlation-id=" + subRsp2.registrationId(),
                     REQUEST_STREAM_ID))
             {
@@ -214,8 +220,8 @@ public class ResponseChannelsTest
                 final String url2 = "aeron:ipc?control-mode=response|response-correlation-id=" +
                     subReq.imageAtIndex(1).correlationId();
 
-                try (Publication pubRsp1 = server.addPublication(url1, RESPONSE_STREAM_ID);
-                    Publication pubRsp2 = server.addPublication(url2, RESPONSE_STREAM_ID))
+                try (Publication pubRsp1 = newPublication(useExclusive, server, url1, RESPONSE_STREAM_ID);
+                    Publication pubRsp2 = newPublication(useExclusive, server, url2, RESPONSE_STREAM_ID))
                 {
                     Tests.awaitConnected(subRsp1);
                     Tests.awaitConnected(subRsp2);
@@ -250,6 +256,16 @@ public class ResponseChannelsTest
                 }
             }
         }
+    }
+
+    private static Publication newPublication(
+        final boolean useExclusive,
+        final Aeron client,
+        final String channel,
+        final int streamId)
+    {
+        return useExclusive ? client.addExclusivePublication(channel, streamId) :
+            client.addPublication(channel, streamId);
     }
 
     @Test
