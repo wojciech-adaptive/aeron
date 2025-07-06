@@ -17,14 +17,11 @@ package io.aeron.samples.cluster;
 
 import io.aeron.CommonContext;
 import io.aeron.archive.Archive;
-import io.aeron.archive.ArchiveThreadingMode;
 import io.aeron.archive.client.AeronArchive;
 import io.aeron.cluster.ConsensusModule;
 import io.aeron.cluster.service.ClusteredService;
 import io.aeron.cluster.service.ClusteredServiceContainer;
 import io.aeron.driver.MediaDriver;
-import io.aeron.driver.MinMulticastFlowControlSupplier;
-import io.aeron.driver.ThreadingMode;
 import org.agrona.ErrorHandler;
 import org.agrona.concurrent.NoOpLock;
 
@@ -149,10 +146,7 @@ public final class ClusterConfig
         final String hostname = clusterHostnames.get(memberId - startingMemberId);
 
         final MediaDriver.Context mediaDriverContext = new MediaDriver.Context()
-            .aeronDirectoryName(aeronDirName)
-            .threadingMode(ThreadingMode.SHARED)
-            .termBufferSparseFile(true)
-            .multicastFlowControlSupplier(new MinMulticastFlowControlSupplier());
+            .aeronDirectoryName(aeronDirName);
 
         final AeronArchive.Context replicationArchiveContext = new AeronArchive.Context()
             .controlResponseChannel("aeron:udp?endpoint=" + hostname + ":0");
@@ -164,8 +158,7 @@ public final class ClusterConfig
             .archiveClientContext(replicationArchiveContext)
             .localControlChannel("aeron:ipc?term-length=64k")
             .replicationChannel("aeron:udp?endpoint=" + hostname + ":0")
-            .recordingEventsEnabled(false)
-            .threadingMode(ArchiveThreadingMode.SHARED);
+            .recordingEventsEnabled(false);
 
         final AeronArchive.Context aeronArchiveContext = new AeronArchive.Context()
             .lock(NoOpLock.INSTANCE)
