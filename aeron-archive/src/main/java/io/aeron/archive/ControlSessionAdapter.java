@@ -1064,10 +1064,10 @@ class ControlSessionAdapter implements FragmentHandler
         }
     }
 
-    void removeControlSession(final long controlSessionId, final boolean sesionAborted, final String abortReason)
+    void removeControlSession(final long controlSessionId, final boolean sessionAborted, final String abortReason)
     {
         final SessionInfo sessionInfo = controlSessionByIdMap.remove(controlSessionId);
-        if (null != sessionInfo && sesionAborted)
+        if (null != sessionInfo && sessionAborted)
         {
             sessionInfo.image.reject(abortReason);
         }

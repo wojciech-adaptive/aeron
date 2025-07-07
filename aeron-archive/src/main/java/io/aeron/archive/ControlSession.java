@@ -53,7 +53,7 @@ final class ControlSession implements Session
     @SuppressWarnings("JavadocVariable")
     enum State
     {
-        INIT, CONNECTING, CONNECTED, CHALLENGED, AUTHENTICATED, ACTIVE, INACTIVE, REJECTED, DONE
+        INIT, CONNECTING, CONNECTED, CHALLENGED, AUTHENTICATED, ACTIVE, REJECTED, DONE
     }
 
     private final long controlSessionId;
@@ -144,11 +144,6 @@ final class ControlSession implements Session
      */
     public void close()
     {
-        if (null != activeListing)
-        {
-            activeListing.abort(abortReason);
-        }
-
         if (null == controlPublication)
         {
             aeron.asyncRemovePublication(controlPublicationId);
@@ -188,10 +183,9 @@ final class ControlSession implements Session
 
         if (hasNoActivity(nowMs))
         {
-            abortReason = State.ACTIVE == state ?
+            abort(State.ACTIVE == state ?
                 "failed to send response for more than connectTimeoutMs=" + connectTimeoutMs :
-                "failed to establish initial connection: state=" + state;
-            state(State.INACTIVE, abortReason);
+                "failed to establish initial connection: state=" + state);
             workCount++;
         }
 
@@ -226,10 +220,6 @@ final class ControlSession implements Session
 
             case REJECTED:
                 workCount += sendReject(nowMs);
-                break;
-
-            case INACTIVE:
-                state(State.DONE, "inactive");
                 break;
 
             case DONE:
@@ -931,8 +921,7 @@ final class ControlSession implements Session
 
         if (!controlPublication.isConnected())
         {
-            abortReason = "control publication not connected";
-            state(State.INACTIVE, abortReason);
+            abort("control publication not connected");
             workCount++;
         }
         else
