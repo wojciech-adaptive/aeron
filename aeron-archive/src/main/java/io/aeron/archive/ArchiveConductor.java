@@ -397,7 +397,6 @@ abstract class ArchiveConductor
         final boolean usingResponseChannel = CONTROL_MODE_RESPONSE.equals(channelUri.get(MDC_CONTROL_MODE_PARAM_NAME));
 
         final ChannelUriStringBuilder urlBuilder = strippedChannelBuilder(channelUri)
-            .ttl(channelUri)
             .termLength(termLength)
             .sparse(isSparse)
             .mtu(mtuLength);
@@ -747,7 +746,6 @@ abstract class ArchiveConductor
             final ChannelUri channelUri = ChannelUri.parse(replayChannel);
             final ChannelUriStringBuilder channelBuilder = strippedChannelBuilder(channelUri)
                 .initialPosition(replayPosition, recordingSummary.initialTermId, recordingSummary.termBufferLength)
-                .ttl(channelUri)
                 .eos(channelUri)
                 .sparse(channelUri)
                 .mtu(recordingSummary.mtuLength);
@@ -1708,7 +1706,7 @@ abstract class ArchiveConductor
         return workCount;
     }
 
-    private static ChannelUriStringBuilder strippedChannelBuilder(final ChannelUri channelUri)
+    static ChannelUriStringBuilder strippedChannelBuilder(final ChannelUri channelUri)
     {
         return new ChannelUriStringBuilder()
             .media(channelUri)
@@ -1731,7 +1729,10 @@ abstract class ArchiveConductor
             .mediaReceiveTimestampOffset(channelUri)
             .sessionId(channelUri)
             .alias(channelUri)
-            .responseCorrelationId(channelUri);
+            .responseCorrelationId(channelUri)
+            .responseEndpoint(channelUri)
+            .ttl(channelUri)
+            .streamId(channelUri);
     }
 
     private static String makeKey(final int streamId, final ChannelUri channelUri)
