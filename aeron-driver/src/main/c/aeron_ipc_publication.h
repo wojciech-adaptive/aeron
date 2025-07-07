@@ -51,6 +51,7 @@ typedef struct aeron_ipc_publication_stct
         int64_t consumer_position;
         int64_t last_consumer_position;
         int64_t time_of_last_consumer_position_change_ns;
+        int64_t response_correlation_id;
     }
     conductor_fields;
 

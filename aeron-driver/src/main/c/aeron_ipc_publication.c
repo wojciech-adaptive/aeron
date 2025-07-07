@@ -187,6 +187,7 @@ int aeron_ipc_publication_create(
     _pub->conductor_fields.managed_resource.clientd = _pub;
     _pub->conductor_fields.managed_resource.handle_event = aeron_ipc_publication_handle_managed_resource_event;
     _pub->conductor_fields.has_reached_end_of_life = false;
+    _pub->conductor_fields.response_correlation_id = params->response_correlation_id;
     _pub->conductor_fields.trip_limit = 0;
     _pub->conductor_fields.time_of_last_consumer_position_change_ns = now_ns;
     _pub->conductor_fields.state = AERON_IPC_PUBLICATION_STATE_ACTIVE;
