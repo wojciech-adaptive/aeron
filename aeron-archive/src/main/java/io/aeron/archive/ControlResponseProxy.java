@@ -242,19 +242,19 @@ class ControlResponseProxy
     {
         if (result == Publication.NOT_CONNECTED)
         {
-            session.abort("response publication is not connected");
+            session.abort("control response publication is not connected");
             throw new ArchiveEvent("response publication is not connected: " + session);
         }
 
         if (result == Publication.CLOSED)
         {
-            session.abort("response publication is closed");
+            session.abort("control response publication is closed");
             throw new ArchiveEvent("response publication is closed: " + session, AeronException.Category.ERROR);
         }
 
         if (result == Publication.MAX_POSITION_EXCEEDED)
         {
-            session.abort("response publication at max position");
+            session.abort("control response publication at max position");
             throw new ArchiveEvent("response publication at max position: " + session, AeronException.Category.ERROR);
         }
     }

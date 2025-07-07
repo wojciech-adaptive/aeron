@@ -954,8 +954,8 @@ class ArchiveTest
                     Matchers.startsWith("WARN - controlSessionId=" + client2.controlSessionId() + " ("),
                     Matchers.endsWith(") terminated: failed to send response for more than connectTimeoutMs=" +
                     TimeUnit.NANOSECONDS.toMillis(archive.context().connectTimeoutNs())),
-                    Matchers.containsString("responseStreamId=999"),
-                    Matchers.containsString("responseChannel=aeron:" + parsedResponseChannel.media())));
+                    Matchers.containsString("controlResponseStreamId=999"),
+                    Matchers.containsString("controlResponseChannel=aeron:" + parsedResponseChannel.media())));
 
                 if (CONTROL_MODE_RESPONSE.equals(parsedResponseChannel.get(MDC_CONTROL_MODE_PARAM_NAME)))
                 {

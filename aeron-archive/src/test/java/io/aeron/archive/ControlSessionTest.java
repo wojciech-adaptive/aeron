@@ -26,8 +26,13 @@ import java.util.concurrent.TimeUnit;
 
 import static io.aeron.archive.ControlSession.State.DONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class ControlSessionTest
@@ -97,5 +102,74 @@ class ControlSessionTest
         session.doWork();
         assertEquals(DONE, session.state());
         assertTrue(session.isDone());
+    }
+
+    @Test
+    void shouldChangeStateAndCaptureAbortReason()
+    {
+        assertFalse(session.isDone());
+        assertFalse(session.hasActiveListing());
+
+        final String reason = "stop execution";
+        session.abort(reason);
+
+        assertTrue(session.isDone());
+        assertEquals(DONE, session.state());
+        assertSame(reason, session.abortReason());
+    }
+
+    @Test
+    void shouldChangeStateCaptureAbortReasonAndAbortActiveListing()
+    {
+        assertFalse(session.isDone());
+        assertFalse(session.hasActiveListing());
+        final Session listingSession = mock(Session.class);
+        session.activeListing(listingSession);
+
+        final String reason = "stop execution";
+        session.abort(reason);
+
+        assertTrue(session.isDone());
+        assertEquals(DONE, session.state());
+        assertSame(reason, session.abortReason());
+        verify(listingSession).abort(reason);
+    }
+
+    @Test
+    void abortIsANoOpIfSessionIsDone()
+    {
+        assertFalse(session.isDone());
+        assertFalse(session.hasActiveListing());
+        final Session listingSession = mock(Session.class);
+        session.activeListing(listingSession);
+
+        session.state(ControlSession.State.DONE, "test");
+
+        final String reason = "should be ignored";
+        session.abort(reason);
+
+        assertTrue(session.isDone());
+        assertEquals(DONE, session.state());
+        assertNull(session.abortReason());
+        verifyNoInteractions(listingSession);
+    }
+
+    @Test
+    void abortShouldIgnoreAdditionalCalls()
+    {
+        assertFalse(session.isDone());
+        assertFalse(session.hasActiveListing());
+        final Session listingSession = mock(Session.class);
+        session.activeListing(listingSession);
+
+        final String reason1 = "call1";
+        session.abort(reason1);
+        session.abort("call2");
+        session.abort("call3");
+
+        assertTrue(session.isDone());
+        assertEquals(DONE, session.state());
+        assertEquals(reason1, session.abortReason());
+        verify(listingSession).abort(reason1);
     }
 }

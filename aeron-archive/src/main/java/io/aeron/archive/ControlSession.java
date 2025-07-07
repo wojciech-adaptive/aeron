@@ -131,11 +131,14 @@ final class ControlSession implements Session
      */
     public void abort(final String reason)
     {
-        abortReason = reason;
-        state(State.DONE, reason);
-        if (null != activeListing)
+        if (State.DONE != state)
         {
-            activeListing.abort(reason);
+            abortReason = reason;
+            state(State.DONE, reason);
+            if (null != activeListing)
+            {
+                activeListing.abort(reason);
+            }
         }
     }
 
@@ -160,8 +163,8 @@ final class ControlSession implements Session
         if (sessionAborted)
         {
             conductor.errorHandler.onError(new ArchiveEvent(
-                "controlSessionId=" + controlSessionId + " (responseStreamId=" + controlPublicationStreamId +
-                " responseChannel=" + controlPublicationChannel + ") terminated: " + abortReason));
+                "controlSessionId=" + controlSessionId + " (controlResponseStreamId=" + controlPublicationStreamId +
+                " controlResponseChannel=" + controlPublicationChannel + ") terminated: " + abortReason));
         }
     }
 
@@ -921,7 +924,7 @@ final class ControlSession implements Session
 
         if (!controlPublication.isConnected())
         {
-            abort("control publication not connected");
+            abort("control response publication not connected");
             workCount++;
         }
         else
@@ -992,7 +995,7 @@ final class ControlSession implements Session
         }
     }
 
-    private void state(final State state, final String reason)
+    void state(final State state, final String reason)
     {
         logStateChange(this.state, state, controlSessionId, reason);
         this.state = state;
@@ -1002,6 +1005,11 @@ final class ControlSession implements Session
         final State oldState, final State newState, final long controlSessionId, final String reason)
     {
 //        System.out.println(controlSessionId + ": " + oldState + " -> " + newState + ", reason=\"" + reason + "\"");
+    }
+
+    String abortReason()
+    {
+        return abortReason;
     }
 
     public String toString()
