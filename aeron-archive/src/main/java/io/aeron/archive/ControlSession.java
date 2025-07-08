@@ -131,7 +131,7 @@ final class ControlSession implements Session
      */
     public void abort(final String reason)
     {
-        if (State.DONE != state)
+        if (State.DONE != state || null != abortReason && SESSION_CLOSED_MSG.equals(reason))
         {
             abortReason = reason;
             state(State.DONE, reason);

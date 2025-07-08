@@ -145,8 +145,7 @@ class ControlSessionTest
 
         session.state(ControlSession.State.DONE, "test");
 
-        final String reason = "should be ignored";
-        session.abort(reason);
+        session.abort(ControlSession.SESSION_CLOSED_MSG);
 
         assertTrue(session.isDone());
         assertEquals(DONE, session.state());
@@ -171,5 +170,42 @@ class ControlSessionTest
         assertEquals(DONE, session.state());
         assertEquals(reason1, session.abortReason());
         verify(listingSession).abort(reason1);
+    }
+
+    @Test
+    void cleanTerminationCannotBeAborted()
+    {
+        assertFalse(session.isDone());
+        assertFalse(session.hasActiveListing());
+        final Session listingSession = mock(Session.class);
+        session.activeListing(listingSession);
+
+        session.abort(ControlSession.SESSION_CLOSED_MSG);
+        session.abort("call2");
+        session.abort("call3");
+
+        assertTrue(session.isDone());
+        assertEquals(DONE, session.state());
+        assertEquals(ControlSession.SESSION_CLOSED_MSG, session.abortReason());
+        verify(listingSession).abort(ControlSession.SESSION_CLOSED_MSG);
+    }
+
+    @Test
+    void cleanTerminationCanOverwritePreviousAbortMessage()
+    {
+        assertFalse(session.isDone());
+        assertFalse(session.hasActiveListing());
+        final Session listingSession = mock(Session.class);
+        session.activeListing(listingSession);
+
+        session.abort("call1");
+        session.abort(ControlSession.SESSION_CLOSED_MSG);
+        session.abort("call3");
+
+        assertTrue(session.isDone());
+        assertEquals(DONE, session.state());
+        assertEquals(ControlSession.SESSION_CLOSED_MSG, session.abortReason());
+        verify(listingSession).abort(ControlSession.SESSION_CLOSED_MSG);
+        verify(listingSession).abort("call1");
     }
 }
