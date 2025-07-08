@@ -14,7 +14,14 @@
 
 include(CheckSymbolExists)
 
+if ("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+    set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
+    add_definitions(-D_DEFAULT_SOURCE)
+endif ()
+
 if (MSVC AND "${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    set(BUILD_SHARED_LIBS ON)
     set(AERON_LIB_WINSOCK_LIBS wsock32 ws2_32 Iphlpapi)
     set(WSAPOLL_PROTOTYPE_EXISTS True)
 endif ()
@@ -30,9 +37,18 @@ if (WSAPOLL_PROTOTYPE_EXISTS)
     add_definitions(-DHAVE_WSAPOLL)
 endif ()
 
-if ("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
-    set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
-    add_definitions(-D_DEFAULT_SOURCE)
+check_include_file("bsd/stdlib.h" BSDSTDLIB_H_EXISTS)
+find_library(LIBBSD_EXISTS NAMES bsd libbsd)
+
+if (LIBBSD_EXISTS)
+    set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES} -lbsd")
+endif ()
+
+if (NOT BSDSTDLIB_H_EXISTS)
+    check_symbol_exists(arc4random "stdlib.h" ARC4RANDOM_PROTOTYPE_EXISTS)
+else ()
+    add_definitions(-DHAVE_BSDSTDLIB_H)
+    check_symbol_exists(arc4random "bsd/stdlib.h" ARC4RANDOM_PROTOTYPE_EXISTS)
 endif ()
 
 check_symbol_exists(fallocate "fcntl.h" FALLOCATE_PROTOTYPE_EXISTS)
@@ -51,9 +67,10 @@ if (F_PREALLOCATE_PROTOTYPE_EXISTS)
     add_definitions(-DHAVE_F_PREALLOCATE)
 endif ()
 
-if (MSVC AND "${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-    set(BUILD_SHARED_LIBS ON)
+if (ARC4RANDOM_PROTOTYPE_EXISTS)
+    add_definitions(-DHAVE_ARC4RANDOM)
+else ()
+    message(WARNING "Could not find arc4random. If on Linux, is libbsd installed?")
 endif ()
 
 set(SOURCE

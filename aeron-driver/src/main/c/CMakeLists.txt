@@ -82,12 +82,6 @@ if (F_PREALLOCATE_PROTOTYPE_EXISTS)
     add_definitions(-DHAVE_F_PREALLOCATE)
 endif ()
 
-if (ARC4RANDOM_PROTOTYPE_EXISTS)
-    add_definitions(-DHAVE_ARC4RANDOM)
-else ()
-    message(WARNING "Could not find arc4random. If on Linux, is libbsd installed?")
-endif ()
-
 if (UUID_GENERATE_PROTOTYPE_EXISTS)
     add_definitions(-DHAVE_UUID_GENERATE)
 else ()
