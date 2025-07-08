@@ -26,6 +26,15 @@ if (MSVC AND "${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
     set(WSAPOLL_PROTOTYPE_EXISTS True)
 endif ()
 
+if (NOT MSVC)
+    message(STATUS "Looking up: /dev/urandom")
+    execute_process(
+        COMMAND ls /dev/urandom
+        RESULT_VARIABLE DEV_URANDOM_EXISTS
+        OUTPUT_QUIET
+    )
+endif ()
+
 if (MSVC)
     set(AERON_STATIC_LIB_LINK_OPTS "")
 else()
@@ -71,6 +80,11 @@ if (ARC4RANDOM_PROTOTYPE_EXISTS)
     add_definitions(-DHAVE_ARC4RANDOM)
 else ()
     message(WARNING "Could not find arc4random. If on Linux, is libbsd installed?")
+endif ()
+
+if (DEV_URANDOM_EXISTS EQUAL 0)
+    message(STATUS "Found: /dev/urandom")
+    add_definitions(-DHAVE_DEV_URANDOM)
 endif ()
 
 set(SOURCE

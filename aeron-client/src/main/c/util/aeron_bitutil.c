@@ -40,8 +40,20 @@
 #endif
 
 #ifndef HAVE_ARC4RANDOM
-#if defined(__linux__) || defined(__CYGWIN__)
-static int aeron_dev_random_fd = -1;
+#ifdef HAVE_DEV_URANDOM
+#include "concurrent/aeron_thread.h"
+
+static AERON_INIT_ONCE aeron_dev_urandom_is_initialized = AERON_INIT_ONCE_VALUE;
+static int aeron_dev_urandom_fd = -1;
+
+static void init_dev_urandom(void)
+{
+    if ((aeron_dev_urandom_fd = open("/dev/urandom", O_RDONLY)) < 0)
+    {
+        fprintf(stderr, "could not open /dev/urandom (%d): %s\n", errno, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+}
 #endif
 #endif
 
@@ -53,17 +65,10 @@ int32_t aeron_randomised_int32(void)
     uint32_t value = arc4random();
 
     memcpy(&result, &value, sizeof(int32_t));
-#elif defined(__linux__) || defined(__CYGWIN__)
-    if (-1 == aeron_dev_random_fd)
-    {
-        if ((aeron_dev_random_fd = open("/dev/urandom", O_RDONLY)) < 0)
-        {
-            fprintf(stderr, "could not open /dev/urandom (%d): %s\n", errno, strerror(errno));
-            exit(EXIT_FAILURE);
-        }
-    }
+#elif defined(HAVE_DEV_URANDOM)
+    aeron_thread_once(&aeron_dev_urandom_is_initialized, init_dev_urandom);
 
-    if (sizeof(result) != read(aeron_dev_random_fd, &result, sizeof(result)))
+    if (sizeof(result) != read(aeron_dev_urandom_fd, &result, sizeof(result)))
     {
         fprintf(stderr, "Failed to read from aeron_dev_random (%d): %s\n", errno, strerror(errno));
         exit(EXIT_FAILURE);

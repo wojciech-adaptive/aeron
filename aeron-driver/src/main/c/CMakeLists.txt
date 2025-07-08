@@ -26,6 +26,15 @@ if (MSVC AND "${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
     set(BUILD_SHARED_LIBS ON)
 endif ()
 
+if (NOT MSVC)
+    message(STATUS "Looking up: /dev/urandom")
+    execute_process(
+        COMMAND ls /dev/urandom
+        RESULT_VARIABLE DEV_URANDOM_EXISTS
+        OUTPUT_QUIET
+    )
+endif ()
+
 check_include_file("bsd/stdlib.h" BSDSTDLIB_H_EXISTS)
 check_include_file("uuid/uuid.h" UUID_H_EXISTS)
 find_library(LIBBSD_EXISTS NAMES bsd libbsd)
@@ -86,6 +95,11 @@ if (ARC4RANDOM_PROTOTYPE_EXISTS)
     add_definitions(-DHAVE_ARC4RANDOM)
 else ()
     message(WARNING "Could not find arc4random. If on Linux, is libbsd installed?")
+endif ()
+
+if (DEV_URANDOM_EXISTS EQUAL 0)
+    message(STATUS "Found: /dev/urandom")
+    add_definitions(-DHAVE_DEV_URANDOM)
 endif ()
 
 if (UUID_GENERATE_PROTOTYPE_EXISTS)
