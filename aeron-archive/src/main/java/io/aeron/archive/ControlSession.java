@@ -44,6 +44,8 @@ import static io.aeron.archive.codecs.ControlResponseCode.SUBSCRIPTION_UNKNOWN;
 final class ControlSession implements Session
 {
     static final String SESSION_CLOSED_MSG = "session closed";
+    static final String RESPONSE_NOT_CONNECTED_MSG = "control response publication is not connected";
+    static final String REQUEST_IMAGE_NOT_AVAILABLE_MSG = "control request publication image unavailable";
     private static final long RESEND_INTERVAL_MS = 200L;
     private static final String SESSION_REJECTED_MSG = "authentication rejected";
     private final Thread conductorThread;
@@ -157,7 +159,10 @@ final class ControlSession implements Session
             CloseHelper.close(conductor.context().countedErrorHandler(), controlPublication);
         }
 
-        final boolean sessionAborted = null != abortReason && !SESSION_CLOSED_MSG.equals(abortReason);
+        final boolean sessionAborted = null != abortReason &&
+            !SESSION_CLOSED_MSG.equals(abortReason) &&
+            !RESPONSE_NOT_CONNECTED_MSG.equals(abortReason) &&
+            !abortReason.startsWith(REQUEST_IMAGE_NOT_AVAILABLE_MSG);
         controlSessionAdapter.removeControlSession(controlSessionId, sessionAborted, abortReason);
 
         if (sessionAborted)
@@ -924,7 +929,7 @@ final class ControlSession implements Session
 
         if (!controlPublication.isConnected())
         {
-            abort("control response publication not connected");
+            abort(RESPONSE_NOT_CONNECTED_MSG);
             workCount++;
         }
         else
