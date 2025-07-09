@@ -224,10 +224,10 @@ public final class UdpChannel
 
                 context
                     .isMulticast(true)
-                    .localControlAddress(resolvedAddress)
                     .remoteControlAddress(getMulticastControlAddress(endpointAddress))
-                    .localDataAddress(resolvedAddress)
                     .remoteDataAddress(endpointAddress)
+                    .localControlAddress(resolvedAddress)
+                    .localDataAddress(resolvedAddress)
                     .localInterface(localInterface)
                     .protocolFamily(getProtocolFamily(endpointAddress.getAddress()))
                     .canonicalForm(canonicalise(null, resolvedAddress, null, endpointAddress));
