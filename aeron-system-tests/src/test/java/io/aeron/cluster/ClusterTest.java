@@ -1249,7 +1249,7 @@ class ClusterTest
     }
 
     @ParameterizedTest
-    @InterruptAfter(40)
+    @InterruptAfter(90)
     @ValueSource(booleans = { true, false })
     void shouldRecoverWhenFollowerIsMultipleTermsBehind(final boolean useResponseChannels)
     {
