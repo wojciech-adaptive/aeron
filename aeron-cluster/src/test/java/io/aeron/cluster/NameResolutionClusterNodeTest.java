@@ -37,16 +37,16 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static io.aeron.cluster.ClusterTestConstants.CLUSTER_MEMBERS;
 import static io.aeron.cluster.ClusterTestConstants.INGRESS_ENDPOINTS;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(InterruptingTestCallback.class)
 class NameResolutionClusterNodeTest
@@ -55,7 +55,7 @@ class NameResolutionClusterNodeTest
     private ClusteredServiceContainer container;
     private AeronCluster aeronCluster;
 
-    private final ErrorHandler mockErrorHandler = mock(ErrorHandler.class);
+    private final CopyOnWriteArrayList<Throwable> errors = new CopyOnWriteArrayList<>();
 
     @BeforeEach
     void before()
@@ -64,7 +64,7 @@ class NameResolutionClusterNodeTest
             new MediaDriver.Context()
                 .threadingMode(ThreadingMode.SHARED)
                 .termBufferSparseFile(true)
-                .errorHandler(mockErrorHandler)
+                .errorHandler(errors::add)
                 .dirDeleteOnStart(true),
             TestContexts.localhostArchive()
                 .catalogCapacity(ClusterTestConstants.CATALOG_CAPACITY)
@@ -107,11 +107,11 @@ class NameResolutionClusterNodeTest
 
         assertTrue(aeronCluster.sendKeepAlive());
 
-        final ArgumentCaptor<Throwable> argumentCaptor = ArgumentCaptor.forClass(Throwable.class);
-        verify(mockErrorHandler).onError(argumentCaptor.capture());
+        assertEquals(1, errors.size(), errors::toString);
+        final Throwable exception = errors.get(0);
 
-        assertEquals(InvalidChannelException.class, argumentCaptor.getValue().getClass());
-        assertThat(argumentCaptor.getValue().getMessage(), containsString("badname"));
+        assertInstanceOf(InvalidChannelException.class, exception);
+        assertThat(exception.getMessage(), containsString("badname"));
 
         ClusterTests.failOnClusterError();
     }
