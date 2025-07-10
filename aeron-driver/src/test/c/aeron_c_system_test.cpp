@@ -20,6 +20,7 @@
 #include <gmock/gmock.h>
 
 #include "aeron_test_base.h"
+#include "aeron_counters.h"
 
 extern "C"
 {
@@ -828,4 +829,58 @@ TEST_P(CSystemTest, shouldSetClientNameOverLong)
     ASSERT_EQ(EINVAL, aeron_errcode());
 
     aeron_context_close(context);
+}
+
+TEST_F(CSystemTest, shouldBeNotifiedWhenClientIsClosed)
+{
+    ASSERT_TRUE(connect());
+    const auto countersReader = aeron_counters_reader(m_aeron);
+
+    aeron_context_t *context;
+    aeron_t *aeron;
+
+    ASSERT_EQ(aeron_context_init(&context), 0);
+    ASSERT_EQ(aeron_init(&aeron, context), 0);
+
+    ASSERT_EQ(aeron_start(aeron), 0);
+
+    const std::int64_t key = 1234567890;
+    const auto counterName = "test";
+    aeron_async_add_counter_t *async_add_counter;
+    ASSERT_EQ(0, aeron_async_add_counter(
+        &async_add_counter,
+        aeron,
+        10001,
+        (const uint8_t *)&key,
+        sizeof(key),
+        counterName,
+        strlen(counterName))) << aeron_errmsg();
+
+    aeron_counter_t *counter = nullptr;
+    aeron_async_add_counter_poll(&counter, async_add_counter);
+    while (nullptr == counter)
+    {
+        std::this_thread::yield();
+        aeron_async_add_counter_poll(&counter, async_add_counter);
+    }
+
+    const auto clientId = aeron_client_id(aeron);
+    int32_t heartbeatCounterId = AERON_NULL_COUNTER_ID;
+    while (AERON_NULL_COUNTER_ID == heartbeatCounterId)
+    {
+        heartbeatCounterId = aeron_counters_reader_find_by_type_id_and_registration_id(
+            countersReader, AERON_COUNTER_CLIENT_HEARTBEAT_TIMESTAMP_TYPE_ID, clientId);
+        std::this_thread::yield();
+    }
+
+    aeron_close(aeron);
+    aeron_context_close(context);
+
+    int32_t state = AERON_COUNTER_RECORD_ALLOCATED;
+    while (AERON_COUNTER_RECORD_ALLOCATED == state)
+    {
+        ASSERT_EQ(0, aeron_counters_reader_counter_state(countersReader, heartbeatCounterId, &state));
+        std::this_thread::yield();
+    }
+    ASSERT_EQ(0, aeron_counter_get_acquire(aeron_counters_reader_addr(countersReader, AERON_SYSTEM_COUNTER_CLIENT_TIMEOUTS)));
 }

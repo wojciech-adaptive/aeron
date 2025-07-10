@@ -698,8 +698,6 @@ void aeron_client_conductor_on_close(aeron_client_conductor_t *conductor)
 {
     aeron_client_conductor_notify_close_handlers(conductor);
 
-    aeron_client_conductor_on_cmd_client_close(conductor);
-
     aeron_int64_to_ptr_hash_map_for_each(
         &conductor->log_buffer_by_id_map, aeron_client_conductor_delete_log_buffer, NULL);
     aeron_int64_to_ptr_hash_map_for_each(
@@ -712,6 +710,7 @@ void aeron_client_conductor_on_close(aeron_client_conductor_t *conductor)
         aeron_client_conductor_delete_lingering_resource(&conductor->lingering_resources.array[i]);
     }
 
+    aeron_client_conductor_on_cmd_client_close(conductor);
     aeron_broadcast_receiver_close(&conductor->to_client_buffer);
 
     aeron_int64_to_ptr_hash_map_delete(&conductor->log_buffer_by_id_map);
@@ -3123,7 +3122,7 @@ int aeron_client_conductor_on_cmd_client_close(aeron_client_conductor_t *conduct
     uint8_t *ptr = conductor->to_driver_buffer.buffer + offset;
     aeron_correlated_command_t *command = (aeron_correlated_command_t *)ptr;
     command->client_id = conductor->client_id;
-    command->correlation_id = aeron_mpsc_rb_next_correlation_id(&conductor->to_driver_buffer);
+    command->correlation_id = AERON_NULL_VALUE;
 
     aeron_mpsc_rb_commit(&conductor->to_driver_buffer, offset);
     return 0;
