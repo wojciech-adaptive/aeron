@@ -116,9 +116,9 @@ final class PublicationParams
                     channelUri);
             }
 
-            params.initialTermId = Integer.parseInt(initialTermIdStr);
-            params.termId = Integer.parseInt(termIdStr);
-            params.termOffset = Integer.parseInt(termOffsetStr);
+            params.initialTermId = parseInt(initialTermIdStr, INITIAL_TERM_ID_PARAM_NAME);
+            params.termId = parseInt(termIdStr, TERM_ID_PARAM_NAME);
+            params.termOffset = parseInt(termOffsetStr, TERM_OFFSET_PARAM_NAME);
 
             if (params.termOffset > params.termLength)
             {
@@ -158,7 +158,8 @@ final class PublicationParams
         }
 
         params.isResponse = CONTROL_MODE_RESPONSE.equals(channelUri.get(MDC_CONTROL_MODE_PARAM_NAME));
-        params.responseCorrelationId = Long.parseLong(channelUri.get(RESPONSE_CORRELATION_ID_PARAM_NAME, "-1"));
+        params.responseCorrelationId = parseLong(
+            channelUri.get(RESPONSE_CORRELATION_ID_PARAM_NAME, "-1"), RESPONSE_CORRELATION_ID_PARAM_NAME);
 
         return params;
     }
@@ -197,16 +198,7 @@ final class PublicationParams
         final String streamIdParam = channelUri.get(STREAM_ID_PARAM_NAME);
         if (null != streamIdParam)
         {
-            final int configuredStreamId;
-            try
-            {
-                configuredStreamId = Integer.parseInt(streamIdParam);
-            }
-            catch (final NumberFormatException ex)
-            {
-                throw new InvalidChannelException("invalid " + STREAM_ID_PARAM_NAME + ", must be a number", ex);
-            }
-
+            final int configuredStreamId = parseInt(streamIdParam, STREAM_ID_PARAM_NAME);
             if (streamId != configuredStreamId)
             {
                 throw new InvalidChannelException(
@@ -469,15 +461,7 @@ final class PublicationParams
             }
             else
             {
-                try
-                {
-                    sessionId = Integer.parseInt(sessionIdStr);
-                }
-                catch (final NumberFormatException ex)
-                {
-                    throw new InvalidChannelException(
-                        "invalid " + SESSION_ID_PARAM_NAME + ", must be a number", ex);
-                }
+                sessionId = parseInt(sessionIdStr, SESSION_ID_PARAM_NAME);
             }
         }
         else
@@ -542,15 +526,7 @@ final class PublicationParams
         }
         else
         {
-            try
-            {
-                maxResend = Integer.parseInt(maxRetransmtsString);
-            }
-            catch (final NumberFormatException ex)
-            {
-                throw new InvalidChannelException(
-                    "invalid " + MAX_RESEND_PARAM_NAME + ", must be a number", ex);
-            }
+            maxResend = parseInt(maxRetransmtsString, MAX_RESEND_PARAM_NAME);
 
             if (maxResend <= 0 || maxResend > Configuration.MAX_RESEND_MAX)
             {
@@ -558,6 +534,32 @@ final class PublicationParams
                     "invalid " + MAX_RESEND_PARAM_NAME + "=" + maxResend +
                     ", must be > 0 and <= " + Configuration.MAX_RESEND_MAX);
             }
+        }
+    }
+
+    private static int parseInt(final String value, final String paramName)
+    {
+        try
+        {
+            return Integer.parseInt(value);
+        }
+        catch (final NumberFormatException ex)
+        {
+            throw new InvalidChannelException(
+                "invalid " + paramName + ", must be a number", ex);
+        }
+    }
+
+    private static long parseLong(final String value, final String paramName)
+    {
+        try
+        {
+            return Long.parseLong(value);
+        }
+        catch (final NumberFormatException ex)
+        {
+            throw new InvalidChannelException(
+                "invalid " + paramName + ", must be a number", ex);
         }
     }
 
