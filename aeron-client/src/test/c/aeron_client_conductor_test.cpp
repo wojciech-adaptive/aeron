@@ -1241,7 +1241,11 @@ class ClientConductorIsLengthSufficientTest : public testing::TestWithParam<std:
 
 static aeron_mapped_file_t* mappedFileFrom(size_t length, const aeron_cnc_metadata_t *metadata)
 {
-    auto *mappedFile = new aeron_mapped_file_t{(void *)metadata, length};
+    aeron_mapped_file_t *mappedFile;
+    if (aeron_alloc(reinterpret_cast<void **>(&mappedFile), sizeof(aeron_mapped_file_t)) < 0)
+    {
+        throw std::runtime_error("failed to allocate aeron_mapped_file_t");
+    }
     return mappedFile;
 }
 
@@ -1252,7 +1256,11 @@ static aeron_cnc_metadata_t* metadata(
     int32_t counter_values_buffer_length,
     int32_t error_log_buffer_length)
 {
-    auto metadata = new aeron_cnc_metadata_t{};
+    aeron_cnc_metadata_t *metadata;
+    if (aeron_alloc(reinterpret_cast<void **>(&metadata), sizeof(aeron_cnc_metadata_t)) < 0)
+    {
+        throw std::runtime_error("failed to allocate aeron_cnc_metadata_t");
+    }
     metadata->to_driver_buffer_length = to_driver_buffer_length;
     metadata->to_clients_buffer_length = to_clients_buffer_length;
     metadata->counter_metadata_buffer_length = counter_metadata_buffer_length;
@@ -1288,6 +1296,6 @@ TEST_P(ClientConductorIsLengthSufficientTest, shouldCheckIfLengthIsSufficient)
     const auto mappedFile = std::get<0>(GetParam());
     const bool expected = std::get<1>(GetParam());
     ASSERT_EQ(expected, aeron_cnc_is_file_length_sufficient(mappedFile));
-    delete (aeron_cnc_metadata_t*)mappedFile->addr;
-    delete mappedFile;
+    aeron_free(mappedFile->addr);
+    aeron_free(mappedFile);
 }
