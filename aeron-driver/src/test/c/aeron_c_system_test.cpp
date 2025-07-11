@@ -125,7 +125,14 @@ TEST_P(CSystemTest, shouldAddAndClosePublication)
     aeron_async_add_publication_t *async = nullptr;
     aeron_publication_constants_t publication_constants;
 
+    aeron_async_add_subscription_t *asyncSub = nullptr;
+
     ASSERT_TRUE(connect());
+
+    ASSERT_EQ(aeron_async_add_subscription(
+        &asyncSub, m_aeron, std::get<0>(GetParam()), STREAM_ID, nullptr, nullptr, nullptr, nullptr), 0);
+    aeron_subscription_t *subscription = awaitSubscriptionOrError(asyncSub);
+    ASSERT_TRUE(subscription) << aeron_errmsg();
 
     ASSERT_EQ(aeron_async_add_publication(&async, m_aeron, std::get<0>(GetParam()), STREAM_ID), 0);
     std::int64_t registration_id = aeron_async_add_publication_get_registration_id(async);
@@ -136,13 +143,35 @@ TEST_P(CSystemTest, shouldAddAndClosePublication)
     ASSERT_EQ(0, aeron_publication_constants(publication, &publication_constants)) << aeron_errmsg();
     ASSERT_EQ(registration_id, publication_constants.registration_id);
 
-    aeron_publication_close(publication, setFlagOnClose, &publicationClosedFlag);
+    while (!aeron_publication_is_connected(publication))
+    {
+        std::this_thread::yield();
+    }
+
+    const auto countersReader = aeron_counters_reader(m_aeron);
+    const int32_t pubPosCounterId = aeron_counters_reader_find_by_type_id_and_registration_id(
+        countersReader, AERON_COUNTER_PUBLISHER_POSITION_TYPE_ID, registration_id);
+    ASSERT_NE(AERON_NULL_COUNTER_ID, pubPosCounterId);
+    int counterState;
+    ASSERT_EQ(0, aeron_counters_reader_counter_state(countersReader, pubPosCounterId, &counterState));
+    ASSERT_EQ(AERON_COUNTER_RECORD_ALLOCATED, counterState);
+
+    ASSERT_EQ(0, aeron_publication_close(publication, setFlagOnClose, &publicationClosedFlag));
+    ASSERT_TRUE(aeron_publication_is_closed(publication));
 
     while (!publicationClosedFlag)
     {
         std::this_thread::yield();
     }
 
+    do
+    {
+        ASSERT_EQ(0, aeron_counters_reader_counter_state(countersReader, pubPosCounterId, &counterState));
+        std::this_thread::yield();
+    }
+    while (AERON_COUNTER_RECORD_RECLAIMED != counterState);
+
+    ASSERT_EQ(0, aeron_subscription_close(subscription, nullptr, nullptr));
 }
 
 TEST_P(CSystemTest, shouldAddAndCloseExclusivePublication)
@@ -150,8 +179,14 @@ TEST_P(CSystemTest, shouldAddAndCloseExclusivePublication)
     std::atomic<bool> publicationClosedFlag(false);
     aeron_async_add_exclusive_publication_t *async = nullptr;
     aeron_publication_constants_t publication_constants;
+    aeron_async_add_subscription_t *asyncSub = nullptr;
 
     ASSERT_TRUE(connect());
+
+    ASSERT_EQ(aeron_async_add_subscription(
+        &asyncSub, m_aeron, std::get<0>(GetParam()), STREAM_ID, nullptr, nullptr, nullptr, nullptr), 0);
+    aeron_subscription_t *subscription = awaitSubscriptionOrError(asyncSub);
+    ASSERT_TRUE(subscription) << aeron_errmsg();
 
     ASSERT_EQ(aeron_async_add_exclusive_publication(&async, m_aeron, std::get<0>(GetParam()), STREAM_ID), 0);
     std::int64_t registration_id = aeron_async_add_exclusive_exclusive_publication_get_registration_id(async);
@@ -161,33 +196,84 @@ TEST_P(CSystemTest, shouldAddAndCloseExclusivePublication)
     ASSERT_EQ(0, aeron_exclusive_publication_constants(publication, &publication_constants));
     ASSERT_EQ(registration_id, publication_constants.registration_id);
 
-    aeron_exclusive_publication_close(publication, nullptr, nullptr);
-
-    if (!publicationClosedFlag)
+    while (!aeron_exclusive_publication_is_connected(publication))
     {
         std::this_thread::yield();
     }
+
+    const auto countersReader = aeron_counters_reader(m_aeron);
+    const int32_t pubPosCounterId = aeron_counters_reader_find_by_type_id_and_registration_id(
+        countersReader, AERON_COUNTER_PUBLISHER_POSITION_TYPE_ID, registration_id);
+    ASSERT_NE(AERON_NULL_COUNTER_ID, pubPosCounterId);
+    int counterState;
+    ASSERT_EQ(0, aeron_counters_reader_counter_state(countersReader, pubPosCounterId, &counterState));
+    ASSERT_EQ(AERON_COUNTER_RECORD_ALLOCATED, counterState);
+
+    ASSERT_EQ(0, aeron_exclusive_publication_close(publication, setFlagOnClose, &publicationClosedFlag));
+    ASSERT_TRUE(aeron_exclusive_publication_is_closed(publication));
+
+    while (!publicationClosedFlag)
+    {
+        std::this_thread::yield();
+    }
+
+    do
+    {
+        ASSERT_EQ(0, aeron_counters_reader_counter_state(countersReader, pubPosCounterId, &counterState));
+        std::this_thread::yield();
+    }
+    while (AERON_COUNTER_RECORD_RECLAIMED != counterState);
+
+    ASSERT_EQ(0, aeron_subscription_close(subscription, nullptr, nullptr));
 }
 
 TEST_P(CSystemTest, shouldAddAndCloseSubscription)
 {
     std::atomic<bool> subscriptionClosedFlag(false);
     aeron_async_add_subscription_t *async = nullptr;
+    aeron_async_add_exclusive_publication_t *asyncPub = nullptr;
 
     ASSERT_TRUE(connect());
+
+    ASSERT_EQ(aeron_async_add_exclusive_publication(&asyncPub, m_aeron, std::get<0>(GetParam()), STREAM_ID), 0);
+    aeron_exclusive_publication_t *publication = awaitExclusivePublicationOrError(asyncPub);
+    ASSERT_TRUE(publication) << aeron_errmsg();
 
     ASSERT_EQ(aeron_async_add_subscription(
         &async, m_aeron, std::get<0>(GetParam()), STREAM_ID, nullptr, nullptr, nullptr, nullptr), 0);
 
+    const int64_t registrationId = aeron_async_add_subscription_get_registration_id(async);
     aeron_subscription_t *subscription = awaitSubscriptionOrError(async);
     ASSERT_TRUE(subscription) << aeron_errmsg();
 
-    aeron_subscription_close(subscription, setFlagOnClose, &subscriptionClosedFlag);
+    while (!aeron_subscription_is_connected(subscription))
+    {
+        std::this_thread::yield();
+    }
+
+    const auto countersReader = aeron_counters_reader(m_aeron);
+    const int32_t subPosCounterId = aeron_counters_reader_find_by_type_id_and_registration_id(
+        countersReader, AERON_COUNTER_SUBSCRIPTION_POSITION_TYPE_ID, registrationId);
+    ASSERT_NE(AERON_NULL_COUNTER_ID, subPosCounterId);
+    int counterState;
+    ASSERT_EQ(0, aeron_counters_reader_counter_state(countersReader, subPosCounterId, &counterState));
+    ASSERT_EQ(AERON_COUNTER_RECORD_ALLOCATED, counterState);
+
+    ASSERT_EQ(0, aeron_subscription_close(subscription, setFlagOnClose, &subscriptionClosedFlag));
 
     while (!subscriptionClosedFlag)
     {
         std::this_thread::yield();
     }
+
+    do
+    {
+        ASSERT_EQ(0, aeron_counters_reader_counter_state(countersReader, subPosCounterId, &counterState));
+        std::this_thread::yield();
+    }
+    while (AERON_COUNTER_RECORD_RECLAIMED != counterState);
+
+    ASSERT_EQ(0, aeron_exclusive_publication_close(publication, nullptr, nullptr));
 }
 
 TEST_F(CSystemTest, shouldAddAndCloseCounter)
