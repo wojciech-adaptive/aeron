@@ -25,7 +25,25 @@ import org.agrona.BitUtil;
 import org.agrona.SystemUtil;
 
 import static io.aeron.ChannelUri.INVALID_TAG;
-import static io.aeron.CommonContext.*;
+import static io.aeron.CommonContext.CONTROL_MODE_RESPONSE;
+import static io.aeron.CommonContext.EOS_PARAM_NAME;
+import static io.aeron.CommonContext.INITIAL_TERM_ID_PARAM_NAME;
+import static io.aeron.CommonContext.LINGER_PARAM_NAME;
+import static io.aeron.CommonContext.MAX_RESEND_PARAM_NAME;
+import static io.aeron.CommonContext.MDC_CONTROL_MODE_PARAM_NAME;
+import static io.aeron.CommonContext.MTU_LENGTH_PARAM_NAME;
+import static io.aeron.CommonContext.PUBLICATION_WINDOW_LENGTH_PARAM_NAME;
+import static io.aeron.CommonContext.RESPONSE_CORRELATION_ID_PARAM_NAME;
+import static io.aeron.CommonContext.SESSION_ID_PARAM_NAME;
+import static io.aeron.CommonContext.SPARSE_PARAM_NAME;
+import static io.aeron.CommonContext.SPIES_SIMULATE_CONNECTION_PARAM_NAME;
+import static io.aeron.CommonContext.STREAM_ID_PARAM_NAME;
+import static io.aeron.CommonContext.TERM_ID_PARAM_NAME;
+import static io.aeron.CommonContext.TERM_LENGTH_PARAM_NAME;
+import static io.aeron.CommonContext.TERM_OFFSET_PARAM_NAME;
+import static io.aeron.CommonContext.UNTETHERED_LINGER_TIMEOUT_PARAM_NAME;
+import static io.aeron.CommonContext.UNTETHERED_RESTING_TIMEOUT_PARAM_NAME;
+import static io.aeron.CommonContext.UNTETHERED_WINDOW_LIMIT_TIMEOUT_PARAM_NAME;
 
 final class PublicationParams
 {
@@ -451,7 +469,15 @@ final class PublicationParams
             }
             else
             {
-                sessionId = Integer.parseInt(sessionIdStr);
+                try
+                {
+                    sessionId = Integer.parseInt(sessionIdStr);
+                }
+                catch (final NumberFormatException ex)
+                {
+                    throw new InvalidChannelException(
+                        "invalid " + SESSION_ID_PARAM_NAME + ", must be a number", ex);
+                }
             }
         }
         else
