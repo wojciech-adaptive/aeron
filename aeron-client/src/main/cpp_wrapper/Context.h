@@ -214,11 +214,9 @@ class Context
 public:
     using this_t = Context;
 
-    Context()
-    {
-    }
-
+    Context() = default;
     Context(const Context &other) = default;
+    Context& operator=(const Context& other) = default;
 
     /// @cond HIDDEN_SYMBOLS
     this_t &conclude()
