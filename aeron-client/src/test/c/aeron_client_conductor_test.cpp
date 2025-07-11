@@ -1246,6 +1246,8 @@ static aeron_mapped_file_t* mappedFileFrom(size_t length, const aeron_cnc_metada
     {
         throw std::runtime_error("failed to allocate aeron_mapped_file_t");
     }
+    mappedFile->addr = (void*)metadata;
+    mappedFile->length = length;
     return mappedFile;
 }
 
