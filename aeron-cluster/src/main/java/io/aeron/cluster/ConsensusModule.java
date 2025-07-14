@@ -757,16 +757,6 @@ public final class ConsensusModule implements AutoCloseable
             () -> ALLOW_ONLY_BACKUP_QUERIES;
 
         /**
-         * Special case token for authorisation service supplier that will deny all requests.
-         */
-        public static final String AUTHORISATION_SERVICE_DENY_ALL_NAME = "DENY_ALL";
-
-        /**
-         * Special case token for authorisation service supplier that allow all requests.
-         */
-        public static final String AUTHORISATION_SERVICE_ALLOW_ALL_NAME = "ALLOW_ALL";
-
-        /**
          * Size in bytes of the error buffer for the cluster.
          */
         @Config
@@ -1248,11 +1238,11 @@ public final class ConsensusModule implements AutoCloseable
             {
                 return DEFAULT_AUTHORISATION_SERVICE_SUPPLIER;
             }
-            else if (AUTHORISATION_SERVICE_DENY_ALL_NAME.equals(supplierClassName))
+            else if (AuthorisationService.DENY_ALL_NAME.equals(supplierClassName))
             {
                 return () -> AuthorisationService.DENY_ALL;
             }
-            else if (AUTHORISATION_SERVICE_ALLOW_ALL_NAME.equals(supplierClassName))
+            else if (AuthorisationService.ALLOW_ALL_NAME.equals(supplierClassName))
             {
                 fallbackLogger().println("Warning: Cluster authorisation service set to allow all requests");
                 return () -> AuthorisationService.ALLOW_ALL;

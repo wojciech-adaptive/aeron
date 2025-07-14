@@ -59,6 +59,7 @@ import static io.aeron.AeronCounters.*;
 import static io.aeron.AeronCounters.ARCHIVE_CONTROL_SESSIONS_TYPE_ID;
 import static io.aeron.AeronCounters.ARCHIVE_ERROR_COUNT_TYPE_ID;
 import static io.aeron.CommonContext.ENDPOINT_PARAM_NAME;
+import static io.aeron.CommonContext.fallbackLogger;
 import static io.aeron.archive.Archive.Configuration.*;
 import static io.aeron.archive.ArchiveThreadingMode.DEDICATED;
 import static io.aeron.exceptions.AeronException.Category.ERROR;
@@ -921,6 +922,15 @@ public final class Archive implements AutoCloseable
             if (Strings.isEmpty(supplierClassName))
             {
                 return DEFAULT_AUTHORISATION_SERVICE_SUPPLIER;
+            }
+            else if (AuthorisationService.DENY_ALL_NAME.equals(supplierClassName))
+            {
+                return () -> AuthorisationService.DENY_ALL;
+            }
+            else if (AuthorisationService.ALLOW_ALL_NAME.equals(supplierClassName))
+            {
+                fallbackLogger().println("Warning: Cluster authorisation service set to allow all requests");
+                return () -> AuthorisationService.ALLOW_ALL;
             }
 
             try

@@ -34,6 +34,16 @@ public interface AuthorisationService
     AuthorisationService DENY_ALL = (protocolId, actionId, type, encodedPrincipal) -> false;
 
     /**
+     * Special case token for authorisation service supplier that will deny all requests.
+     */
+    String DENY_ALL_NAME = "DENY_ALL";
+
+    /**
+     * Special case token for authorisation service supplier that allow all requests.
+     */
+    String ALLOW_ALL_NAME = "ALLOW_ALL";
+
+    /**
      * Checks if the client with authenticated credentials is allowed to perform an action indicated by the
      * given {@code actionId}.
      *
