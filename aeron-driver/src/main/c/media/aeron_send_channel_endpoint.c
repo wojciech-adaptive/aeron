@@ -52,6 +52,7 @@ int aeron_send_channel_endpoint_create(
 
     if (aeron_alloc((void **)&_endpoint, sizeof(aeron_send_channel_endpoint_t)) < 0)
     {
+        AERON_APPEND_ERR("%s", "");
         aeron_udp_channel_delete(channel);
         return -1;
     }
@@ -70,6 +71,7 @@ int aeron_send_channel_endpoint_create(
                 AERON_UDP_CHANNEL_CONTROL_MODE_MANUAL == channel->control_mode,
                 AERON_UDP_DESTINATION_TRACKER_DESTINATION_TIMEOUT_NS) < 0)
         {
+            AERON_APPEND_ERR("%s", "");
             aeron_udp_channel_delete(channel);
             aeron_free(_endpoint);
             return -1;
@@ -149,6 +151,7 @@ int aeron_send_channel_endpoint_create(
     if ((bind_addr_and_port_length = aeron_send_channel_endpoint_bind_addr_and_port(
         _endpoint, bind_addr_and_port, sizeof(bind_addr_and_port))) < 0)
     {
+        AERON_APPEND_ERR("%s", "");
         aeron_send_channel_endpoint_delete(counters_manager, _endpoint);
         return -1;
     }
@@ -163,6 +166,7 @@ int aeron_send_channel_endpoint_create(
 
     if (_endpoint->channel_status.counter_id < 0)
     {
+        AERON_APPEND_ERR("%s", "");
         aeron_send_channel_endpoint_delete(counters_manager, _endpoint);
         return -1;
     }
@@ -183,6 +187,7 @@ int aeron_send_channel_endpoint_create(
 
         if (_endpoint->tracker_num_destinations.counter_id < 0)
         {
+            AERON_APPEND_ERR("%s", "");
             aeron_send_channel_endpoint_delete(counters_manager, _endpoint);
             return -1;
         }
@@ -213,6 +218,7 @@ int aeron_send_channel_endpoint_create(
 
     if (_endpoint->local_sockaddr_indicator.counter_id < 0)
     {
+        AERON_APPEND_ERR("%s", "");
         aeron_send_channel_endpoint_delete(counters_manager, _endpoint);
         return -1;
     }
