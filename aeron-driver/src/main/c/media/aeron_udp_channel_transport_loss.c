@@ -43,7 +43,7 @@ struct mmsghdr
 
 static AERON_INIT_ONCE env_is_initialized = AERON_INIT_ONCE_VALUE;
 
-static const aeron_udp_channel_interceptor_loss_params_t *aeron_udp_channel_interceptor_loss_params = NULL;
+static aeron_udp_channel_interceptor_loss_params_t aeron_udp_channel_interceptor_loss_params;
 static unsigned short data_loss_xsubi[3];
 
 int aeron_udp_channel_interceptor_loss_init_incoming(
@@ -80,18 +80,17 @@ aeron_udp_channel_interceptor_bindings_t *aeron_udp_channel_interceptor_loss_loa
 
 int aeron_udp_channel_interceptor_loss_configure(const aeron_udp_channel_interceptor_loss_params_t *loss_params)
 {
-    aeron_udp_channel_interceptor_loss_params = loss_params;
+    memcpy(&aeron_udp_channel_interceptor_loss_params, loss_params, sizeof(aeron_udp_channel_interceptor_loss_params_t));
 
-    data_loss_xsubi[2] = (unsigned short)(aeron_udp_channel_interceptor_loss_params->seed & 0xFFFF);
-    data_loss_xsubi[1] = (unsigned short)((aeron_udp_channel_interceptor_loss_params->seed >> 16) & 0xFFFF);
-    data_loss_xsubi[0] = (unsigned short)((aeron_udp_channel_interceptor_loss_params->seed >> 32) & 0xFFFF);
+    data_loss_xsubi[2] = (unsigned short)(aeron_udp_channel_interceptor_loss_params.seed & 0xFFFF);
+    data_loss_xsubi[1] = (unsigned short)((aeron_udp_channel_interceptor_loss_params.seed >> 16) & 0xFFFF);
+    data_loss_xsubi[0] = (unsigned short)((aeron_udp_channel_interceptor_loss_params.seed >> 32) & 0xFFFF);
 
     return 0;
 }
 
 void aeron_udp_channel_transport_loss_load_env(void)
 {
-    aeron_udp_channel_interceptor_loss_params_t *params;
     const char *args = AERON_CONFIG_GETENV_OR_DEFAULT(AERON_UDP_CHANNEL_TRANSPORT_BINDINGS_LOSS_ARGS_ENV_VAR, "");
     char *args_dup = strdup(args);
     if (NULL == args_dup)
@@ -100,8 +99,11 @@ void aeron_udp_channel_transport_loss_load_env(void)
         return;
     }
 
+    aeron_udp_channel_interceptor_loss_params_t *params;
     if (aeron_alloc((void **)&params, sizeof(aeron_udp_channel_interceptor_loss_params_t)) < 0)
     {
+        AERON_APPEND_ERR("%s", "");
+        aeron_free(args_dup);
         return;
     }
 
@@ -109,11 +111,8 @@ void aeron_udp_channel_transport_loss_load_env(void)
     {
         aeron_udp_channel_interceptor_loss_configure(params);
     }
-    else
-    {
-        aeron_free(params);
-    }
 
+    aeron_free(params);
     aeron_free(args_dup);
 }
 
@@ -121,11 +120,6 @@ int aeron_udp_channel_interceptor_loss_init_incoming(
     void **interceptor_state, aeron_driver_context_t *context, aeron_udp_channel_transport_affinity_t affinity)
 {
     (void)aeron_thread_once(&env_is_initialized, aeron_udp_channel_transport_loss_load_env);
-
-    if (NULL == aeron_udp_channel_interceptor_loss_params)
-    {
-        return -1;
-    }
 
     *interceptor_state = NULL;
 
@@ -155,8 +149,8 @@ void aeron_udp_channel_interceptor_loss_incoming(
     struct timespec *media_timestamp)
 {
     if (!aeron_udp_channel_interceptor_loss_should_drop_frame(
-        buffer, aeron_udp_channel_interceptor_loss_params->rate,
-        aeron_udp_channel_interceptor_loss_params->recv_msg_type_mask))
+        buffer, aeron_udp_channel_interceptor_loss_params.rate,
+        aeron_udp_channel_interceptor_loss_params.recv_msg_type_mask))
     {
         delegate->incoming_func(
             delegate->interceptor_state,

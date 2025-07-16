@@ -94,8 +94,20 @@ void aeron_udp_channel_transport_multi_gap_loss_load_env(void)
         return;
     }
 
-    aeron_udp_channel_interceptor_multi_gap_loss_parse_params(args_dup, &aeron_udp_channel_interceptor_multi_gap_loss_params);
+    aeron_udp_channel_interceptor_multi_gap_loss_params_t *params;
+    if (aeron_alloc((void **)&params, sizeof(aeron_udp_channel_interceptor_multi_gap_loss_params_t)) < 0)
+    {
+        AERON_APPEND_ERR("%s", "");
+        aeron_free(args_dup);
+        return;
+    }
 
+    if (aeron_udp_channel_interceptor_multi_gap_loss_parse_params(args_dup, params) >= 0)
+    {
+        aeron_udp_channel_interceptor_multi_gap_loss_configure(params);
+    }
+
+    aeron_free(params);
     aeron_free(args_dup);
 }
 

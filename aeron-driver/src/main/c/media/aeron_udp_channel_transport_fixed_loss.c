@@ -44,7 +44,7 @@ struct mmsghdr
 
 static AERON_INIT_ONCE env_is_initialized = AERON_INIT_ONCE_VALUE;
 
-static const aeron_udp_channel_interceptor_fixed_loss_params_t *aeron_udp_channel_interceptor_fixed_loss_params = NULL;
+static aeron_udp_channel_interceptor_fixed_loss_params_t aeron_udp_channel_interceptor_fixed_loss_params;
 
 #define STREAM_AND_SESSION_ID_NULL_OFFSET (-1)
 
@@ -83,14 +83,15 @@ aeron_udp_channel_interceptor_bindings_t *aeron_udp_channel_interceptor_fixed_lo
 
 int aeron_udp_channel_interceptor_fixed_loss_configure(const aeron_udp_channel_interceptor_fixed_loss_params_t *fixed_loss_params)
 {
-    aeron_udp_channel_interceptor_fixed_loss_params = fixed_loss_params;
+    memcpy(&aeron_udp_channel_interceptor_fixed_loss_params, fixed_loss_params, sizeof(aeron_udp_channel_interceptor_fixed_loss_params_t));
 
     return 0;
 }
 
 void aeron_udp_channel_transport_fixed_loss_load_env(void)
 {
-    aeron_udp_channel_interceptor_fixed_loss_params_t *fixed_loss_params;
+    aeron_udp_channel_interceptor_fixed_loss_params.term_offset = -1;
+
     const char *args = AERON_CONFIG_GETENV_OR_DEFAULT(AERON_UDP_CHANNEL_TRANSPORT_BINDINGS_FIXED_LOSS_ARGS_ENV_VAR, "");
     char *args_dup = strdup(args);
     if (NULL == args_dup)
@@ -99,24 +100,20 @@ void aeron_udp_channel_transport_fixed_loss_load_env(void)
         return;
     }
 
-    if (aeron_alloc((void **)&fixed_loss_params, sizeof(aeron_udp_channel_interceptor_fixed_loss_params_t)) < 0)
+    aeron_udp_channel_interceptor_fixed_loss_params_t *params;
+    if (aeron_alloc((void **)&params, sizeof(aeron_udp_channel_interceptor_fixed_loss_params_t)) < 0)
     {
         AERON_APPEND_ERR("%s", "");
+        aeron_free(args_dup);
         return;
     }
 
-    if (aeron_udp_channel_interceptor_fixed_loss_parse_params(args_dup, fixed_loss_params) >= 0)
+    if (aeron_udp_channel_interceptor_fixed_loss_parse_params(args_dup, params) >= 0)
     {
-        if (aeron_udp_channel_interceptor_fixed_loss_configure(fixed_loss_params) != 0)
-        {
-            AERON_APPEND_ERR("%s", "");
-        }
-    }
-    else
-    {
-        aeron_free(fixed_loss_params);
+        aeron_udp_channel_interceptor_fixed_loss_configure(params);
     }
 
+    aeron_free(params);
     aeron_free(args_dup);
 }
 
@@ -125,7 +122,7 @@ int aeron_udp_channel_interceptor_fixed_loss_init_incoming(
 {
     (void)aeron_thread_once(&env_is_initialized, aeron_udp_channel_transport_fixed_loss_load_env);
 
-    if (NULL == aeron_udp_channel_interceptor_fixed_loss_params)
+    if (aeron_udp_channel_interceptor_fixed_loss_params.term_offset == -1)
     {
         AERON_SET_ERR(errno, "%s", "fixed loss params not set");
         return -1;
@@ -219,9 +216,9 @@ void aeron_udp_channel_interceptor_fixed_loss_incoming(
         (aeron_int64_counter_map_t *)interceptor_state,
         buffer,
         length,
-        aeron_udp_channel_interceptor_fixed_loss_params->term_id,
-        aeron_udp_channel_interceptor_fixed_loss_params->term_offset,
-        aeron_udp_channel_interceptor_fixed_loss_params->length))
+        aeron_udp_channel_interceptor_fixed_loss_params.term_id,
+        aeron_udp_channel_interceptor_fixed_loss_params.term_offset,
+        aeron_udp_channel_interceptor_fixed_loss_params.length))
     {
         delegate->incoming_func(
             delegate->interceptor_state,
