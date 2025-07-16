@@ -1,7 +1,7 @@
-ARG VERSION="8.9"
+ARG VERSION="9"
 FROM rockylinux:${VERSION} as builder
 
-ARG GCC_VERSION="10"
+ARG GCC_VERSION="13"
 
 RUN yum update -y && yum install -y https://cdn.azul.com/zulu/bin/zulu-repo-1.0.0-1.noarch.rpm && \
     yum update -y && yum install -y \

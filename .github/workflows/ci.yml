@@ -240,13 +240,13 @@ jobs:
           path: ${{ steps.copy_test_logs.outputs.file }}
 
   cpp-gcc-rocky-build:
-    name: C++ Rocky 8
+    name: C++ Rocky 9
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        version: [ '10' ]
+        version: [ '13' ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
