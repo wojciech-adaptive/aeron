@@ -221,6 +221,8 @@ public final class DriverConductor implements Agent
             }
         }
         CloseHelper.close(ctx.errorHandler(), nameResolver);
+        CloseHelper.closeAll(receiveChannelEndpointByChannelMap.values());
+        CloseHelper.closeAll(sendChannelEndpointByChannelMap.values());
         publicationImages.forEach(PublicationImage::free);
         networkPublications.forEach(NetworkPublication::free);
         ipcPublications.forEach(IpcPublication::free);
@@ -394,12 +396,6 @@ public final class DriverConductor implements Agent
                 throw ex;
             }
         }
-    }
-
-    void onChannelEndpointError(final long statusIndicatorId, final Exception ex)
-    {
-        final String errorMessage = ex.getClass().getName() + " : " + ex.getMessage();
-        clientProxy.onError(statusIndicatorId, CHANNEL_ENDPOINT_ERROR, errorMessage);
     }
 
     void onPublicationError(
@@ -1422,11 +1418,27 @@ public final class DriverConductor implements Agent
 
                 final ReceiveChannelEndpoint receiveChannelEndpoint = mdsSubscriptionLink.channelEndpoint();
 
-                final AtomicCounter localSocketAddressIndicator = ReceiveLocalSocketAddress.allocate(
-                    tempBuffer, countersManager, registrationId, receiveChannelEndpoint.statusIndicatorCounter().id());
+                AtomicCounter localSocketAddressIndicator = null;
+                ReceiveDestinationTransport transport = null;
 
-                final ReceiveDestinationTransport transport = new ReceiveDestinationTransport(
-                    udpChannel, ctx, localSocketAddressIndicator, receiveChannelEndpoint);
+                try
+                {
+                    localSocketAddressIndicator = ReceiveLocalSocketAddress.allocate(
+                        tempBuffer,
+                        countersManager,
+                        registrationId,
+                        receiveChannelEndpoint.statusIndicatorCounter().id());
+
+                    transport = new ReceiveDestinationTransport(
+                        udpChannel, ctx, localSocketAddressIndicator, receiveChannelEndpoint);
+
+                    transport.openChannel(ctx.driverConductorProxy(), null);
+                }
+                catch (final Exception ex)
+                {
+                    CloseHelper.closeAll(localSocketAddressIndicator, transport);
+                    throw ex;
+                }
 
                 receiverProxy.addDestination(receiveChannelEndpoint, transport);
                 clientProxy.operationSucceeded(correlationId);
@@ -2115,8 +2127,11 @@ public final class DriverConductor implements Agent
                 validateMtuForSndbuf(
                     params, channelEndpoint.socketSndbufLength(), ctx, udpChannel.originalUriString(), null);
 
-                sendChannelEndpointByChannelMap.put(udpChannel.canonicalForm(), channelEndpoint);
+                channelEndpoint.openChannel(ctx.driverConductorProxy());
+                channelEndpoint.indicateActive();
+
                 senderProxy.registerSendChannelEndpoint(channelEndpoint);
+                sendChannelEndpointByChannelMap.put(udpChannel.canonicalForm(), channelEndpoint);
             }
             catch (final Exception ex)
             {
@@ -2381,8 +2396,11 @@ public final class DriverConductor implements Agent
 
                 validateInitialWindowForRcvBuf(params, channel, channelEndpoint.socketRcvbufLength(), ctx, null);
 
-                receiveChannelEndpointByChannelMap.put(udpChannel.canonicalForm(), channelEndpoint);
+                channelEndpoint.openChannel(ctx.driverConductorProxy());
+                channelEndpoint.indicateActive();
+
                 receiverProxy.registerReceiveChannelEndpoint(channelEndpoint);
+                receiveChannelEndpointByChannelMap.put(udpChannel.canonicalForm(), channelEndpoint);
             }
             catch (final Exception ex)
             {

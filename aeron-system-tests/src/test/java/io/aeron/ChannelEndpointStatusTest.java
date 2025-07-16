@@ -19,7 +19,6 @@ import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
 import io.aeron.driver.exceptions.InvalidChannelException;
 import io.aeron.exceptions.AeronException;
-import io.aeron.exceptions.ChannelEndpointException;
 import io.aeron.exceptions.RegistrationException;
 import io.aeron.logbuffer.LogBufferDescriptor;
 import io.aeron.protocol.DataHeaderFlyweight;
@@ -38,16 +37,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.ArgumentCaptor;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(InterruptingTestCallback.class)
 @InterruptAfter(20)
@@ -181,35 +181,6 @@ class ChannelEndpointStatusTest
     }
 
     @Test
-    void shouldCatchErrorOnAddressAlreadyInUseForSubscriptions()
-    {
-        TestMediaDriver.notSupportedOnCMediaDriver("C Driver raises error on conductor");
-        final Subscription subscriptionA = clientA.addSubscription(URI, STREAM_ID);
-
-        while (subscriptionA.channelStatus() == ChannelEndpointStatus.INITIALIZING)
-        {
-            Tests.yield();
-        }
-
-        assertThat(subscriptionA.channelStatus(), is(ChannelEndpointStatus.ACTIVE));
-
-        final Subscription subscriptionB = clientB.addSubscription(URI, STREAM_ID);
-
-        final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(errorHandlerClientB, timeout(5000L)).onError(captor.capture());
-
-        assertThat(captor.getValue(), instanceOf(ChannelEndpointException.class));
-
-        final ChannelEndpointException channelEndpointException = (ChannelEndpointException)captor.getValue();
-        final long status = clientB.countersReader().getCounterValue(channelEndpointException.statusIndicatorId());
-
-        assertThat(status, is(ChannelEndpointStatus.ERRORED));
-        assertThat(subscriptionB.channelStatusId(), is(channelEndpointException.statusIndicatorId()));
-        assertThat(subscriptionA.channelStatus(), is(ChannelEndpointStatus.ACTIVE));
-        assertNull(testException.get());
-    }
-
-    @Test
     void shouldCatchErrorOnAddressAlreadyInUseForPublications()
     {
         TestMediaDriver.notSupportedOnCMediaDriver("C Driver raises error on conductor");
@@ -222,49 +193,14 @@ class ChannelEndpointStatusTest
 
         assertThat(publicationA.channelStatus(), is(ChannelEndpointStatus.ACTIVE));
 
-        final Publication publicationB = clientB.addPublication(URI_WITH_INTERFACE_PORT, STREAM_ID);
-
-        final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(errorHandlerClientB, timeout(5000L)).onError(captor.capture());
-
-        assertThat(captor.getValue(), instanceOf(ChannelEndpointException.class));
-
-        final ChannelEndpointException channelEndpointException = (ChannelEndpointException)captor.getValue();
-        final long status = clientB.countersReader().getCounterValue(channelEndpointException.statusIndicatorId());
-
-        assertThat(status, is(ChannelEndpointStatus.ERRORED));
-        assertThat(publicationB.channelStatusId(), is(channelEndpointException.statusIndicatorId()));
-        assertThat(publicationB.channelStatus(), is(ChannelEndpointStatus.ERRORED));
-        assertThat(publicationA.channelStatus(), is(ChannelEndpointStatus.ACTIVE));
-        assertNull(testException.get());
-    }
-
-    @Test
-    void shouldNotErrorOnAddressAlreadyInUseOnActiveChannelEndpointForSubscriptions()
-    {
-        TestMediaDriver.notSupportedOnCMediaDriver("C Driver raises error on conductor");
-        final Subscription subscriptionA = clientA.addSubscription(URI, STREAM_ID);
-
-        while (subscriptionA.channelStatus() == ChannelEndpointStatus.INITIALIZING)
+        try
         {
-            Tests.yield();
+            clientB.addPublication(URI_WITH_INTERFACE_PORT, STREAM_ID);
+            fail("Should have thrown an exception");
         }
-
-        final Subscription subscriptionB = clientB.addSubscription(URI_NO_CONFLICT, STREAM_ID);
-        final Subscription subscriptionC = clientC.addSubscription(URI, STREAM_ID);
-
-        while (subscriptionB.channelStatus() == ChannelEndpointStatus.INITIALIZING ||
-            subscriptionC.channelStatus() == ChannelEndpointStatus.INITIALIZING)
+        catch (final RegistrationException ex)
         {
-            Tests.yield();
+            assertThat(ex.getMessage(), containsString(URI_WITH_INTERFACE_PORT));
         }
-
-        verify(errorHandlerClientC, timeout(5000L)).onError(any(ChannelEndpointException.class));
-
-        assertThat(subscriptionC.channelStatus(), is(ChannelEndpointStatus.ERRORED));
-
-        assertThat(subscriptionA.channelStatus(), is(ChannelEndpointStatus.ACTIVE));
-        assertThat(subscriptionB.channelStatus(), is(ChannelEndpointStatus.ACTIVE));
-        assertNull(testException.get());
     }
 }

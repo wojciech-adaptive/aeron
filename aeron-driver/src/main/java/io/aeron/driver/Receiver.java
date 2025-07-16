@@ -227,19 +227,13 @@ public final class Receiver implements Agent
     {
         if (!channelEndpoint.hasDestinationControl())
         {
-            channelEndpoint.openChannel(conductorProxy);
             channelEndpoint.registerForRead(dataTransportPoller);
-            channelEndpoint.indicateActive();
 
             if (channelEndpoint.hasExplicitControl())
             {
                 addPendingSetupMessage(0, 0, 0, channelEndpoint, true, channelEndpoint.explicitControlAddress());
                 channelEndpoint.sendSetupElicitingStatusMessage(0, channelEndpoint.explicitControlAddress(), 0, 0);
             }
-        }
-        else
-        {
-            channelEndpoint.indicateActive();
         }
     }
 
@@ -269,8 +263,6 @@ public final class Receiver implements Agent
 
     void onAddDestination(final ReceiveChannelEndpoint channelEndpoint, final ReceiveDestinationTransport transport)
     {
-        transport.openChannel(conductorProxy, channelEndpoint.statusIndicatorCounter());
-
         final int transportIndex = channelEndpoint.addDestination(transport);
         final SelectionKey key = dataTransportPoller.registerForRead(channelEndpoint, transport, transportIndex);
         transport.selectionKey(key);
