@@ -121,8 +121,8 @@ class ReplicateRecordingTest
             .threadingMode(ThreadingMode.SHARED)
             .spiesSimulateConnection(true)
             .timerIntervalNs(TIMER_INTERVAL_NS)
-            .dirDeleteOnStart(true);
-        srcContext.enableExperimentalFeatures(true);
+            .dirDeleteOnStart(true)
+            .dirDeleteOnShutdown(true);
 
         srcArchiveCtx = new Archive.Context()
             .catalogCapacity(CATALOG_CAPACITY)
@@ -142,8 +142,8 @@ class ReplicateRecordingTest
             .threadingMode(ThreadingMode.SHARED)
             .spiesSimulateConnection(true)
             .timerIntervalNs(TIMER_INTERVAL_NS)
-            .dirDeleteOnStart(true);
-        dstContext.enableExperimentalFeatures(true);
+            .dirDeleteOnStart(true)
+            .dirDeleteOnShutdown(true);
 
         final Archive.Context dstArchiveCtx = new Archive.Context()
             .catalogCapacity(CATALOG_CAPACITY)

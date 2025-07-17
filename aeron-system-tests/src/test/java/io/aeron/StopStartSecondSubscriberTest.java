@@ -76,6 +76,7 @@ class StopStartSecondSubscriberTest
         driverOne = MediaDriver.launchEmbedded(
             new MediaDriver.Context()
                 .dirDeleteOnStart(true)
+                .dirDeleteOnShutdown(true)
                 .errorHandler(Tests::onError)
                 .termBufferSparseFile(true));
         testWatcher.dataCollector().add(driverOne.context().aeronDirectory());
@@ -83,6 +84,7 @@ class StopStartSecondSubscriberTest
         driverTwo = MediaDriver.launchEmbedded(
             new MediaDriver.Context()
                 .dirDeleteOnStart(true)
+                .dirDeleteOnShutdown(true)
                 .errorHandler(Tests::onError)
                 .termBufferSparseFile(true));
         testWatcher.dataCollector().add(driverTwo.context().aeronDirectory());

@@ -62,8 +62,8 @@ public class MdsAndMdcInteractionTest
     {
         final MediaDriver.Context context = new MediaDriver.Context()
             .publicationTermBufferLength(LogBufferDescriptor.TERM_MIN_LENGTH)
+            .dirDeleteOnShutdown(true)
             .threadingMode(ThreadingMode.SHARED);
-        context.enableExperimentalFeatures(true);
 
         driver = TestMediaDriver.launch(context, watcher);
         watcher.dataCollector().add(driver.context().aeronDirectory());

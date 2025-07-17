@@ -101,11 +101,13 @@ class MultiDestinationCastTest
         driverAContext.errorHandler(errorHandler)
             .publicationTermBufferLength(TERM_BUFFER_LENGTH)
             .aeronDirectoryName(baseDirA)
+            .dirDeleteOnShutdown(true)
             .threadingMode(ThreadingMode.SHARED);
 
         driverBContext.publicationTermBufferLength(TERM_BUFFER_LENGTH)
             .errorHandler(errorHandler)
             .aeronDirectoryName(baseDirB)
+            .dirDeleteOnShutdown(true)
             .threadingMode(ThreadingMode.SHARED);
 
         driverA = TestMediaDriver.launch(driverAContext, testWatcher);

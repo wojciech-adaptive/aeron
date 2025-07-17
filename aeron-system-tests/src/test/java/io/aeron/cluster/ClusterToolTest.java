@@ -400,8 +400,9 @@ class ClusterToolTest
     void listMembersShouldReturnFalseIfQueryTimesOut(@TempDir final Path clusterDir)
     {
         final SystemEpochClock clock = SystemEpochClock.INSTANCE;
-        try (MediaDriver driver = MediaDriver.launch(
-            new MediaDriver.Context().aeronDirectoryName(CommonContext.generateRandomDirName()));
+        try (MediaDriver driver = MediaDriver.launch(new MediaDriver.Context()
+            .aeronDirectoryName(CommonContext.generateRandomDirName())
+            .dirDeleteOnShutdown(true));
             ClusterMarkFile clusterMarkFile = new ClusterMarkFile(
                 clusterDir.resolve(ClusterMarkFile.FILENAME).toFile(),
                 ClusterComponentType.BACKUP,

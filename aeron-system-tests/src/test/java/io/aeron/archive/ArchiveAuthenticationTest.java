@@ -15,7 +15,11 @@
  */
 package io.aeron.archive;
 
-import io.aeron.*;
+import io.aeron.Aeron;
+import io.aeron.ChannelUriStringBuilder;
+import io.aeron.CommonContext;
+import io.aeron.Publication;
+import io.aeron.Subscription;
 import io.aeron.archive.client.AeronArchive;
 import io.aeron.archive.client.ArchiveException;
 import io.aeron.driver.MediaDriver;
@@ -36,14 +40,15 @@ import org.agrona.SystemUtil;
 import org.agrona.collections.MutableLong;
 import org.agrona.concurrent.status.CountersReader;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.File;
 
-import static io.aeron.archive.ArchiveSystemTests.*;
+import static io.aeron.archive.ArchiveSystemTests.CATALOG_CAPACITY;
+import static io.aeron.archive.ArchiveSystemTests.consume;
+import static io.aeron.archive.ArchiveSystemTests.offer;
 import static io.aeron.archive.codecs.SourceLocation.LOCAL;
 import static io.aeron.security.NullCredentialsSupplier.NULL_CREDENTIAL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -76,11 +81,6 @@ class ArchiveAuthenticationTest
 
     @RegisterExtension
     final SystemTestWatcher systemTestWatcher = new SystemTestWatcher();
-
-    @BeforeEach
-    void setUp()
-    {
-    }
 
     @AfterEach
     void after()
@@ -359,7 +359,8 @@ class ArchiveAuthenticationTest
             .termBufferSparseFile(true)
             .threadingMode(ThreadingMode.SHARED)
             .spiesSimulateConnection(false)
-            .dirDeleteOnStart(true);
+            .dirDeleteOnStart(true)
+            .dirDeleteOnShutdown(true);
 
         final Archive.Context archiveCtx = TestContexts.localhostArchive()
             .catalogCapacity(CATALOG_CAPACITY)

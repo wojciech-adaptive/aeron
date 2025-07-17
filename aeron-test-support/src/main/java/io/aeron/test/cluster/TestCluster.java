@@ -300,10 +300,9 @@ public final class TestCluster implements AutoCloseable
             .termBufferSparseFile(true)
             .senderWildcardPortRange(senderWildcardPortRanges[index])
             .receiverWildcardPortRange(receiverWildcardPortRanges[index])
-            .dirDeleteOnShutdown(false)
+            .dirDeleteOnShutdown(true)
             .dirDeleteOnStart(true)
-            .imageLivenessTimeoutNs(imageLivenessTimeoutNs)
-            .enableExperimentalFeatures(useResponseChannels);
+            .imageLivenessTimeoutNs(imageLivenessTimeoutNs);
 
         context.archiveContext
             .archiveId(index)
@@ -392,9 +391,8 @@ public final class TestCluster implements AutoCloseable
             .senderWildcardPortRange(senderWildcardPortRanges[index])
             .receiverWildcardPortRange(receiverWildcardPortRanges[index])
             .dirDeleteOnStart(true)
-            .dirDeleteOnShutdown(false)
-            .nameResolver(new RedirectingNameResolver(nodeNameMappings(index)))
-            .enableExperimentalFeatures(useResponseChannels);
+            .dirDeleteOnShutdown(true)
+            .nameResolver(new RedirectingNameResolver(nodeNameMappings(index)));
 
         context.archiveContext
             .archiveId(index)
@@ -474,7 +472,7 @@ public final class TestCluster implements AutoCloseable
             .senderWildcardPortRange(senderWildcardPortRanges[backupNodeIndex])
             .receiverWildcardPortRange(receiverWildcardPortRanges[backupNodeIndex])
             .dirDeleteOnStart(true)
-            .enableExperimentalFeatures(useResponseChannels);
+            .dirDeleteOnShutdown(true);
 
         context.archiveContext
             .catalogCapacity(CATALOG_CAPACITY)
@@ -656,15 +654,14 @@ public final class TestCluster implements AutoCloseable
             final MediaDriver.Context ctx = new MediaDriver.Context()
                 .threadingMode(ThreadingMode.SHARED)
                 .dirDeleteOnStart(true)
-                .dirDeleteOnShutdown(false)
+                .dirDeleteOnShutdown(true)
                 .aeronDirectoryName(aeronDirName)
                 .nameResolver(new RedirectingNameResolver(nodeNameMappings()))
                 .senderWildcardPortRange("20700 20709")
                 .receiverWildcardPortRange("20710 20719")
                 .sendChannelEndpointSupplier(clientSendChannelEndpointSupplier)
                 .receiveChannelEndpointSupplier(clientReceiveChannelEndpointSupplier)
-                .imageLivenessTimeoutNs(clientImageLivenessTimeoutNs)
-                .enableExperimentalFeatures(useResponseChannels);
+                .imageLivenessTimeoutNs(clientImageLivenessTimeoutNs);
 
             clientMediaDriver = TestMediaDriver.launch(ctx, clientDriverOutputConsumer(dataCollector));
         }
@@ -706,13 +703,12 @@ public final class TestCluster implements AutoCloseable
             final MediaDriver.Context ctx = new MediaDriver.Context()
                 .threadingMode(ThreadingMode.INVOKER)
                 .dirDeleteOnStart(true)
-                .dirDeleteOnShutdown(false)
+                .dirDeleteOnShutdown(true)
                 .aeronDirectoryName(aeronDirName)
                 .nameResolver(new RedirectingNameResolver(nodeNameMappings()))
                 .sendChannelEndpointSupplier(clientSendChannelEndpointSupplier)
                 .receiveChannelEndpointSupplier(clientReceiveChannelEndpointSupplier)
-                .imageLivenessTimeoutNs(clientImageLivenessTimeoutNs)
-                .enableExperimentalFeatures(useResponseChannels);
+                .imageLivenessTimeoutNs(clientImageLivenessTimeoutNs);
 
             clientMediaDriver = TestMediaDriver.launch(ctx, clientDriverOutputConsumer(dataCollector));
         }

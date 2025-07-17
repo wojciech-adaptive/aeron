@@ -59,6 +59,7 @@ class BusySocketTest
     {
         driver1 = TestMediaDriver.launch(new MediaDriver.Context()
             .aeronDirectoryName(CommonContext.generateRandomDirName())
+            .dirDeleteOnShutdown(true)
             .threadingMode(ThreadingMode.SHARED), testWatcher);
     }
 
@@ -76,6 +77,7 @@ class BusySocketTest
     {
         driver2 = TestMediaDriver.launch(new MediaDriver.Context()
             .aeronDirectoryName(CommonContext.generateRandomDirName())
+            .dirDeleteOnShutdown(true)
             .threadingMode(threadingMode), testWatcher);
 
         final int streamId = 10001;
@@ -131,6 +133,7 @@ class BusySocketTest
     {
         driver2 = TestMediaDriver.launch(new MediaDriver.Context()
             .aeronDirectoryName(CommonContext.generateRandomDirName())
+            .dirDeleteOnShutdown(true)
             .threadingMode(threadingMode), testWatcher);
 
         final int streamId = 10001;
@@ -192,6 +195,7 @@ class BusySocketTest
     {
         driver2 = TestMediaDriver.launch(new MediaDriver.Context()
             .aeronDirectoryName(CommonContext.generateRandomDirName())
+            .dirDeleteOnShutdown(true)
             .threadingMode(threadingMode), testWatcher);
 
 
@@ -242,6 +246,7 @@ class BusySocketTest
     {
         driver2 = TestMediaDriver.launch(new MediaDriver.Context()
             .aeronDirectoryName(CommonContext.generateRandomDirName())
+            .dirDeleteOnShutdown(true)
             .threadingMode(ThreadingMode.DEDICATED), testWatcher);
 
         final int streamId = 10001;

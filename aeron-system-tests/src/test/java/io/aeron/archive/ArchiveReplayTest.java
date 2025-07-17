@@ -58,7 +58,6 @@ public class ArchiveReplayTest
             .sharedIdleStrategy(YieldingIdleStrategy.INSTANCE)
             .spiesSimulateConnection(true)
             .dirDeleteOnStart(true);
-        driverCtx.enableExperimentalFeatures(true);
 
         final Archive.Context archiveContext = TestContexts.localhostArchive()
             .aeronDirectoryName(driverCtx.aeronDirectoryName())

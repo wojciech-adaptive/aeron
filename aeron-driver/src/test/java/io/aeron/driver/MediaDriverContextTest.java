@@ -361,7 +361,10 @@ class MediaDriverContextTest
     {
         final Path dir = Paths.get(CommonContext.generateRandomDirName());
         Files.createDirectories(dir);
-        context.aeronDirectoryName(dir.toString()).filePageSize(filePageSize);
+        context
+            .aeronDirectoryName(dir.toString())
+            .dirDeleteOnShutdown(true)
+            .filePageSize(filePageSize);
 
         context.conclude();
 

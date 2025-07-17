@@ -76,9 +76,9 @@ public class ResponseChannelsTest
     {
         final MediaDriver.Context context = new MediaDriver.Context()
             .aeronDirectoryName(generateRandomDirName())
+            .dirDeleteOnShutdown(true)
             .publicationTermBufferLength(LogBufferDescriptor.TERM_MIN_LENGTH)
-            .threadingMode(ThreadingMode.SHARED)
-            .enableExperimentalFeatures(true);
+            .threadingMode(ThreadingMode.SHARED);
 
         driver1 = TestMediaDriver.launch(
             context.clone().aeronDirectoryName(context.aeronDirectoryName() + "-1"), watcher);

@@ -899,10 +899,10 @@ class ArchiveTest
         final ErrorHandler errorHandler = mock(ErrorHandler.class);
         try (MediaDriver driver = MediaDriver.launch(new MediaDriver.Context()
             .aeronDirectoryName(generateRandomDirName())
+            .dirDeleteOnShutdown(true)
             .statusMessageTimeoutNs(TimeUnit.MILLISECONDS.toNanos(80))
             .imageLivenessTimeoutNs(TimeUnit.MILLISECONDS.toNanos(1000))
-            .timerIntervalNs(TimeUnit.MILLISECONDS.toNanos(100))
-            .enableExperimentalFeatures(true));
+            .timerIntervalNs(TimeUnit.MILLISECONDS.toNanos(100)));
             Archive archive = Archive.launch(TestContexts.localhostArchive()
                 .controlChannel("aeron:udp?endpoint=localhost:8010")
                 .localControlChannel("aeron:ipc?term-length=64k")
@@ -1019,6 +1019,7 @@ class ArchiveTest
     {
         final MediaDriver.Context driverCtx = new MediaDriver.Context()
             .aeronDirectoryName(CommonContext.generateRandomDirName())
+            .dirDeleteOnShutdown(true)
             .threadingMode(ThreadingMode.SHARED);
 
         final Archive.Context archiveCtx = TestContexts.localhostArchive()
@@ -1052,6 +1053,7 @@ class ArchiveTest
     {
         final MediaDriver.Context driverCtx = new MediaDriver.Context()
             .aeronDirectoryName(CommonContext.generateRandomDirName())
+            .dirDeleteOnShutdown(true)
             .threadingMode(ThreadingMode.SHARED);
 
         final Archive.Context archiveCtx = TestContexts.localhostArchive()

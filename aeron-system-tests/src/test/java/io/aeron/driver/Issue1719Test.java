@@ -63,7 +63,8 @@ class Issue1719Test
             .termBufferSparseFile(true)
             .threadingMode(ThreadingMode.SHARED)
             .spiesSimulateConnection(false)
-            .dirDeleteOnStart(true);
+            .dirDeleteOnStart(true)
+            .dirDeleteOnShutdown(true);
 
         driver = TestMediaDriver.launch(driverCtx, systemTestWatcher);
         systemTestWatcher.dataCollector().add(driverCtx.aeronDirectory());

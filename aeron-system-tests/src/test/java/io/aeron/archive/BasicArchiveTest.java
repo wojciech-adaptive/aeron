@@ -45,6 +45,7 @@ import io.aeron.test.TestContexts;
 import io.aeron.test.Tests;
 import io.aeron.test.driver.TestMediaDriver;
 import org.agrona.CloseHelper;
+import org.agrona.IoUtil;
 import org.agrona.SystemUtil;
 import org.agrona.collections.Hashing;
 import org.agrona.collections.Long2LongHashMap;
@@ -130,7 +131,8 @@ class BasicArchiveTest
             .termBufferSparseFile(true)
             .threadingMode(ThreadingMode.SHARED)
             .spiesSimulateConnection(false)
-            .dirDeleteOnStart(true);
+            .dirDeleteOnStart(true)
+            .dirDeleteOnShutdown(true);
 
         archiveDir = new File(SystemUtil.tmpDirName(), "archive");
 
@@ -164,6 +166,7 @@ class BasicArchiveTest
     void after()
     {
         CloseHelper.closeAll(aeronArchive, aeron, archive, driver);
+        IoUtil.delete(archiveDir, false);
     }
 
     @Test

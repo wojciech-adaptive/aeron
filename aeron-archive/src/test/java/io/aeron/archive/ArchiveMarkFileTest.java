@@ -535,6 +535,7 @@ class ArchiveMarkFileTest
         final int filePageSize = 2 * 1024 * 1024;
         final MediaDriver.Context mediaDriverContext = new MediaDriver.Context()
             .aeronDirectoryName(CommonContext.generateRandomDirName())
+            .dirDeleteOnShutdown(true)
             .threadingMode(ThreadingMode.SHARED)
             .filePageSize(filePageSize);
 

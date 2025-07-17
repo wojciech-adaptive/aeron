@@ -52,6 +52,7 @@ public class FilePageSizeTest
             .dirDeleteOnShutdown(true)
             .threadingMode(ThreadingMode.SHARED)
             .aeronDirectoryName(generateRandomDirName())
+            .dirDeleteOnShutdown(true)
             .filePageSize(filePageSize), systemTestWatcher);
 
         systemTestWatcher.dataCollector().add(driver.context().aeronDirectory());

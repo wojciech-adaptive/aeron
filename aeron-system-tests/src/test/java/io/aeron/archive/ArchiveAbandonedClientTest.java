@@ -68,7 +68,6 @@ public class ArchiveAbandonedClientTest
             .sharedIdleStrategy(YieldingIdleStrategy.INSTANCE)
             .spiesSimulateConnection(true)
             .dirDeleteOnStart(true)
-            .enableExperimentalFeatures(true)
             .threadingMode(ThreadingMode.SHARED);
 
         driver = TestMediaDriver.launch(driverCtx, systemTestWatcher);

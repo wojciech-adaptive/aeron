@@ -236,6 +236,7 @@ class ClusterBackupContextTest
         final int filePageSize = 1024 * 1024;
         try (MediaDriver driver = MediaDriver.launch(new MediaDriver.Context()
             .aeronDirectoryName(aeronDir.toString())
+            .dirDeleteOnShutdown(true)
             .threadingMode(ThreadingMode.SHARED)
             .filePageSize(filePageSize)))
         {

@@ -274,7 +274,7 @@ class ClusterNetworkTopologyTest
             };
 
         try (
-            MediaDriver mediaDriver = MediaDriver.launchEmbedded(new MediaDriver.Context()
+            MediaDriver mediaDriver = MediaDriver.launch(new MediaDriver.Context()
                 .threadingMode(ThreadingMode.SHARED)
                 .dirDeleteOnStart(true)
                 .dirDeleteOnShutdown(true));

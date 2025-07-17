@@ -27,6 +27,7 @@ import io.aeron.test.SystemTestWatcher;
 import io.aeron.test.TestContexts;
 import io.aeron.test.driver.TestMediaDriver;
 import org.agrona.CloseHelper;
+import org.agrona.IoUtil;
 import org.agrona.collections.MutableInteger;
 import org.agrona.concurrent.CachedEpochClock;
 import org.junit.jupiter.api.AfterEach;
@@ -126,7 +127,8 @@ class CatalogWithJumboRecordingsAndGapsTest
             .spiesSimulateConnection(false)
             .publicationTermBufferLength(TERM_MIN_LENGTH)
             .ipcTermBufferLength(TERM_MIN_LENGTH)
-            .dirDeleteOnStart(true);
+            .dirDeleteOnStart(true)
+            .dirDeleteOnShutdown(true);
 
         final Archive.Context archiveCtx = TestContexts.localhostArchive()
             .catalogCapacity(ArchiveSystemTests.CATALOG_CAPACITY)
@@ -153,6 +155,7 @@ class CatalogWithJumboRecordingsAndGapsTest
     void after()
     {
         CloseHelper.closeAll(aeronArchive, aeron, archive, mediaDriver);
+        IoUtil.delete(archiveDir, false);
     }
 
     @Test

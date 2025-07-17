@@ -117,7 +117,8 @@ class ExtendRecordingTest
             .termBufferSparseFile(true)
             .threadingMode(ThreadingMode.SHARED)
             .spiesSimulateConnection(false)
-            .dirDeleteOnStart(true);
+            .dirDeleteOnStart(true)
+            .dirDeleteOnShutdown(true);
 
         final Archive.Context archiveCtx = TestContexts.localhostArchive()
             .catalogCapacity(ArchiveSystemTests.CATALOG_CAPACITY)

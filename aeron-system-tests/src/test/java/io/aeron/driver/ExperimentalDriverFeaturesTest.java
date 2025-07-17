@@ -35,8 +35,8 @@ public class ExperimentalDriverFeaturesTest
     {
         final MediaDriver.Context context = new MediaDriver.Context()
             .publicationTermBufferLength(LogBufferDescriptor.TERM_MIN_LENGTH)
-            .threadingMode(ThreadingMode.SHARED);
-        context.enableExperimentalFeatures(false);
+            .threadingMode(ThreadingMode.SHARED)
+            .dirDeleteOnShutdown(true);
 
         driver = TestMediaDriver.launch(context, watcher);
         watcher.dataCollector().add(driver.context().aeronDirectory());
