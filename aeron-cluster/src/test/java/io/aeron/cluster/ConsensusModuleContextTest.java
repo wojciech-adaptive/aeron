@@ -912,8 +912,8 @@ class ConsensusModuleContextTest
     @ParameterizedTest
     @CsvSource({
         "aeron:ipc,aeron:ipc?term-length=64k|mtu=8k," +
-            "aeron:ipc?alias=cm-archive-ctrl-req-cluster--65," +
-            "aeron:ipc?term-length=64k|mtu=8k|alias=cm-archive-ctrl-resp-cluster--65",
+            "aeron:ipc?alias=cm-archive-ctrl-req-cluster--65-member-0," +
+            "aeron:ipc?term-length=64k|mtu=8k|alias=cm-archive-ctrl-resp-cluster--65-member-0",
         "aeron:ipc?alias=x,aeron:ipc?alias=y,aeron:ipc?alias=x,aeron:ipc?alias=y"
     })
     void shouldCreateAliasForControlStreamsEvenWhenArchiveContextAssignedExplicitly(
