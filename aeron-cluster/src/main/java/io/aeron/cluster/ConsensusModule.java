@@ -1957,9 +1957,11 @@ public final class ConsensusModule implements AutoCloseable
                 .ownsAeronClient(false)
                 .lock(NoOpLock.INSTANCE)
                 .controlRequestChannel(addAliasIfAbsent(
-                archiveContext.controlRequestChannel(), "cm-archive-ctrl-req-cluster-" + clusterId))
+                archiveContext.controlRequestChannel(),
+                "cm-archive-ctrl-req-cluster-" + clusterId + "-member-" + clusterMemberId))
                 .controlResponseChannel(addAliasIfAbsent(
-                archiveContext.controlResponseChannel(), "cm-archive-ctrl-resp-cluster-" + clusterId));
+                archiveContext.controlResponseChannel(),
+                "cm-archive-ctrl-resp-cluster-" + clusterId + "-member-" + clusterMemberId));
 
             if (null == shutdownSignalBarrier)
             {

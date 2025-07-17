@@ -17,6 +17,7 @@ package io.aeron.test.cluster;
 
 import io.aeron.Aeron;
 import io.aeron.ChannelUri;
+import io.aeron.ChannelUriStringBuilder;
 import io.aeron.CommonContext;
 import io.aeron.Counter;
 import io.aeron.Publication;
@@ -1694,10 +1695,16 @@ public final class TestCluster implements AutoCloseable
                 .consensusModule()
                 .context()
                 .archiveContext()
-                .clone()
+                .clone();
+
+            aeronArchiveCtx
                 .recordingSignalConsumer(deleteSignalConsumer)
                 .aeron(aeron)
-                .ownsAeronClient(false);
+                .ownsAeronClient(false)
+                .controlResponseStreamId(10000 + node.index())
+                .controlResponseChannel(new ChannelUriStringBuilder(aeronArchiveCtx.controlResponseChannel())
+                .alias("purge-log-node-" + node.index())
+                .build());
 
             try (AeronArchive aeronArchive = AeronArchive.connect(aeronArchiveCtx))
             {
