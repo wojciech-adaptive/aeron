@@ -18,6 +18,7 @@ package io.aeron.cluster;
 import io.aeron.ExclusivePublication;
 import io.aeron.Image;
 import io.aeron.Publication;
+import io.aeron.api.InternalApi;
 import io.aeron.cluster.codecs.CloseReason;
 import io.aeron.cluster.service.Cluster;
 import io.aeron.logbuffer.ControlledFragmentHandler;
@@ -29,6 +30,7 @@ import org.agrona.concurrent.AgentTerminationException;
  * Extension for handling messages from external schemas unknown to core Aeron Cluster code
  * thus providing an extension to the core ingress consensus module behaviour.
  */
+@InternalApi
 public interface ConsensusModuleExtension extends AutoCloseable
 {
     /**
