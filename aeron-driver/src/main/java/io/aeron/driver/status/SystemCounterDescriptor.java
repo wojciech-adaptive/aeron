@@ -30,8 +30,8 @@ import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_CLIENT_TIMEOUTS;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_CONDUCTOR_CYCLE_TIME_THRESHOLD_EXCEEDED;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_CONDUCTOR_MAX_CYCLE_TIME;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_CONDUCTOR_PROXY_FAILS;
-import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_SENDER_MAX_CYCLE_TIME;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_CONTROLLABLE_IDLE_STRATEGY;
+import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_ERRORS;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_ERROR_FRAMES_RECEIVED;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_ERROR_FRAMES_SENT;
@@ -59,6 +59,7 @@ import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_RETRANSMITTED_BYTES;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_RETRANSMIT_OVERFLOW;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_SENDER_CYCLE_TIME_THRESHOLD_EXCEEDED;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_SENDER_FLOW_CONTROL_LIMITS;
+import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_SENDER_MAX_CYCLE_TIME;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_SENDER_PROXY_FAILS;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_SHORT_SENDS;
 import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_STATUS_MESSAGES_RECEIVED;
@@ -240,23 +241,31 @@ public enum SystemCounterDescriptor
 
     /**
      * The maximum time spent by the NameResolver in one of its operations.
+     *
+     * @since 1.41.0
      */
     NAME_RESOLVER_MAX_TIME(SYSTEM_COUNTER_ID_NAME_RESOLVER_MAX_TIME, "NameResolver max time in ns"),
 
     /**
      * Count of the number of times the time threshold has been exceeded by the NameResolver.
+     *
+     * @since 1.41.0
      */
     NAME_RESOLVER_TIME_THRESHOLD_EXCEEDED(SYSTEM_COUNTER_ID_NAME_RESOLVER_TIME_THRESHOLD_EXCEEDED,
         "NameResolver exceeded threshold count"),
 
     /**
      * The version of the media driver.
+     *
+     * @since 1.43.0
      */
     AERON_VERSION(SYSTEM_COUNTER_ID_AERON_VERSION, "Aeron software: " +
         AeronCounters.formatVersionInfo(MediaDriverVersion.VERSION, MediaDriverVersion.GIT_SHA)),
 
     /**
      * The total number of bytes currently mapped in log buffers, CnC file, and loss report.
+     *
+     * @since 1.44.0
      */
     BYTES_CURRENTLY_MAPPED(SYSTEM_COUNTER_ID_BYTES_CURRENTLY_MAPPED, "Bytes currently mapped"),
 
@@ -268,38 +277,59 @@ public enum SystemCounterDescriptor
      * <p>
      * Note that retransmitted bytes are not included in the {@link SystemCounterDescriptor#BYTES_SENT}
      * counter value. We may change this in the future.
+     *
+     * @since 1.45.0
      */
     RETRANSMITTED_BYTES(SYSTEM_COUNTER_ID_RETRANSMITTED_BYTES, "Retransmitted bytes"),
 
     /**
      * A count of the number of times that the retransmit pool has been overflowed.
+     *
+     * @since 1.45.0
      */
     RETRANSMIT_OVERFLOW(SYSTEM_COUNTER_ID_RETRANSMIT_OVERFLOW, "Retransmit Pool Overflow count"),
 
     /**
      * A count of the number of error frames received by this driver.
+     *
+     * @since 1.47.0
      */
     ERROR_FRAMES_RECEIVED(SYSTEM_COUNTER_ID_ERROR_FRAMES_RECEIVED, "Error Frames received"),
 
     /**
      * A count of the number of error frames sent by this driver.
+     *
+     * @since 1.47.0
      */
     ERROR_FRAMES_SENT(SYSTEM_COUNTER_ID_ERROR_FRAMES_SENT, "Error Frames sent"),
 
     /**
      * A count of the number of publications that have been revoked.
+     *
+     * @since 1.48.0
      */
     PUBLICATIONS_REVOKED(SYSTEM_COUNTER_ID_PUBLICATIONS_REVOKED, "Publications Revoked"),
 
     /**
      * A count of the number of publication images that have been revoked.
+     *
+     * @since 1.48.0
      */
     PUBLICATION_IMAGES_REVOKED(SYSTEM_COUNTER_ID_PUBLICATION_IMAGES_REVOKED, "Publication Images Revoked"),
 
     /**
      * A count of the number of images that have been rejected.
+     *
+     * @since 1.48.0
      */
-    IMAGES_REJECTED(SYSTEM_COUNTER_ID_IMAGES_REJECTED, "Images rejected");
+    IMAGES_REJECTED(SYSTEM_COUNTER_ID_IMAGES_REJECTED, "Images rejected"),
+
+    /**
+     * The semantic version of the control protocol between clients and media driver.
+     *
+     * @since 1.49.0
+     */
+    CONTROL_PROTOCOL_VERSION(SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION, "Control protocol version");
 
     /**
      * All system counters have the same type id, i.e. system counters are the same type. Other types can exist.

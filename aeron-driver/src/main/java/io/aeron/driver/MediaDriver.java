@@ -18,6 +18,7 @@ package io.aeron.driver;
 import io.aeron.Aeron;
 import io.aeron.CncFileDescriptor;
 import io.aeron.CommonContext;
+import io.aeron.command.ControlProtocolEvents;
 import io.aeron.config.Config;
 import io.aeron.driver.buffer.FileStoreLogFactory;
 import io.aeron.driver.buffer.LogFactory;
@@ -4226,6 +4227,7 @@ public final class MediaDriver implements AutoCloseable
             final int aeronVersion = SemanticVersion.compose(
                 MediaDriverVersion.MAJOR_VERSION, MediaDriverVersion.MINOR_VERSION, MediaDriverVersion.PATCH_VERSION);
             systemCounters.get(AERON_VERSION).set(aeronVersion);
+            systemCounters.get(CONTROL_PROTOCOL_VERSION).set(ControlProtocolEvents.CONTROL_PROTOCOL_SEMANTIC_VERSION);
         }
 
         @SuppressWarnings("MethodLength")

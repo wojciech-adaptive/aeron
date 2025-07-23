@@ -15,11 +15,42 @@
  */
 package io.aeron.command;
 
+import org.agrona.SemanticVersion;
+
 /**
  * List of events used in the control protocol between client and the media driver.
  */
 public class ControlProtocolEvents
 {
+    /**
+     * Major version of the control protocol between client and the media driver.
+     *
+     * @since 1.49.0
+     */
+    public static final int CONTROL_PROTOCOL_MAJOR_VERSION = 1;
+
+    /**
+     * Minor version of the control protocol between client and the media driver.
+     *
+     * @since 1.49.0
+     */
+    public static final int CONTROL_PROTOCOL_MINOR_VERSION = 0;
+
+    /**
+     * Patch version of the control protocol between client and the media driver.
+     *
+     * @since 1.49.0
+     */
+    public static final int CONTROL_PROTOCOL_PATCH_VERSION = 0;
+
+    /**
+     * Semantic version of the control protocol between clients and media driver.
+     *
+     * @since 1.49.0
+     */
+    public static final int CONTROL_PROTOCOL_SEMANTIC_VERSION = SemanticVersion.compose(
+        CONTROL_PROTOCOL_MAJOR_VERSION, CONTROL_PROTOCOL_MINOR_VERSION, CONTROL_PROTOCOL_PATCH_VERSION);
+
     // Clients to Media Driver
 
     /**
@@ -171,6 +202,7 @@ public class ControlProtocolEvents
 
     /**
      * Inform clients of error frame received by publication.
+     *
      * @since 1.47.0
      */
     public static final int ON_PUBLICATION_ERROR = 0x0F0C;

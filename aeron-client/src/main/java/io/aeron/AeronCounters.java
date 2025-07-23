@@ -302,6 +302,14 @@ public final class AeronCounters
     @AeronCounter
     public static final int SYSTEM_COUNTER_ID_IMAGES_REJECTED = 42;
 
+    /**
+     * Counter id for the control protocol between clients and media driver.
+     *
+     * @since 1.49.0
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION = 43;
+
     // Client/driver counters
     /**
      * System-wide counters for monitoring. These are separate from counters used for position tracking on streams.
