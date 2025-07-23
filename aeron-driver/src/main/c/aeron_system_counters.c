@@ -19,7 +19,6 @@
 #include "util/aeron_error.h"
 #include "aeron_system_counters.h"
 #include "aeron_alloc.h"
-#include "aeron_counters.h"
 
 static aeron_system_counter_t system_counters[] =
     {
