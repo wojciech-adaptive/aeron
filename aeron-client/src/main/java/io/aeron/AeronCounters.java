@@ -40,6 +40,268 @@ import static org.agrona.BitUtil.SIZE_OF_INT;
  */
 public final class AeronCounters
 {
+    // System counter IDs to be accessed outside the driver.
+    /**
+     * Counter id for bytes sent over the network.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_BYTES_SENT = 0;
+
+    /**
+     * Counter id for bytes sent over the network.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_BYTES_RECEIVED = 1;
+
+    /**
+     * Counter id for failed offers to the receiver proxy.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_RECEIVER_PROXY_FAILS = 2;
+
+    /**
+     * Counter id for failed offers to the sender proxy.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_SENDER_PROXY_FAILS = 3;
+
+    /**
+     * Counter id for failed offers to the conductor proxy.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_CONDUCTOR_PROXY_FAILS = 4;
+
+    /**
+     * Counter id for NAKs sent back to senders requesting re-transmits.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_NAK_MESSAGES_SENT = 5;
+
+    /**
+     * Counter id for NAKs received from receivers requesting re-transmits.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_NAK_MESSAGES_RECEIVED = 6;
+
+    /**
+     * Counter id for status messages sent back to senders for flow control.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_STATUS_MESSAGES_SENT = 7;
+
+    /**
+     * Counter id for status messages received from receivers for flow control.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_STATUS_MESSAGES_RECEIVED = 8;
+
+    /**
+     * Counter id for heartbeat data frames sent to indicate liveness in the absence of data to send.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_HEARTBEATS_SENT = 9;
+
+    /**
+     * Counter id for heartbeat data frames received to indicate liveness in the absence of data to send.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_HEARTBEATS_RECEIVED = 10;
+
+    /**
+     * Counter id for data packets re-transmitted as a result of NAKs.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_RETRANSMITS_SENT = 11;
+
+    /**
+     * Counter id for packets received which under-run the current flow control window for images.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_FLOW_CONTROL_UNDER_RUNS = 12;
+
+    /**
+     * Counter id for packets received which over-run the current flow control window for images.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_FLOW_CONTROL_OVER_RUNS = 13;
+
+    /**
+     * Counter id for invalid packets received.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_INVALID_PACKETS = 14;
+
+    /**
+     * Counter id for errors observed by the driver and an indication to read the distinct error log.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_ERRORS = 15;
+
+    /**
+     * Counter id for socket send operation which resulted in less than the packet length being sent.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_SHORT_SENDS = 16;
+
+    /**
+     * Counter id for attempts to free log buffers no longer required by the driver which as still held by clients.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_FREE_FAILS = 17;
+
+    /**
+     * Counter id for the times a sender has entered the state of being back-pressured when it could have sent faster.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_SENDER_FLOW_CONTROL_LIMITS = 18;
+
+    /**
+     * Counter id for the times a publication has been unblocked after a client failed to complete an offer within a
+     * timeout.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_UNBLOCKED_PUBLICATIONS = 19;
+
+    /**
+     * Counter id for the times a command has been unblocked after a client failed to complete an offer within a
+     * timeout.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_UNBLOCKED_COMMANDS = 20;
+
+    /**
+     * Counter id for the times the channel endpoint detected a possible TTL asymmetry between its config and new
+     * connection.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_POSSIBLE_TTL_ASYMMETRY = 21;
+
+    /**
+     * Counter id for status of the {@link org.agrona.concurrent.ControllableIdleStrategy} if configured.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_CONTROLLABLE_IDLE_STRATEGY = 22;
+
+    /**
+     * Counter id for the times a loss gap has been filled when NAKs have been disabled.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_LOSS_GAP_FILLS = 23;
+
+    /**
+     * Counter id for the Aeron clients that have timed out without a graceful close.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_CLIENT_TIMEOUTS = 24;
+
+    /**
+     * Counter id for the times a connection endpoint has been re-resolved resulting in a change.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_RESOLUTION_CHANGES = 25;
+
+    /**
+     * Counter id for the maximum time spent by the conductor between work cycles.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_CONDUCTOR_MAX_CYCLE_TIME = 26;
+
+    /**
+     * Counter id for the number of times the cycle time threshold has been exceeded by the conductor in its work cycle.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_CONDUCTOR_CYCLE_TIME_THRESHOLD_EXCEEDED = 27;
+
+    /**
+     * Counter id for the maximum time spent by the sender between work cycles.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_SENDER_MAX_CYCLE_TIME = 28;
+
+    /**
+     * Counter id for the number of times the cycle time threshold has been exceeded by the sender in its work cycle.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_SENDER_CYCLE_TIME_THRESHOLD_EXCEEDED = 29;
+
+    /**
+     * Counter id for the maximum time spent by the receiver between work cycles.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_RECEIVER_MAX_CYCLE_TIME = 30;
+
+    /**
+     * Counter id for the number of times the cycle time threshold has been exceeded by the receiver in its work cycle.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_RECEIVER_CYCLE_TIME_THRESHOLD_EXCEEDED = 31;
+
+    /**
+     * Counter id for the maximum time spent by the NameResolver in one of its operations.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_NAME_RESOLVER_MAX_TIME = 32;
+
+    /**
+     * Counter id for the number of times the time threshold has been exceeded by the NameResolver.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_NAME_RESOLVER_TIME_THRESHOLD_EXCEEDED = 33;
+
+    /**
+     * Counter id for the version of the media driver.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_AERON_VERSION = 34;
+
+    /**
+     * Counter id for the total number of bytes currently mapped in log buffers, CnC file, and loss report.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_BYTES_CURRENTLY_MAPPED = 35;
+
+    /**
+     * Counter id for the minimum bound on the number of bytes re-transmitted as a result of NAKs.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_RETRANSMITTED_BYTES = 36;
+
+    /**
+     * Counter id for the number of times that the retransmit pool has been overflowed.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_RETRANSMIT_OVERFLOW = 37;
+
+    /**
+     * Counter id for the number of error frames received by this driver.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_ERROR_FRAMES_RECEIVED = 38;
+
+    /**
+     * Counter id for the number of error frames sent by this driver.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_ERROR_FRAMES_SENT = 39;
+
+    /**
+     * Counter id for the number of publications that have been revoked.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_PUBLICATIONS_REVOKED = 40;
+
+    /**
+     * Counter id for the number of publication images that have been revoked.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_PUBLICATION_IMAGES_REVOKED = 41;
+
+    /**
+     * Counter id for the number of images that have been rejected.
+     */
+    @AeronCounter
+    public static final int SYSTEM_COUNTER_ID_IMAGES_REJECTED = 42;
+
     // Client/driver counters
     /**
      * System-wide counters for monitoring. These are separate from counters used for position tracking on streams.

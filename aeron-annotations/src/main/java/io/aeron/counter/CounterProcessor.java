@@ -20,13 +20,16 @@ import io.aeron.utility.Processor;
 
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.lang.model.element.*;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * AeronCounter processor.
@@ -34,6 +37,10 @@ import java.util.regex.Pattern;
 @SupportedAnnotationTypes("io.aeron.counter.AeronCounter")
 public class CounterProcessor extends Processor
 {
+
+    private static final String SYSTEM_COUNTER_ID_PREFIX = "SYSTEM_COUNTER_ID_";
+    private static final String TYPE_ID_SUFFIX = "_TYPE_ID";
+
     protected String getEnabledPropertyName()
     {
         return "aeron.build.counterProcessor.enabled";
@@ -65,10 +72,6 @@ public class CounterProcessor extends Processor
                     if (element instanceof VariableElement)
                     {
                         processElement(counterInfoMap, (VariableElement)element);
-                    }
-                    else
-                    {
-                        // TODO
                     }
                 }
                 catch (final Exception e)
@@ -107,14 +110,18 @@ public class CounterProcessor extends Processor
             return;
         }
 
-        final Matcher matcher = Pattern.compile("^([A-Z_]+)_TYPE_ID$").matcher(element.toString());
-        if (!matcher.find())
+        final String name = element.toString();
+        final boolean systemCounterId = name.startsWith(SYSTEM_COUNTER_ID_PREFIX);
+        final boolean typeId = name.endsWith(TYPE_ID_SUFFIX);
+        if (!systemCounterId && !typeId)
         {
             error("unable to determine type and/or id", element);
             return;
         }
 
-        final CounterInfo counterInfo = new CounterInfo(matcher.group(1));
+        final CounterInfo counterInfo = new CounterInfo(systemCounterId ?
+            name.substring(SYSTEM_COUNTER_ID_PREFIX.length()) :
+            name.substring(0, name.length() - TYPE_ID_SUFFIX.length()));
 
         if (null != counterInfoMap.put(counterInfo.name, counterInfo))
         {
@@ -144,11 +151,26 @@ public class CounterProcessor extends Processor
         {
             final StringBuilder builder = new StringBuilder();
 
-            builder.append("AERON_COUNTER_");
+            builder.append("AERON_");
+            if (systemCounterId)
+            {
+                builder.append(SYSTEM_COUNTER_ID_PREFIX);
+            }
+            else
+            {
+                builder.append("COUNTER_");
+            }
 
             if (counter.expectedCName().isEmpty())
             {
-                builder.append(counterInfo.name.replaceAll("^DRIVER_", ""));
+                if (typeId && counterInfo.name.startsWith("DRIVER_"))
+                {
+                    builder.append(counterInfo.name.substring(7));
+                }
+                else
+                {
+                    builder.append(counterInfo.name);
+                }
             }
             else
             {
@@ -157,7 +179,10 @@ public class CounterProcessor extends Processor
                 builder.append(counter.expectedCName());
             }
 
-            builder.append("_TYPE_ID");
+            if (typeId)
+            {
+                builder.append(TYPE_ID_SUFFIX);
+            }
 
             counterInfo.expectedCName = builder.toString();
         }
