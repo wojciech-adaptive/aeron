@@ -39,6 +39,7 @@ class DriverEventsAdapter implements MessageHandler
     private final CounterUpdateFlyweight counterUpdate = new CounterUpdateFlyweight();
     private final ClientTimeoutFlyweight clientTimeout = new ClientTimeoutFlyweight();
     private final StaticCounterFlyweight staticCounter = new StaticCounterFlyweight();
+    private final NextAvailableSessionIdFlyweight nextSessionId = new NextAvailableSessionIdFlyweight();
     private final CopyBroadcastReceiver receiver;
     private final ClientConductor conductor;
     private final LongHashSet asyncCommandIdSet;
@@ -261,7 +262,7 @@ class DriverEventsAdapter implements MessageHandler
                 {
                     final int counterId = staticCounter.counterId();
                     receivedCorrelationId = correlationId;
-                    conductor.onStaticCounter(correlationId, counterId);
+                    conductor.onStaticCounter(counterId);
                 }
                 break;
             }
@@ -271,6 +272,19 @@ class DriverEventsAdapter implements MessageHandler
                 publicationErrorFrame.wrap(buffer, index);
 
                 conductor.onPublicationError(publicationErrorFrame);
+                break;
+            }
+
+            case ON_NEXT_AVAILABLE_SESSION_ID:
+            {
+                nextSessionId.wrap(buffer, index);
+
+                final long correlationId = nextSessionId.correlationId();
+                if (correlationId == activeCorrelationId)
+                {
+                    receivedCorrelationId = correlationId;
+                    conductor.onNextAvailableSessionId(nextSessionId.nextSessionId());
+                }
                 break;
             }
         }

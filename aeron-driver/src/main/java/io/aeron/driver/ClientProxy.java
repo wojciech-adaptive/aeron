@@ -45,6 +45,7 @@ final class ClientProxy
     private final CounterUpdateFlyweight counterUpdate = new CounterUpdateFlyweight();
     private final ClientTimeoutFlyweight clientTimeout = new ClientTimeoutFlyweight();
     private final StaticCounterFlyweight staticCounter = new StaticCounterFlyweight();
+    private final NextAvailableSessionIdFlyweight nextSessionId = new NextAvailableSessionIdFlyweight();
 
     ClientProxy(final BroadcastTransmitter transmitter)
     {
@@ -60,6 +61,7 @@ final class ClientProxy
         counterUpdate.wrap(buffer, 0);
         clientTimeout.wrap(buffer, 0);
         staticCounter.wrap(buffer, 0);
+        nextSessionId.wrap(buffer, 0);
     }
 
     void onError(final long correlationId, final ErrorCode errorCode, final String errorMessage)
@@ -200,6 +202,15 @@ final class ClientProxy
         clientTimeout.clientId(clientId);
 
         transmit(ON_CLIENT_TIMEOUT, buffer, 0, ClientTimeoutFlyweight.LENGTH);
+    }
+
+    void onNextAvailableSessionId(final long correlationId, final int sessionId)
+    {
+        nextSessionId
+            .correlationId(correlationId)
+            .nextSessionId(sessionId);
+
+        transmit(ON_NEXT_AVAILABLE_SESSION_ID, buffer, 0, NextAvailableSessionIdFlyweight.LENGTH);
     }
 
     private void transmit(final int msgTypeId, final DirectBuffer buffer, final int index, final int length)

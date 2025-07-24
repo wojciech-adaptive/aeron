@@ -21,7 +21,8 @@ import static org.agrona.BitUtil.SIZE_OF_INT;
 import static org.agrona.BitUtil.SIZE_OF_LONG;
 
 /**
- * Message to denote a response to a create static counter request.
+ * Message to denote a response to get next session id command
+ * ({@link ControlProtocolEvents#ON_NEXT_AVAILABLE_SESSION_ID}).
  *
  * @see ControlProtocolEvents
  * <pre>
@@ -31,18 +32,19 @@ import static org.agrona.BitUtil.SIZE_OF_LONG;
  *  |                         Correlation ID                        |
  *  |                                                               |
  *  +---------------------------------------------------------------+
- *  |                           Counter ID                          |
+*  |                         Next Session ID                        |
  *  +---------------------------------------------------------------+
  * </pre>
+ * @since 1.49.0
  */
-public class StaticCounterFlyweight
+public class NextAvailableSessionIdFlyweight
 {
+    private static final int CORRELATION_ID_OFFSET = 0;
+    private static final int SESSION_ID_OFFSET = CORRELATION_ID_OFFSET + SIZE_OF_LONG;
     /**
      * Length of the header.
      */
-    public static final int LENGTH = SIZE_OF_LONG + SIZE_OF_INT;
-    private static final int CORRELATION_ID_OFFSET = 0;
-    private static final int COUNTER_ID_OFFSET = CORRELATION_ID_OFFSET + SIZE_OF_LONG;
+    public static final int LENGTH = SESSION_ID_OFFSET + SIZE_OF_INT;
 
     private MutableDirectBuffer buffer;
     private int offset;
@@ -54,7 +56,7 @@ public class StaticCounterFlyweight
      * @param offset at which the message begins.
      * @return this for a fluent API.
      */
-    public final StaticCounterFlyweight wrap(final MutableDirectBuffer buffer, final int offset)
+    public final NextAvailableSessionIdFlyweight wrap(final MutableDirectBuffer buffer, final int offset)
     {
         this.buffer = buffer;
         this.offset = offset;
@@ -78,7 +80,7 @@ public class StaticCounterFlyweight
      * @param correlationId field value.
      * @return this for a fluent API.
      */
-    public StaticCounterFlyweight correlationId(final long correlationId)
+    public NextAvailableSessionIdFlyweight correlationId(final long correlationId)
     {
         buffer.putLong(offset + CORRELATION_ID_OFFSET, correlationId);
 
@@ -86,24 +88,24 @@ public class StaticCounterFlyweight
     }
 
     /**
-     * The counter id.
+     * The session id.
      *
-     * @return counter id.
+     * @return session id.
      */
-    public int counterId()
+    public int nextSessionId()
     {
-        return buffer.getInt(offset + COUNTER_ID_OFFSET);
+        return buffer.getInt(offset + SESSION_ID_OFFSET);
     }
 
     /**
-     * Set counter id field.
+     * Set session id field.
      *
-     * @param counterId field value.
+     * @param sessionId field value.
      * @return this for a fluent API.
      */
-    public StaticCounterFlyweight counterId(final int counterId)
+    public NextAvailableSessionIdFlyweight nextSessionId(final int sessionId)
     {
-        buffer.putInt(offset + COUNTER_ID_OFFSET, counterId);
+        buffer.putInt(offset + SESSION_ID_OFFSET, sessionId);
 
         return this;
     }
@@ -113,9 +115,9 @@ public class StaticCounterFlyweight
      */
     public String toString()
     {
-        return "StaticCounterFlyweight{" +
+        return "NextSessionIdFlyweight{" +
             "correlationId=" + correlationId() +
-            ", counterId=" + counterId() +
+            ", sessionId=" + nextSessionId() +
             "}";
     }
 }

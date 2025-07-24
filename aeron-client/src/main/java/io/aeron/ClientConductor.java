@@ -16,15 +16,29 @@
 package io.aeron;
 
 import io.aeron.command.PublicationErrorFrameFlyweight;
-import io.aeron.exceptions.*;
+import io.aeron.exceptions.AeronException;
+import io.aeron.exceptions.ChannelEndpointException;
+import io.aeron.exceptions.ClientTimeoutException;
+import io.aeron.exceptions.ConductorServiceTimeoutException;
+import io.aeron.exceptions.DriverTimeoutException;
+import io.aeron.exceptions.RegistrationException;
 import io.aeron.status.ChannelEndpointStatus;
 import io.aeron.status.HeartbeatTimestamp;
 import io.aeron.status.PublicationErrorFrame;
-import org.agrona.*;
+import org.agrona.BitUtil;
+import org.agrona.CloseHelper;
+import org.agrona.DirectBuffer;
+import org.agrona.SemanticVersion;
 import org.agrona.collections.ArrayListUtil;
 import org.agrona.collections.Long2ObjectHashMap;
 import org.agrona.collections.LongHashSet;
-import org.agrona.concurrent.*;
+import org.agrona.concurrent.Agent;
+import org.agrona.concurrent.AgentInvoker;
+import org.agrona.concurrent.AgentTerminationException;
+import org.agrona.concurrent.EpochClock;
+import org.agrona.concurrent.IdleStrategy;
+import org.agrona.concurrent.NanoClock;
+import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.status.AtomicCounter;
 import org.agrona.concurrent.status.CountersManager;
 import org.agrona.concurrent.status.CountersReader;
@@ -35,11 +49,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 import static io.aeron.Aeron.NULL_VALUE;
+import static io.aeron.AeronCounters.DRIVER_SYSTEM_COUNTER_TYPE_ID;
+import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION;
+import static io.aeron.AeronCounters.appendToLabel;
+import static io.aeron.AeronCounters.formatVersionInfo;
 import static io.aeron.ErrorCode.CHANNEL_ENDPOINT_ERROR;
 import static io.aeron.status.HeartbeatTimestamp.HEARTBEAT_TYPE_ID;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.agrona.concurrent.status.CountersReader.NULL_COUNTER_ID;
+import static org.agrona.concurrent.status.CountersReader.RECORD_ALLOCATED;
 
 /**
  * Client conductor receives responses and notifications from Media Driver and acts on them in addition to forwarding
@@ -49,7 +69,9 @@ final class ClientConductor implements Agent
 {
     private static final long NO_CORRELATION_ID = NULL_VALUE;
     private static final long EXPLICIT_CLOSE_LINGER_NS = TimeUnit.SECONDS.toNanos(1);
+    static final int CONTROL_PROTOCOL_VERSION_WITH_NEXT_AVAILABLE_SESSION_ID_COMMAND = SemanticVersion.compose(1, 0, 0);
 
+    final int controlProtocolVersion;
     private final long idleSleepDurationNs;
     private final long keepAliveIntervalNs;
     private final long driverTimeoutMs;
@@ -88,6 +110,7 @@ final class ClientConductor implements Agent
     private final CountersReader countersReader;
     private final PublicationErrorFrame publicationErrorFrame = new PublicationErrorFrame();
     private AtomicCounter heartbeatTimestamp;
+    private long lastResponseValue;
 
     ClientConductor(final Aeron.Context ctx, final Aeron aeron)
     {
@@ -125,6 +148,19 @@ final class ClientConductor implements Agent
         if (null != ctx.closeHandler())
         {
             closeHandlerByIdMap.put(aeron.nextCorrelationId(), ctx.closeHandler());
+        }
+
+        if (RECORD_ALLOCATED == countersReader.getCounterState(SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION) &&
+            DRIVER_SYSTEM_COUNTER_TYPE_ID ==
+            countersReader.getCounterTypeId(SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION) &&
+            SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION ==
+            countersReader.getCounterRegistrationId(SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION))
+        {
+            controlProtocolVersion = (int)countersReader.getCounterValue(SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION);
+        }
+        else
+        {
+            controlProtocolVersion = 0;
         }
 
         final long nowNs = nanoClock.nanoTime();
@@ -456,6 +492,33 @@ final class ClientConductor implements Agent
         if (!isClosed)
         {
             ctx.errorHandler().onError(ex);
+        }
+    }
+
+    int nextSessionId(final int streamId)
+    {
+        if (controlProtocolVersion >= CONTROL_PROTOCOL_VERSION_WITH_NEXT_AVAILABLE_SESSION_ID_COMMAND)
+        {
+            clientLock.lock();
+            try
+            {
+                ensureActive();
+                ensureNotReentrant();
+
+                lastResponseValue = NULL_VALUE;
+                final long correlationId = driverProxy.nextAvailableSessionId(streamId);
+                awaitResponse(correlationId);
+
+                return (int)lastResponseValue;
+            }
+            finally
+            {
+                clientLock.unlock();
+            }
+        }
+        else
+        {
+            return BitUtil.generateRandomisedId();
         }
     }
 
@@ -1136,12 +1199,13 @@ final class ClientConductor implements Agent
                 throw new IllegalArgumentException("label length out of bounds: " + labelLength);
             }
 
+            lastResponseValue = NULL_VALUE;
             final long correlationId = driverProxy.addStaticCounter(
                 typeId, keyBuffer, keyOffset, keyLength, labelBuffer, labelOffset, labelLength, registrationId);
 
             awaitResponse(correlationId);
 
-            final int counterId = (int)resourceByRegIdMap.remove(correlationId);
+            final int counterId = (int)lastResponseValue;
             return new Counter(aeron.countersReader(), registrationId, counterId);
         }
         finally
@@ -1163,10 +1227,11 @@ final class ClientConductor implements Agent
                 throw new IllegalArgumentException("label length exceeds MAX_LABEL_LENGTH: " + label.length());
             }
 
+            lastResponseValue = NULL_VALUE;
             final long correlationId = driverProxy.addStaticCounter(typeId, label, registrationId);
             awaitResponse(correlationId);
 
-            final int counterId = (int)resourceByRegIdMap.remove(correlationId);
+            final int counterId = (int)lastResponseValue;
             return new Counter(aeron.countersReader(), registrationId, counterId);
         }
         finally
@@ -1438,9 +1503,9 @@ final class ClientConductor implements Agent
         }
     }
 
-    void onStaticCounter(final long correlationId, final int counterId)
+    void onStaticCounter(final int counterId)
     {
-        resourceByRegIdMap.put(correlationId, (Integer)counterId);
+        lastResponseValue = counterId;
     }
 
     void rejectImage(final long correlationId, final long position, final String reason)
@@ -1458,6 +1523,11 @@ final class ClientConductor implements Agent
         {
             clientLock.unlock();
         }
+    }
+
+    void onNextAvailableSessionId(final int nextSessionId)
+    {
+        lastResponseValue = nextSessionId;
     }
 
     private void ensureActive()
@@ -1647,17 +1717,17 @@ final class ClientConductor implements Agent
                 final int counterId = HeartbeatTimestamp.findCounterIdByRegistrationId(
                     countersReader, HEARTBEAT_TYPE_ID, ctx.clientId());
 
-                if (CountersReader.NULL_COUNTER_ID != counterId)
+                if (NULL_COUNTER_ID != counterId)
                 {
                     try
                     {
                         heartbeatTimestamp = new AtomicCounter(counterValuesBuffer, counterId);
                         heartbeatTimestamp.setRelease(nowMs);
-                        AeronCounters.appendToLabel(
+                        appendToLabel(
                             countersReader.metaDataBuffer(),
                             counterId,
                             " name=" + ctx.clientName() + " " +
-                            AeronCounters.formatVersionInfo(AeronVersion.VERSION, AeronVersion.GIT_SHA));
+                            formatVersionInfo(AeronVersion.VERSION, AeronVersion.GIT_SHA));
                         timeOfLastKeepAliveNs = nowNs;
                     }
                     catch (final RuntimeException ex)  // a race caused by the driver timing out the client

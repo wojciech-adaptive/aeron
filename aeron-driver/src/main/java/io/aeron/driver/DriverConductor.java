@@ -1556,20 +1556,31 @@ public final class DriverConductor implements Agent
         clientProxy.operationSucceeded(correlationId);
     }
 
+    void onNextAvailableSessionId(final long correlationId, final int streamId)
+    {
+        outer: while (true)
+        {
+            final int sessionId = advanceSessionId();
+
+            for (final SessionKey key : activeSessionSet)
+            {
+                if (streamId == key.streamId && sessionId == key.sessionId)
+                {
+                    continue outer;
+                }
+            }
+
+            clientProxy.onNextAvailableSessionId(correlationId, sessionId);
+            break;
+        }
+    }
+
     int nextAvailableSessionId(final int streamId, final String channel)
     {
         final SessionKey sessionKey = new SessionKey(streamId, channel);
-
         while (true)
         {
-            int sessionId = nextSessionId++;
-
-            if (ctx.publicationReservedSessionIdLow() <= sessionId &&
-                sessionId <= ctx.publicationReservedSessionIdHigh())
-            {
-                nextSessionId = ctx.publicationReservedSessionIdHigh() + 1;
-                sessionId = nextSessionId++;
-            }
+            final int sessionId = advanceSessionId();
 
             sessionKey.sessionId = sessionId;
             if (!activeSessionSet.contains(sessionKey))
@@ -1577,6 +1588,19 @@ public final class DriverConductor implements Agent
                 return sessionId;
             }
         }
+    }
+
+    private int advanceSessionId()
+    {
+        int sessionId = nextSessionId++;
+
+        if (ctx.publicationReservedSessionIdLow() <= sessionId &&
+            sessionId <= ctx.publicationReservedSessionIdHigh())
+        {
+            nextSessionId = ctx.publicationReservedSessionIdHigh() + 1;
+            sessionId = nextSessionId++;
+        }
+        return sessionId;
     }
 
     private void heartbeatAndCheckTimers(final long nowNs)

@@ -15,7 +15,13 @@
  */
 package io.aeron;
 
-import io.aeron.command.*;
+import io.aeron.command.ClientTimeoutFlyweight;
+import io.aeron.command.ControlProtocolEvents;
+import io.aeron.command.CorrelatedMessageFlyweight;
+import io.aeron.command.ErrorResponseFlyweight;
+import io.aeron.command.OperationSucceededFlyweight;
+import io.aeron.command.PublicationBuffersReadyFlyweight;
+import io.aeron.command.SubscriptionReadyFlyweight;
 import io.aeron.exceptions.AeronException;
 import io.aeron.exceptions.ConductorServiceTimeoutException;
 import io.aeron.exceptions.DriverTimeoutException;
@@ -27,18 +33,28 @@ import io.aeron.test.InterruptAfter;
 import io.aeron.test.InterruptingTestCallback;
 import org.agrona.ErrorHandler;
 import org.agrona.MutableDirectBuffer;
-import org.agrona.concurrent.*;
+import org.agrona.SemanticVersion;
+import org.agrona.concurrent.AgentTerminationException;
+import org.agrona.concurrent.EpochClock;
+import org.agrona.concurrent.MessageHandler;
+import org.agrona.concurrent.NanoClock;
+import org.agrona.concurrent.NoOpIdleStrategy;
+import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.broadcast.CopyBroadcastReceiver;
+import org.agrona.concurrent.status.CountersManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.function.ToIntFunction;
 
+import static io.aeron.AeronCounters.DRIVER_SYSTEM_COUNTER_TYPE_ID;
+import static io.aeron.AeronCounters.SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION;
 import static io.aeron.ErrorCode.INVALID_CHANNEL;
 import static io.aeron.logbuffer.LogBufferDescriptor.PARTITION_COUNT;
 import static io.aeron.logbuffer.LogBufferDescriptor.TERM_MIN_LENGTH;
@@ -48,8 +64,27 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.core.Is.is;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.only;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(InterruptingTestCallback.class)
 class ClientConductorTest
@@ -92,8 +127,12 @@ class ClientConductorTest
     private final UnsafeBuffer clientTimeoutBuffer = new UnsafeBuffer(new byte[SEND_BUFFER_CAPACITY]);
 
     private final CopyBroadcastReceiver mockToClientReceiver = mock(CopyBroadcastReceiver.class);
-    private final UnsafeBuffer counterValuesBuffer = new UnsafeBuffer(new byte[COUNTER_BUFFER_LENGTH]);
-    private final UnsafeBuffer counterMetaDataBuffer = new UnsafeBuffer(new byte[COUNTER_BUFFER_LENGTH]);
+    final UnsafeBuffer counterMetaDataBuffer = new UnsafeBuffer(
+        ByteBuffer.allocateDirect(640 * 1024), 0, 512 * 1024);
+    final UnsafeBuffer counterValuesBuffer = new UnsafeBuffer(
+        counterMetaDataBuffer.byteBuffer(),
+        counterMetaDataBuffer.capacity(),
+        counterMetaDataBuffer.byteBuffer().capacity() - counterMetaDataBuffer.capacity());
 
     private long timeMs = 0;
     private final EpochClock epochClock = () -> timeMs += 10;
@@ -649,7 +688,7 @@ class ClientConductorTest
     @ValueSource(strings = {
         "aeron:udp?endpoint=localhost:5050",
         "aeron:udp?endpoint=localhost:5050|sparse=true",
-        "aeron:udp?endpoint=localhost:8080|sparse=false"})
+        "aeron:udp?endpoint=localhost:8080|sparse=false" })
     void shouldPreTouchLogBuffersForNewImage(final String channel)
     {
         final int streamId = 42;
@@ -718,7 +757,7 @@ class ClientConductorTest
     @ValueSource(strings = {
         "aeron:udp?endpoint=localhost:5050",
         "aeron:udp?endpoint=localhost:5050|sparse=true",
-        "aeron:udp?endpoint=localhost:8080|sparse=false"})
+        "aeron:udp?endpoint=localhost:8080|sparse=false" })
     void shouldPreTouchLogBuffersForNewPublication(final String channel)
     {
         final int streamId = -53453894;
@@ -777,7 +816,7 @@ class ClientConductorTest
     @ValueSource(strings = {
         "aeron:udp?endpoint=localhost:5050",
         "aeron:udp?endpoint=localhost:5050|sparse=true",
-        "aeron:udp?endpoint=localhost:8080|sparse=false"})
+        "aeron:udp?endpoint=localhost:8080|sparse=false" })
     void shouldPreTouchLogBuffersForNewExclusivePublication(final String channel)
     {
         final int streamId = -53453894;
@@ -832,6 +871,42 @@ class ClientConductorTest
         verify(logBuffers, never()).preTouch();
     }
 
+    @Test
+    void shouldUseZeroAsControlProtocolVersionIfCounterNotAvailable()
+    {
+        assertEquals(0, conductor.controlProtocolVersion);
+    }
+
+    @Test
+    void shouldGetControlProtocolVersionFromSystemCounter()
+    {
+        final int expectedVersion = SemanticVersion.compose(123, 98, 19);
+        final CountersManager countersManager = new CountersManager(counterMetaDataBuffer, counterValuesBuffer);
+        for (int i = 0; i <= SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION; i++)
+        {
+            allocateSystemCounter(countersManager, i, "#" + i);
+        }
+        countersManager.setCounterValue(SYSTEM_COUNTER_ID_CONTROL_PROTOCOL_VERSION, expectedVersion);
+
+        final ClientConductor clientConductor = new ClientConductor(context, mockAeron);
+        assertEquals(expectedVersion, clientConductor.controlProtocolVersion);
+    }
+
+    @Test
+    void shouldReturnRandomIdIfMediaDriverDoesNotSupportNextAvailableSessionIdCommand()
+    {
+        final int streamId = 42;
+
+        final int sessionId1 = conductor.nextSessionId(streamId);
+        final int sessionId2 = conductor.nextSessionId(streamId);
+        final int sessionId3 = conductor.nextSessionId(streamId);
+
+        assertNotEquals(sessionId1, sessionId2);
+        assertNotEquals(sessionId1, sessionId3);
+        assertNotEquals(sessionId1 + 1, sessionId2);
+        assertNotEquals(sessionId2 + 1, sessionId3);
+    }
+
     private void whenReceiveBroadcastOnMessage(
         final int msgTypeId, final MutableDirectBuffer buffer, final ToIntFunction<MutableDirectBuffer> filler)
     {
@@ -844,6 +919,18 @@ class ClientConductorTest
                 return 1;
             })
             .when(mockToClientReceiver).receive(any(MessageHandler.class));
+    }
+
+    private static void allocateSystemCounter(
+        final CountersManager countersManager, final int counterId, final String label)
+    {
+        final int id = countersManager.allocate(
+            label,
+            DRIVER_SYSTEM_COUNTER_TYPE_ID,
+            (buffer) -> buffer.putInt(0, counterId));
+        assertEquals(counterId, id);
+        countersManager.setCounterRegistrationId(id, counterId);
+        countersManager.setCounterOwnerId(id, Aeron.NULL_VALUE);
     }
 
     class PrintError implements ErrorHandler

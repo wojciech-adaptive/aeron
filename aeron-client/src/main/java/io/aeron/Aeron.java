@@ -74,7 +74,7 @@ import static org.agrona.SystemUtil.getProperty;
  * See {@link Aeron.Configuration#DEFAULT_ERROR_HANDLER}.
  */
 @Versioned
-public class Aeron implements AutoCloseable
+public final class Aeron implements AutoCloseable
 {
     /**
      * Used to represent a null value for when some value is not yet set.
@@ -481,14 +481,14 @@ public class Aeron implements AutoCloseable
     }
 
     /**
-     * Generate the next correlation id that is unique for the connected Media Driver.
+     * Generate the next correlation id that is unique for the connected media driver.
      * <p>
      * This is useful generating correlation identifiers for pairing requests with responses in a clients own
      * application protocol.
      * <p>
      * This method is thread safe and will work across processes that all use the same media driver.
      *
-     * @return next correlation id that is unique for the Media Driver.
+     * @return next correlation id that is unique for the media driver.
      */
     public long nextCorrelationId()
     {
@@ -498,6 +498,28 @@ public class Aeron implements AutoCloseable
         }
 
         return commandBuffer.nextCorrelationId();
+    }
+
+    /**
+     * Get or generate next available session id for the given {@code streamId}. The session id will be unique for the
+     * connected media driver and given {@code streamId}.
+     * <p>
+     * If media driver's version is 1.49.0 or higher, then the session id is returned by the media driver. Otherwise,
+     * a random session id is generated.
+     *
+     * @param streamId for which a new session id is requested. Media driver only checks for session clashes at the
+     *                 stream level.
+     * @return next available session id that is unique for the media driver and given {@code streamId}.
+     * @since 1.49.0
+     */
+    public int nextSessionId(final int streamId)
+    {
+        if (isClosed)
+        {
+            throw new AeronException("client is closed");
+        }
+
+        return conductor.nextSessionId(streamId);
     }
 
     /**
