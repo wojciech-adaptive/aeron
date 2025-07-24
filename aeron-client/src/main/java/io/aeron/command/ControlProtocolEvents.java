@@ -150,7 +150,7 @@ public class ControlProtocolEvents
      *
      * @since 1.49.0
      */
-    public static final int NEXT_AVAILABLE_SESSION_ID = 0x12;
+    public static final int GET_NEXT_AVAILABLE_SESSION_ID = 0x12;
 
     // Media Driver to Clients
 
@@ -219,7 +219,7 @@ public class ControlProtocolEvents
     public static final int ON_PUBLICATION_ERROR = 0x0F0C;
 
     /**
-     * A response to the {@link #NEXT_AVAILABLE_SESSION_ID} command.
+     * A response to the {@link #GET_NEXT_AVAILABLE_SESSION_ID} command.
      *
      * @since 1.49.0
      */

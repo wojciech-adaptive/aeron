@@ -322,7 +322,7 @@ final class ClientCommandAdapter implements ControlledMessageHandler
                     break;
                 }
 
-                case NEXT_AVAILABLE_SESSION_ID:
+                case GET_NEXT_AVAILABLE_SESSION_ID:
                 {
                     nextAvailableSessionIdMessageFlyweight.wrap(buffer, index);
                     nextAvailableSessionIdMessageFlyweight.validateLength(msgTypeId, length);

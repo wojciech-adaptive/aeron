@@ -23,7 +23,7 @@ import static org.agrona.BitUtil.SIZE_OF_INT;
 
 /**
  * Control message for getting next available session id from the media driver
- * ({@link ControlProtocolEvents#NEXT_AVAILABLE_SESSION_ID}).
+ * ({@link ControlProtocolEvents#GET_NEXT_AVAILABLE_SESSION_ID}).
  * <pre>
  *   0                   1                   2                   3
  *   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1

@@ -606,7 +606,7 @@ public final class DriverProxy
     {
         final long correlationId = toDriverCommandBuffer.nextCorrelationId();
         final int index = toDriverCommandBuffer.tryClaim(
-            NEXT_AVAILABLE_SESSION_ID, NextAvailableSessionIdMessageFlyweight.LENGTH);
+            GET_NEXT_AVAILABLE_SESSION_ID, NextAvailableSessionIdMessageFlyweight.LENGTH);
         if (index < 0)
         {
             throw new AeronException("failed to write next session id command");
