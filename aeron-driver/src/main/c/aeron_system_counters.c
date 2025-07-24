@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <inttypes.h>
 #include "util/aeron_error.h"
 #include "aeron_system_counters.h"
 #include "aeron_alloc.h"
@@ -94,16 +95,27 @@ int aeron_system_counters_init(aeron_system_counters_t *counters, aeron_counters
 
     for (size_t i = 0; i < num_system_counters; i++)
     {
-        if ((counters->counter_ids[i] = aeron_counters_manager_allocate(
-             manager,
-             AERON_COUNTER_SYSTEM_COUNTER_TYPE_ID,
-             (const uint8_t *)&(system_counters[i].id),
-             sizeof(system_counters[i].id),
-             system_counters[i].label,
-             strlen(system_counters[i].label))) < 0)
+        const int32_t counter_id = aeron_counters_manager_allocate(
+            manager,
+            AERON_COUNTER_SYSTEM_COUNTER_TYPE_ID,
+            (const uint8_t *) &(system_counters[i].id),
+            sizeof(system_counters[i].id),
+            system_counters[i].label,
+            strlen(system_counters[i].label));
+
+        if (counter_id < 0 || counter_id != system_counters[i].id)
         {
+            AERON_APPEND_ERR(
+                "Failed to allocate system counter: id=%" PRIi32 ", label=%s",
+                system_counters[i].id,
+                system_counters[i].label);
             return -1;
         }
+
+        aeron_counters_manager_counter_registration_id(manager, counter_id, counter_id);
+        aeron_counters_manager_counter_owner_id(manager, counter_id, AERON_NULL_VALUE);
+
+        counters->counter_ids[i] = counter_id;
     }
 
     return 0;
