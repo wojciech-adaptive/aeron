@@ -49,8 +49,8 @@ final class ClientCommandAdapter implements ControlledMessageHandler
     private final RejectImageFlyweight rejectImageFlyweight = new RejectImageFlyweight();
     private final DestinationByIdMessageFlyweight destinationByIdMessageFlyweight =
         new DestinationByIdMessageFlyweight();
-    private final NextAvailableSessionIdMessageFlyweight nextAvailableSessionIdMessageFlyweight =
-        new NextAvailableSessionIdMessageFlyweight();
+    private final GetNextAvailableSessionIdMessageFlyweight getNextAvailableSessionIdMessageFlyweight =
+        new GetNextAvailableSessionIdMessageFlyweight();
     private final DriverConductor conductor;
     private final RingBuffer toDriverCommands;
     private final ClientProxy clientProxy;
@@ -324,12 +324,12 @@ final class ClientCommandAdapter implements ControlledMessageHandler
 
                 case GET_NEXT_AVAILABLE_SESSION_ID:
                 {
-                    nextAvailableSessionIdMessageFlyweight.wrap(buffer, index);
-                    nextAvailableSessionIdMessageFlyweight.validateLength(msgTypeId, length);
+                    getNextAvailableSessionIdMessageFlyweight.wrap(buffer, index);
+                    getNextAvailableSessionIdMessageFlyweight.validateLength(msgTypeId, length);
 
-                    correlationId = nextAvailableSessionIdMessageFlyweight.correlationId();
+                    correlationId = getNextAvailableSessionIdMessageFlyweight.correlationId();
                     conductor.onNextAvailableSessionId(
-                        correlationId, nextAvailableSessionIdMessageFlyweight.streamId());
+                        correlationId, getNextAvailableSessionIdMessageFlyweight.streamId());
 
                     break;
                 }

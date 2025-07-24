@@ -43,8 +43,8 @@ public final class DriverProxy
     private final CounterMessageFlyweight counterMessageFlyweight = new CounterMessageFlyweight();
     private final StaticCounterMessageFlyweight staticCounterMessageFlyweight = new StaticCounterMessageFlyweight();
     private final RejectImageFlyweight rejectImageFlyweight = new RejectImageFlyweight();
-    private final NextAvailableSessionIdMessageFlyweight nextAvailableSessionIdMessageFlyweight =
-        new NextAvailableSessionIdMessageFlyweight();
+    private final GetNextAvailableSessionIdMessageFlyweight getNextAvailableSessionIdMessageFlyweight =
+        new GetNextAvailableSessionIdMessageFlyweight();
     private final RingBuffer toDriverCommandBuffer;
 
     /**
@@ -606,13 +606,13 @@ public final class DriverProxy
     {
         final long correlationId = toDriverCommandBuffer.nextCorrelationId();
         final int index = toDriverCommandBuffer.tryClaim(
-            GET_NEXT_AVAILABLE_SESSION_ID, NextAvailableSessionIdMessageFlyweight.LENGTH);
+            GET_NEXT_AVAILABLE_SESSION_ID, GetNextAvailableSessionIdMessageFlyweight.LENGTH);
         if (index < 0)
         {
             throw new AeronException("failed to write next session id command");
         }
 
-        nextAvailableSessionIdMessageFlyweight
+        getNextAvailableSessionIdMessageFlyweight
             .wrap(toDriverCommandBuffer.buffer(), index)
             .streamId(streamId)
             .correlationId(correlationId)

@@ -38,7 +38,7 @@ import static org.agrona.BitUtil.SIZE_OF_INT;
  *  +---------------------------------------------------------------+
  * </pre>
  */
-public final class NextAvailableSessionIdMessageFlyweight extends CorrelatedMessageFlyweight
+public final class GetNextAvailableSessionIdMessageFlyweight extends CorrelatedMessageFlyweight
 {
     private static final int STREAM_ID_OFFSET = CorrelatedMessageFlyweight.LENGTH;
     /**
@@ -53,7 +53,7 @@ public final class NextAvailableSessionIdMessageFlyweight extends CorrelatedMess
      * @param offset at which the message begins.
      * @return this for a fluent API.
      */
-    public NextAvailableSessionIdMessageFlyweight wrap(final MutableDirectBuffer buffer, final int offset)
+    public GetNextAvailableSessionIdMessageFlyweight wrap(final MutableDirectBuffer buffer, final int offset)
     {
         super.wrap(buffer, offset);
 
@@ -76,7 +76,7 @@ public final class NextAvailableSessionIdMessageFlyweight extends CorrelatedMess
      * @param streamId the channel id.
      * @return this for a fluent API.
      */
-    public NextAvailableSessionIdMessageFlyweight streamId(final int streamId)
+    public GetNextAvailableSessionIdMessageFlyweight streamId(final int streamId)
     {
         buffer.putInt(offset + STREAM_ID_OFFSET, streamId);
 
