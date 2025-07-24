@@ -87,11 +87,6 @@ int aeron_system_counters_init(aeron_system_counters_t *counters, aeron_counters
     }
 
     counters->manager = manager;
-    if (aeron_alloc((void **)&counters->counter_ids, sizeof(int32_t) * num_system_counters) < 0)
-    {
-        AERON_APPEND_ERR("%s", "Failed to allocate counter ids");
-        return -1;
-    }
 
     for (size_t i = 0; i < num_system_counters; i++)
     {
@@ -114,8 +109,6 @@ int aeron_system_counters_init(aeron_system_counters_t *counters, aeron_counters
 
         aeron_counters_manager_counter_registration_id(manager, counter_id, counter_id);
         aeron_counters_manager_counter_owner_id(manager, counter_id, AERON_NULL_VALUE);
-
-        counters->counter_ids[i] = counter_id;
     }
 
     return 0;
@@ -125,10 +118,8 @@ void aeron_system_counters_close(aeron_system_counters_t *counters)
 {
     for (int32_t i = 0; i < (int32_t)num_system_counters; i++)
     {
-        aeron_counters_manager_free(counters->manager, counters->counter_ids[i]);
+        aeron_counters_manager_free(counters->manager, system_counters[i].id);
     }
-
-    aeron_free(counters->counter_ids);
 }
 
 extern int64_t *aeron_system_counter_addr(aeron_system_counters_t *counters, aeron_system_counter_enum_t type);
