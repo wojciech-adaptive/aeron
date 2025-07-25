@@ -306,21 +306,6 @@ int aeron_archive_context_conclude(aeron_archive_context_t *ctx)
         goto error;
     }
 
-    aeron_uri_string_builder_t request_channel;
-    if (aeron_archive_apply_default_parameters(ctx, ctx->control_request_channel, &request_channel) < 0)
-    {
-        AERON_APPEND_ERR("%s", "");
-        goto error;
-    }
-
-    aeron_uri_string_builder_t response_channel;
-    if (aeron_archive_apply_default_parameters(ctx, ctx->control_response_channel, &response_channel) < 0)
-    {
-        aeron_uri_string_builder_close(&request_channel);
-        AERON_APPEND_ERR("%s", "");
-        goto error;
-    }
-
     if (NULL == ctx->aeron)
     {
         ctx->owns_aeron_client = true;
@@ -345,6 +330,21 @@ int aeron_archive_context_conclude(aeron_archive_context_t *ctx)
             AERON_APPEND_ERR("%s", "");
             goto error;
         }
+    }
+
+    aeron_uri_string_builder_t request_channel;
+    if (aeron_archive_apply_default_parameters(ctx, ctx->control_request_channel, &request_channel) < 0)
+    {
+        AERON_APPEND_ERR("%s", "");
+        goto error;
+    }
+
+    aeron_uri_string_builder_t response_channel;
+    if (aeron_archive_apply_default_parameters(ctx, ctx->control_response_channel, &response_channel) < 0)
+    {
+        aeron_uri_string_builder_close(&request_channel);
+        AERON_APPEND_ERR("%s", "");
+        goto error;
     }
 
     const char* control_mode =
