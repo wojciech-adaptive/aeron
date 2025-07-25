@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 class DriverNameResolverTest
 {
     private static final SleepingMillisIdleStrategy SLEEP_50_MS = new SleepingMillisIdleStrategy(50);
-    private final String baseDir = CommonContext.getAeronDirectoryName();
+    private final String baseDir = CommonContext.generateRandomDirName();
     private final Map<String, TestMediaDriver> drivers = new TreeMap<>();
     private final Map<String, Aeron> clients = new TreeMap<>();
 
@@ -69,9 +69,10 @@ class DriverNameResolverTest
     @InterruptAfter(20)
     void shouldInitializeWithDefaultsAndHaveResolverCounters()
     {
-        addDriver(TestMediaDriver.launch(setDefaults(new MediaDriver.Context()
+        addDriver(TestMediaDriver.launch(setDefaults(new MediaDriver.Context())
+            .aeronDirectoryName(baseDir + "-A")
             .resolverName("A")
-            .resolverInterface("0.0.0.0:0")), testWatcher));
+            .resolverInterface("0.0.0.0:0"), testWatcher));
         startClients();
 
         final int neighborsCounterId = awaitNeighborsCounterId("A");
