@@ -62,7 +62,7 @@ public class SystemCountersTest
     }
 
     @Test
-    void verifySystemCounterLabels()
+    void verifySystemCounters()
     {
         final CountersReader countersReader = aeron.countersReader();
         final Int2ObjectHashMap<String> idToLabel = new Int2ObjectHashMap<>();
@@ -70,7 +70,8 @@ public class SystemCountersTest
         {
             if (SystemCounterDescriptor.SYSTEM_COUNTER_TYPE_ID == typeId)
             {
-                idToLabel.put(keyBuffer.getInt(0), label);
+                assertEquals(counterId, keyBuffer.getInt(0));
+                idToLabel.put(counterId, label);
             }
         });
 
@@ -78,6 +79,8 @@ public class SystemCountersTest
         {
             final String counterLabel = idToLabel.get(counter.id());
             assertThat(counterLabel, startsWith(counter.label()));
+            assertEquals(counter.id(), countersReader.getCounterRegistrationId(counter.id()));
+            assertEquals(Aeron.NULL_VALUE, countersReader.getCounterOwnerId(counter.id()));
         }
     }
 
