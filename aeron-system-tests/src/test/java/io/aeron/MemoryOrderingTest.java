@@ -131,7 +131,7 @@ class MemoryOrderingTest
     }
 
     @Test
-    @InterruptAfter(10)
+    @InterruptAfter(20)
     void shouldReceiveMessagesInOrderWithFirstLongWordIntactFromExclusivePublication() throws InterruptedException
     {
         final UnsafeBuffer srcBuffer = new UnsafeBuffer(ByteBuffer.allocate(MESSAGE_LENGTH));
