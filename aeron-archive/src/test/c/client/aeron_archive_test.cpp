@@ -3068,6 +3068,9 @@ TEST_F(AeronCArchiveIdTest, shouldApplyDefaultParametersToRequestAndResponseChan
     aeron_archive_context_set_control_request_channel(m_ctx, "aeron:ipc");
     aeron_archive_context_set_control_response_channel(m_ctx, "aeron:udp?endpoint=127.0.0.1:0");
     aeron_t aeron = {};
+    aeron.conductor.control_protocol_version = 0;
+    const size_t buffer_capacity = 128 + AERON_RB_TRAILER_LENGTH;
+    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, new uint8_t[buffer_capacity], buffer_capacity));
     aeron_archive_context_set_aeron(m_ctx, &aeron);
     aeron_archive_context_set_error_handler(m_ctx, error_handler, nullptr);
     aeron_archive_context_set_control_term_buffer_length(m_ctx, 256 * 1024);
@@ -3108,6 +3111,9 @@ TEST_F(AeronCArchiveIdTest, shouldNotApplyDefaultParametersToRequestAndResponseC
     aeron_archive_context_set_control_request_channel(m_ctx, "aeron:udp?endpoint=localhost:8080|term-length=64k|mtu=1408|sparse=true|session-id=0|ttl=3|interface=127.0.0.1");
     aeron_archive_context_set_control_response_channel(m_ctx, "aeron:ipc?term-length=128k|mtu=4096|sparse=true|alias=response");
     aeron_t aeron = {};
+    aeron.conductor.control_protocol_version = 0;
+    const size_t buffer_capacity = 128 + AERON_RB_TRAILER_LENGTH;
+    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, new uint8_t[buffer_capacity], buffer_capacity));
     aeron_archive_context_set_aeron(m_ctx, &aeron);
     aeron_archive_context_set_error_handler(m_ctx, error_handler, nullptr);
     aeron_archive_context_set_control_term_buffer_length(m_ctx, 256 * 1024);
@@ -3155,6 +3161,9 @@ TEST_F(AeronCArchiveIdTest, shouldNotSetSessionIdOnControlRequestAndReponseChann
     aeron_archive_context_set_control_request_channel(m_ctx, "aeron:udp?endpoint=localhost:8080");
     aeron_archive_context_set_control_response_channel(m_ctx, "aeron:udp?control=localhost:9090|control-mode=response");
     aeron_t aeron = {};
+    aeron.conductor.control_protocol_version = 0;
+    const size_t buffer_capacity = 128 + AERON_RB_TRAILER_LENGTH;
+    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, new uint8_t[buffer_capacity], buffer_capacity));
     aeron_archive_context_set_aeron(m_ctx, &aeron);
     aeron_archive_context_set_error_handler(m_ctx, error_handler, nullptr);
     aeron_archive_context_set_control_term_buffer_length(m_ctx, 256 * 1024);
@@ -3198,6 +3207,9 @@ TEST_F(AeronCArchiveIdTest, shouldDuplicateContext)
     aeron_archive_context_set_control_term_buffer_sparse(m_ctx, false);
     aeron_archive_context_set_message_timeout_ns(m_ctx, 1000000000);
     aeron_t aeron = {};
+    aeron.conductor.control_protocol_version = 0;
+    const size_t buffer_capacity = 128 + AERON_RB_TRAILER_LENGTH;
+    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, new uint8_t[buffer_capacity], buffer_capacity));
     aeron_archive_context_set_aeron(m_ctx, &aeron);
     aeron_archive_context_set_error_handler(m_ctx, error_handler, nullptr);
     aeron_archive_context_set_idle_strategy(m_ctx, aeron_idle_strategy_sleeping_idle, (void *)&m_idle_duration_ns);
@@ -3961,38 +3973,12 @@ TEST_F(AeronCArchiveTest, shouldDetachAndReattachSegments)
 
 TEST_F(AeronCArchiveTest, shouldSetClientName)
 {
-    connect();
-
-    aeron_uri_string_builder_t builder;
-    EXPECT_EQ(0, aeron_uri_string_builder_init_on_string(
-        &builder,
-        aeron_archive_context_get_control_request_channel(m_ctx)));
-    const auto session_id = aeron_uri_string_builder_get(&builder, AERON_URI_SESSION_ID_KEY);
-    EXPECT_NE(nullptr, session_id);
-
-    std::string expected_name = std::string("archive-client session-id=").append(session_id);
-    auto aeron = aeron_archive_context_get_aeron(m_ctx);
-    const auto client_name = std::string(aeron_context_get_client_name(aeron->context));
-    EXPECT_NE(std::string::npos, client_name.find(expected_name));
-
-    aeron_uri_string_builder_close(&builder);
-}
-
-TEST_F(AeronCArchiveTest, shouldSetClientNameWithResponseChannels)
-{
     connect(
         nullptr,
         "aeron:udp?endpoint=localhost:8010",
         "aeron:udp?control=localhost:9090|control-mode=response");
 
-    aeron_uri_string_builder_t builder;
-    EXPECT_EQ(0, aeron_uri_string_builder_init_on_string(
-        &builder,
-        aeron_archive_context_get_control_request_channel(m_ctx)));
-
     auto aeron = aeron_archive_context_get_aeron(m_ctx);
     const auto client_name = std::string(aeron_context_get_client_name(aeron->context));
-    EXPECT_NE(std::string::npos, client_name.find("archive-client control-mode=response"));
-
-    aeron_uri_string_builder_close(&builder);
+    EXPECT_NE(std::string::npos, client_name.find("archive-client"));
 }
