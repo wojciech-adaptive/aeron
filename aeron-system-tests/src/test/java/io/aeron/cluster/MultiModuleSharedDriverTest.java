@@ -244,7 +244,7 @@ class MultiModuleSharedDriverTest
             nameResolver = new RedirectingNameResolver(TestCluster.DEFAULT_NODE_MAPPINGS);
 
             final MediaDriver.Context driverCtx = new MediaDriver.Context()
-                .aeronDirectoryName(CommonContext.getAeronDirectoryName() + "-" + nodeId)
+                .aeronDirectoryName(CommonContext.generateRandomDirName())
                 .threadingMode(ThreadingMode.SHARED)
                 .nameResolver(nameResolver)
                 .dirDeleteOnStart(true);
