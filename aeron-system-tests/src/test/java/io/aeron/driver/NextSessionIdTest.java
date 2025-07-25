@@ -60,8 +60,6 @@ public class NextSessionIdTest
     @Test
     void shouldFetchNextAvailableSessionId()
     {
-        TestMediaDriver.notSupportedOnCMediaDriver("not implemented yet");
-
         final ExclusivePublication publication =
             aeron.addExclusivePublication("aeron:ipc?term-length=64k", 555);
 
@@ -75,8 +73,6 @@ public class NextSessionIdTest
     @Test
     void shouldSkipActiveSessionId()
     {
-        TestMediaDriver.notSupportedOnCMediaDriver("not implemented yet");
-
         final int nextSessionId = aeron.nextSessionId(777);
 
         final ExclusivePublication pub1 =

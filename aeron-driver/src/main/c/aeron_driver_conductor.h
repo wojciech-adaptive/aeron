@@ -535,6 +535,9 @@ int aeron_driver_conductor_on_terminate_driver(
 int aeron_driver_conductor_on_invalidate_image(
     aeron_driver_conductor_t *conductor, aeron_reject_image_command_t *command);
 
+int aeron_driver_conductor_on_get_next_available_session_id(
+    aeron_driver_conductor_t *conductor, aeron_get_next_available_session_id_command_t *command);
+
 void aeron_driver_conductor_unlink_ipc_subscriptions(
     aeron_driver_conductor_t *conductor, aeron_ipc_publication_t *publication);
 

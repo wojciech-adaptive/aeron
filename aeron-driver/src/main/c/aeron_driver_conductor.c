@@ -3023,6 +3023,19 @@ void aeron_driver_conductor_on_operation_succeeded(aeron_driver_conductor_t *con
         conductor, AERON_RESPONSE_ON_OPERATION_SUCCESS, response, sizeof(aeron_operation_succeeded_t));
 }
 
+void aeron_driver_conductor_response_next_available_session_id(
+    aeron_driver_conductor_t *conductor, int64_t correlation_id, int32_t next_session_id)
+{
+    char response_buffer[sizeof(aeron_next_available_session_id_response_t)];
+    aeron_next_available_session_id_response_t *response = (aeron_next_available_session_id_response_t *)response_buffer;
+
+    response->correlation_id = correlation_id;
+    response->next_session_id = next_session_id;
+
+    aeron_driver_conductor_client_transmit(
+        conductor, AERON_RESPONSE_ON_NEXT_AVAILABLE_SESSION_ID, response, sizeof(aeron_next_available_session_id_response_t));
+}
+
 void aeron_driver_conductor_on_client_timeout(aeron_driver_conductor_t *conductor, int64_t client_id)
 {
     char response_buffer[sizeof(aeron_client_timeout_t)];
@@ -3655,6 +3668,21 @@ aeron_rb_read_action_t aeron_driver_conductor_on_command(
             correlation_id = command->correlated.correlation_id;
 
             aeron_driver_conductor_on_remove_receive_send_destination_by_id(conductor, command);
+            break;
+        }
+
+        case AERON_COMMAND_GET_NEXT_AVAILABLE_SESSION_ID:
+        {
+            aeron_get_next_available_session_id_command_t *command = (aeron_get_next_available_session_id_command_t *)message;
+
+            if (length < sizeof(aeron_get_next_available_session_id_command_t))
+            {
+                goto malformed_command;
+            }
+
+            correlation_id = command->correlated.correlation_id;
+
+            aeron_driver_conductor_on_get_next_available_session_id(conductor, command);
             break;
         }
 
@@ -5981,6 +6009,40 @@ int aeron_driver_conductor_on_invalidate_image(
     aeron_driver_conductor_on_operation_succeeded(conductor, command->correlated.correlation_id);
 
     return 0;
+}
+
+int aeron_driver_conductor_on_get_next_available_session_id(
+    aeron_driver_conductor_t *conductor, aeron_get_next_available_session_id_command_t *command)
+{
+    const int32_t stream_id = command->stream_id;
+    outer: while (true)
+    {
+        const int32_t next_session_id = aeron_driver_conductor_next_session_id(conductor);
+        aeron_driver_conductor_update_next_session_id(conductor, next_session_id);
+
+        for (size_t i = 0; i < conductor->ipc_publications.length; i++)
+        {
+            aeron_ipc_publication_t *pub_entry = conductor->ipc_publications.array[i].publication;
+
+            if (stream_id == pub_entry->stream_id && next_session_id == pub_entry->session_id)
+            {
+                goto outer;
+            }
+        }
+
+        for (size_t i = 0; i < conductor->network_publications.length; i++)
+        {
+            aeron_network_publication_t *pub_entry = conductor->network_publications.array[i].publication;
+            if (stream_id == pub_entry->stream_id && next_session_id == pub_entry->session_id)
+            {
+                goto outer;
+            }
+        }
+
+        aeron_driver_conductor_response_next_available_session_id(
+            conductor, command->correlated.correlation_id, next_session_id);
+        return 0;
+    }
 }
 
 void aeron_driver_conductor_unlink_ipc_subscriptions(
