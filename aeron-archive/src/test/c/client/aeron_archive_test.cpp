@@ -3070,7 +3070,8 @@ TEST_F(AeronCArchiveIdTest, shouldApplyDefaultParametersToRequestAndResponseChan
     aeron_t aeron = {};
     aeron.conductor.control_protocol_version = 0;
     const size_t buffer_capacity = 128 + AERON_RB_TRAILER_LENGTH;
-    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, new uint8_t[buffer_capacity], buffer_capacity));
+    auto *buffer = new uint8_t[buffer_capacity];
+    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, buffer, buffer_capacity));
     aeron_archive_context_set_aeron(m_ctx, &aeron);
     aeron_archive_context_set_error_handler(m_ctx, error_handler, nullptr);
     aeron_archive_context_set_control_term_buffer_length(m_ctx, 256 * 1024);
@@ -3102,6 +3103,7 @@ TEST_F(AeronCArchiveIdTest, shouldApplyDefaultParametersToRequestAndResponseChan
     EXPECT_EQ(0, aeron_uri_string_builder_close(&response_channel));
 
     EXPECT_EQ(0, aeron_archive_context_close(m_ctx));
+    delete[] buffer;
 }
 
 TEST_F(AeronCArchiveIdTest, shouldNotApplyDefaultParametersToRequestAndResponseChannelsIfTheyAreSetExplicitly)
@@ -3113,7 +3115,8 @@ TEST_F(AeronCArchiveIdTest, shouldNotApplyDefaultParametersToRequestAndResponseC
     aeron_t aeron = {};
     aeron.conductor.control_protocol_version = 0;
     const size_t buffer_capacity = 128 + AERON_RB_TRAILER_LENGTH;
-    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, new uint8_t[buffer_capacity], buffer_capacity));
+    auto *buffer = new uint8_t[buffer_capacity];
+    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, buffer, buffer_capacity));
     aeron_archive_context_set_aeron(m_ctx, &aeron);
     aeron_archive_context_set_error_handler(m_ctx, error_handler, nullptr);
     aeron_archive_context_set_control_term_buffer_length(m_ctx, 256 * 1024);
@@ -3152,6 +3155,7 @@ TEST_F(AeronCArchiveIdTest, shouldNotApplyDefaultParametersToRequestAndResponseC
     EXPECT_EQ(0, aeron_uri_string_builder_close(&response_channel));
 
     EXPECT_EQ(0, aeron_archive_context_close(m_ctx));
+    delete[] buffer;
 }
 
 TEST_F(AeronCArchiveIdTest, shouldNotSetSessionIdOnControlRequestAndReponseChannelsIfControlModeResponseIsUsed)
@@ -3163,7 +3167,8 @@ TEST_F(AeronCArchiveIdTest, shouldNotSetSessionIdOnControlRequestAndReponseChann
     aeron_t aeron = {};
     aeron.conductor.control_protocol_version = 0;
     const size_t buffer_capacity = 128 + AERON_RB_TRAILER_LENGTH;
-    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, new uint8_t[buffer_capacity], buffer_capacity));
+    auto *buffer = new uint8_t[buffer_capacity];
+    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, buffer, buffer_capacity));
     aeron_archive_context_set_aeron(m_ctx, &aeron);
     aeron_archive_context_set_error_handler(m_ctx, error_handler, nullptr);
     aeron_archive_context_set_control_term_buffer_length(m_ctx, 256 * 1024);
@@ -3190,6 +3195,7 @@ TEST_F(AeronCArchiveIdTest, shouldNotSetSessionIdOnControlRequestAndReponseChann
     EXPECT_EQ(0, aeron_uri_string_builder_close(&response_channel));
 
     EXPECT_EQ(0, aeron_archive_context_close(m_ctx));
+    delete[] buffer;
 }
 
 TEST_F(AeronCArchiveIdTest, shouldDuplicateContext)
@@ -3209,7 +3215,8 @@ TEST_F(AeronCArchiveIdTest, shouldDuplicateContext)
     aeron_t aeron = {};
     aeron.conductor.control_protocol_version = 0;
     const size_t buffer_capacity = 128 + AERON_RB_TRAILER_LENGTH;
-    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, new uint8_t[buffer_capacity], buffer_capacity));
+    auto *buffer = new uint8_t[buffer_capacity];
+    ASSERT_EQ_ERR(0, aeron_mpsc_rb_init(&aeron.conductor.to_driver_buffer, buffer, buffer_capacity));
     aeron_archive_context_set_aeron(m_ctx, &aeron);
     aeron_archive_context_set_error_handler(m_ctx, error_handler, nullptr);
     aeron_archive_context_set_idle_strategy(m_ctx, aeron_idle_strategy_sleeping_idle, (void *)&m_idle_duration_ns);
@@ -3244,6 +3251,7 @@ TEST_F(AeronCArchiveIdTest, shouldDuplicateContext)
 
     EXPECT_EQ(0, aeron_archive_context_close(m_ctx));
     EXPECT_EQ(0, aeron_archive_context_close(copy_ctx));
+    delete[] buffer;
 }
 
 TEST_F(AeronCArchiveIdTest, shouldResolveArchiveId)
