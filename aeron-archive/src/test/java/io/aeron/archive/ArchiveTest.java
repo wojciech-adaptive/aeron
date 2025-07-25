@@ -18,7 +18,6 @@ package io.aeron.archive;
 import io.aeron.Aeron;
 import io.aeron.ChannelUri;
 import io.aeron.ChannelUriStringBuilder;
-import io.aeron.CommonContext;
 import io.aeron.Counter;
 import io.aeron.Image;
 import io.aeron.Publication;
@@ -1005,71 +1004,6 @@ class ArchiveTest
             assertNotEquals(Aeron.NULL_VALUE, archiveId);
             assertEquals(archiveId, archiveClient.archiveId());
             assertEquals(archiveId, archiveCtx.archiveMarkFile().archiveId());
-        }
-        finally
-        {
-            archiveCtx.deleteDirectory();
-            driverCtx.deleteDirectory();
-        }
-    }
-
-    @Test
-    @InterruptAfter(10)
-    void shouldNameImplicitAeronClient()
-    {
-        final MediaDriver.Context driverCtx = new MediaDriver.Context()
-            .aeronDirectoryName(CommonContext.generateRandomDirName())
-            .dirDeleteOnShutdown(true)
-            .threadingMode(ThreadingMode.SHARED);
-
-        final Archive.Context archiveCtx = TestContexts.localhostArchive()
-            .aeronDirectoryName(driverCtx.aeronDirectoryName())
-            .deleteArchiveOnStart(true)
-            .threadingMode(SHARED);
-
-        try (ArchivingMediaDriver ignore = ArchivingMediaDriver.launch(driverCtx, archiveCtx);
-            AeronArchive aeronArchive = AeronArchive.connect(new AeronArchive.Context()
-                .aeronDirectoryName(driverCtx.aeronDirectoryName())
-                .controlRequestChannel("aeron:udp?endpoint=localhost:8010")
-                .controlResponseChannel("aeron:udp?endpoint=localhost:0")))
-        {
-            final ChannelUri requestChannel = ChannelUri.parse(aeronArchive.context().controlRequestChannel());
-            final String sessionId = requestChannel.get(SESSION_ID_PARAM_NAME);
-
-            assertEquals(
-                "archive-client session-id=" + sessionId,
-                aeronArchive.context().aeron().context().clientName());
-        }
-        finally
-        {
-            archiveCtx.deleteDirectory();
-            driverCtx.deleteDirectory();
-        }
-    }
-
-    @Test
-    @InterruptAfter(10)
-    void shouldNameImplicitAeronClientWithResponseChannelsUsed()
-    {
-        final MediaDriver.Context driverCtx = new MediaDriver.Context()
-            .aeronDirectoryName(CommonContext.generateRandomDirName())
-            .dirDeleteOnShutdown(true)
-            .threadingMode(ThreadingMode.SHARED);
-
-        final Archive.Context archiveCtx = TestContexts.localhostArchive()
-            .aeronDirectoryName(driverCtx.aeronDirectoryName())
-            .deleteArchiveOnStart(true)
-            .threadingMode(SHARED);
-
-        try (ArchivingMediaDriver ignore = ArchivingMediaDriver.launch(driverCtx, archiveCtx);
-            AeronArchive aeronArchive = AeronArchive.connect(new AeronArchive.Context()
-                .aeronDirectoryName(driverCtx.aeronDirectoryName())
-                .controlRequestChannel("aeron:udp?endpoint=localhost:8010")
-                .controlResponseChannel("aeron:udp?control=localhost:9090|control-mode=response")))
-        {
-            assertEquals(
-                "archive-client control-mode=response",
-                aeronArchive.context().aeron().context().clientName());
         }
         finally
         {

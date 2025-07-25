@@ -25,6 +25,7 @@ import io.aeron.archive.client.AeronArchive.Context;
 import io.aeron.archive.codecs.ControlResponseCode;
 import io.aeron.exceptions.AeronException;
 import io.aeron.security.CredentialsSupplier;
+import org.agrona.BitUtil;
 import org.agrona.ErrorHandler;
 import org.agrona.SemanticVersion;
 import org.agrona.collections.MutableLong;
@@ -41,10 +42,44 @@ import org.mockito.stubbing.Answer;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.aeron.CommonContext.*;
-import static io.aeron.archive.client.AeronArchive.AsyncConnect.State.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static io.aeron.CommonContext.MTU_LENGTH_PARAM_NAME;
+import static io.aeron.CommonContext.SESSION_ID_PARAM_NAME;
+import static io.aeron.CommonContext.SPARSE_PARAM_NAME;
+import static io.aeron.CommonContext.TERM_LENGTH_PARAM_NAME;
+import static io.aeron.archive.client.AeronArchive.AsyncConnect.State.AWAIT_ARCHIVE_ID_RESPONSE;
+import static io.aeron.archive.client.AeronArchive.AsyncConnect.State.AWAIT_CHALLENGE_RESPONSE;
+import static io.aeron.archive.client.AeronArchive.AsyncConnect.State.AWAIT_CONNECT_RESPONSE;
+import static io.aeron.archive.client.AeronArchive.AsyncConnect.State.AWAIT_PUBLICATION_CONNECTED;
+import static io.aeron.archive.client.AeronArchive.AsyncConnect.State.AWAIT_SUBSCRIPTION_CONNECTED;
+import static io.aeron.archive.client.AeronArchive.AsyncConnect.State.DONE;
+import static io.aeron.archive.client.AeronArchive.AsyncConnect.State.SEND_ARCHIVE_ID_REQUEST;
+import static io.aeron.archive.client.AeronArchive.AsyncConnect.State.SEND_CHALLENGE_RESPONSE;
+import static io.aeron.archive.client.AeronArchive.AsyncConnect.State.SEND_CONNECT_REQUEST;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.nullable;
+import static org.mockito.Mockito.only;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 class AeronArchiveTest
 {
@@ -709,6 +744,9 @@ class AeronArchiveTest
     {
         final int requestStreamId = 42;
         final int responseStreamId = -19;
+        final int sessionId = BitUtil.generateRandomisedId();
+        when(aeron.nextSessionId(requestStreamId)).thenReturn(sessionId);
+
         final Context context = new Context()
             .aeron(aeron)
             .ownsAeronClient(false)
@@ -728,21 +766,31 @@ class AeronArchiveTest
 
         context.conclude();
 
+        verify(aeron).nextSessionId(requestStreamId);
         assertEquals(requestStreamId, context.controlRequestStreamId());
         assertEquals(responseStreamId, context.controlResponseStreamId());
 
         final ChannelUri actualRequestChannel = ChannelUri.parse(context.controlRequestChannel());
         final ChannelUri actualResponseChannel = ChannelUri.parse(context.controlResponseChannel());
         assertTrue(actualRequestChannel.containsKey(SESSION_ID_PARAM_NAME), "session-id was not added");
-        final String sessionId = actualRequestChannel.get(SESSION_ID_PARAM_NAME);
-        assertNotNull(sessionId);
-        assertEquals(sessionId, actualResponseChannel.get(SESSION_ID_PARAM_NAME));
+        assertEquals(Integer.toString(sessionId), actualRequestChannel.get(SESSION_ID_PARAM_NAME));
+        assertEquals(Integer.toString(sessionId), actualResponseChannel.get(SESSION_ID_PARAM_NAME));
 
         ChannelUri.parse(requestChannel).forEachParameter((key, value) ->
-            assertEquals(!SESSION_ID_PARAM_NAME.equals(key) ? value : sessionId, actualRequestChannel.get(key)));
+        {
+            if (!SESSION_ID_PARAM_NAME.equals(key))
+            {
+                assertEquals(value, actualRequestChannel.get(key));
+            }
+        });
 
         ChannelUri.parse(responseChannel).forEachParameter((key, value) ->
-            assertEquals(!SESSION_ID_PARAM_NAME.equals(key) ? value : sessionId, actualResponseChannel.get(key)));
+        {
+            if (!SESSION_ID_PARAM_NAME.equals(key))
+            {
+                assertEquals(value, actualResponseChannel.get(key));
+            }
+        });
     }
 
     @Test

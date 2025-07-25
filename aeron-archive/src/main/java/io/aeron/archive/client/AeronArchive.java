@@ -15,7 +15,16 @@
  */
 package io.aeron.archive.client;
 
-import io.aeron.*;
+import io.aeron.Aeron;
+import io.aeron.AeronCounters;
+import io.aeron.AvailableImageHandler;
+import io.aeron.ChannelUri;
+import io.aeron.ChannelUriStringBuilder;
+import io.aeron.ExclusivePublication;
+import io.aeron.Image;
+import io.aeron.Publication;
+import io.aeron.Subscription;
+import io.aeron.UnavailableImageHandler;
 import io.aeron.archive.codecs.ControlResponseCode;
 import io.aeron.archive.codecs.RecordingSignal;
 import io.aeron.archive.codecs.RecordingSignalEventDecoder;
@@ -29,7 +38,6 @@ import io.aeron.exceptions.TimeoutException;
 import io.aeron.security.CredentialsSupplier;
 import io.aeron.security.NullCredentialsSupplier;
 import io.aeron.version.Versioned;
-import org.agrona.BitUtil;
 import org.agrona.CloseHelper;
 import org.agrona.ErrorHandler;
 import org.agrona.LangUtil;
@@ -46,9 +54,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static io.aeron.CommonContext.*;
+import static io.aeron.CommonContext.CONTROL_MODE_RESPONSE;
+import static io.aeron.CommonContext.MDC_CONTROL_MODE_PARAM_NAME;
+import static io.aeron.CommonContext.MTU_LENGTH_PARAM_NAME;
+import static io.aeron.CommonContext.SESSION_ID_PARAM_NAME;
+import static io.aeron.CommonContext.SPARSE_PARAM_NAME;
+import static io.aeron.CommonContext.TERM_LENGTH_PARAM_NAME;
+import static io.aeron.CommonContext.checkDebugTimeout;
+import static io.aeron.CommonContext.getAeronDirectoryName;
 import static io.aeron.archive.client.ArchiveProxy.DEFAULT_RETRY_ATTEMPTS;
-import static io.aeron.driver.Configuration.*;
+import static io.aeron.driver.Configuration.IDLE_MAX_PARK_NS;
+import static io.aeron.driver.Configuration.IDLE_MAX_SPINS;
+import static io.aeron.driver.Configuration.IDLE_MAX_YIELDS;
+import static io.aeron.driver.Configuration.IDLE_MIN_PARK_NS;
 import static org.agrona.SystemUtil.getDurationInNanos;
 import static org.agrona.SystemUtil.getSizeAsInt;
 
@@ -2995,32 +3013,26 @@ public final class AeronArchive implements AutoCloseable
                 throw new ConfigurationException("AeronArchive.Context.controlResponseChannel must be set");
             }
 
-            final ChannelUri requestChannel = applyDefaultParams(controlRequestChannel);
-            final ChannelUri responseChannel = applyDefaultParams(controlResponseChannel);
-            final String nameSuffix;
-            if (!CONTROL_MODE_RESPONSE.equals(responseChannel.get(MDC_CONTROL_MODE_PARAM_NAME)))
-            {
-                final String sessionId = Integer.toString(BitUtil.generateRandomisedId());
-                nameSuffix = "session-id=" + sessionId;
-                requestChannel.put(SESSION_ID_PARAM_NAME, sessionId);
-                responseChannel.put(SESSION_ID_PARAM_NAME, sessionId);
-            }
-            else
-            {
-                nameSuffix = "control-mode=response";
-            }
-            controlRequestChannel = requestChannel.toString();
-            controlResponseChannel = responseChannel.toString();
-
             if (null == aeron)
             {
                 aeron = Aeron.connect(
                     new Aeron.Context()
                         .aeronDirectoryName(aeronDirectoryName)
-                        .clientName("archive-client " + nameSuffix)
+                        .clientName("archive-client")
                         .errorHandler(errorHandler));
                 ownsAeronClient = true;
             }
+
+            final ChannelUri requestChannel = applyDefaultParams(controlRequestChannel);
+            final ChannelUri responseChannel = applyDefaultParams(controlResponseChannel);
+            if (!CONTROL_MODE_RESPONSE.equals(responseChannel.get(MDC_CONTROL_MODE_PARAM_NAME)))
+            {
+                final String sessionId = Integer.toString(aeron.nextSessionId(controlRequestStreamId));
+                requestChannel.put(SESSION_ID_PARAM_NAME, sessionId);
+                responseChannel.put(SESSION_ID_PARAM_NAME, sessionId);
+            }
+            controlRequestChannel = requestChannel.toString();
+            controlResponseChannel = responseChannel.toString();
 
             if (null == idleStrategy)
             {
