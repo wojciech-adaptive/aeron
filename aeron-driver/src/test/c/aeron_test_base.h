@@ -180,6 +180,24 @@ public:
         return counter;
     }
 
+    static int64_t awaitNextSessionIdOrError(aeron_async_add_counter_t *async)
+    {
+        int32_t next_session_id;
+        while (true)
+        {
+            std::this_thread::yield();
+            int result = aeron_async_next_session_id_poll(&next_session_id, async);
+            if (result < 0)
+            {
+                return INT64_MAX;
+            }
+            else if (1 == result)
+            {
+                return next_session_id;
+            }
+        }
+    }
+
     static void awaitConnected(aeron_subscription_t *subscription)
     {
         while (!aeron_subscription_is_connected(subscription))

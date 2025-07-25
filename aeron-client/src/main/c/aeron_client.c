@@ -570,6 +570,88 @@ int aeron_async_add_subscription_poll(aeron_subscription_t **subscription, aeron
     }
 }
 
+int aeron_async_next_session_id(aeron_async_get_next_available_session_id_t **async, aeron_t *client, int32_t stream_id)
+{
+    if (NULL == async || NULL == client)
+    {
+        AERON_SET_ERR(
+            EINVAL,
+            "Parameters must not be null, async: %s, client: %s",
+            AERON_NULL_STR(async),
+            AERON_NULL_STR(client));
+        return -1;
+    }
+
+    return aeron_client_conductor_async_get_next_available_session_id(async, &client->conductor, stream_id);
+}
+
+int aeron_async_next_session_id_poll(int32_t *next_session_id, aeron_async_get_next_available_session_id_t *async)
+{
+    if (NULL == next_session_id || NULL == async)
+    {
+        AERON_SET_ERR(
+            EINVAL,
+            "Parameters must not be null, next_session_id: %s, async: %s",
+            AERON_NULL_STR(next_session_id),
+            AERON_NULL_STR(async));
+        return -1;
+    }
+
+    if (AERON_CLIENT_TYPE_NEXT_AVAILABLE_SESSION_ID != async->type)
+    {
+        AERON_SET_ERR(
+            EINVAL,
+            "Parameters must be valid, async->type: %d (expected: %d)",
+            (int)async->type,
+            (int)AERON_CLIENT_TYPE_NEXT_AVAILABLE_SESSION_ID);
+        return -1;
+    }
+
+    aeron_client_registration_status_t registration_status;
+    AERON_GET_ACQUIRE(registration_status, async->registration_status);
+
+    switch (registration_status)
+    {
+        case AERON_CLIENT_AWAITING_MEDIA_DRIVER:
+        {
+            return 0;
+        }
+
+        case AERON_CLIENT_ERRORED_MEDIA_DRIVER:
+        {
+            AERON_SET_ERR(
+                -async->error_code,
+                "aeron_async_next_session_id registration\n== Driver Error ==\n%.*s",
+                (int)async->error_message_length,
+                async->error_message);
+            aeron_async_cmd_free(async);
+            return -1;
+        }
+
+        case AERON_CLIENT_REGISTERED_MEDIA_DRIVER:
+        {
+            *next_session_id = async->resource.next_session_id;
+            aeron_async_cmd_free(async);
+            return 1;
+        }
+
+        case AERON_CLIENT_TIMEOUT_MEDIA_DRIVER:
+        {
+            AERON_SET_ERR(
+                AERON_CLIENT_ERROR_DRIVER_TIMEOUT, "%s", "aeron_async_next_session_id no response from media driver");
+            aeron_async_cmd_free(async);
+            return -1;
+        }
+
+        default:
+        {
+            AERON_SET_ERR(EINVAL, "aeron_async_next_session_id async status %s", "unknown");
+            aeron_async_cmd_free(async);
+            return -1;
+        }
+    }
+}
+
 int aeron_async_add_counter(
     aeron_async_add_counter_t **async,
     aeron_t *client,

@@ -99,6 +99,7 @@ typedef struct aeron_client_registering_resource_stct aeron_async_add_subscripti
 typedef struct aeron_client_registering_resource_stct aeron_async_add_counter_t;
 typedef struct aeron_client_registering_resource_stct aeron_async_destination_t;
 typedef struct aeron_client_registering_resource_stct aeron_async_destination_by_id_t;
+typedef struct aeron_client_registering_resource_stct aeron_async_get_next_available_session_id_t;
 
 typedef struct aeron_image_fragment_assembler_stct aeron_image_fragment_assembler_t;
 typedef struct aeron_image_controlled_fragment_assembler_stct aeron_image_controlled_fragment_assembler_t;
@@ -429,6 +430,28 @@ int64_t aeron_client_id(aeron_t *client);
  * @return unique correlation id or -1 for an error.
  */
 int64_t aeron_next_correlation_id(aeron_t *client);
+
+/**
+ * Asynchronously request next available session from the media driver. The session id will be unique for the
+ * connected media driver and given {@code stream_id}.
+ *
+ * @param async object to use for polling completion.
+ * @param client connected to the media driver.
+ * @param stream_id for which a new session id is requested. Media driver only checks for session clashes at the
+ *                 stream level.
+ * @return 0 for success or -1 for an error.
+ */
+int aeron_async_next_session_id(
+    aeron_async_get_next_available_session_id_t **async, aeron_t *client, int32_t stream_id);
+
+/**
+ * Poll the completion of the aeron_async_next_session_id call.
+ *
+ * @param next_session_id to set if completed successfully.
+ * @param async to check for completion.
+ * @return 0 for not complete (try again), 1 for completed successfully, or -1 for an error.
+ */
+int aeron_async_next_session_id_poll(int32_t *next_session_id, aeron_async_get_next_available_session_id_t *async);
 
 /**
  * Asynchronously add a publication using the given client and return an object to use to determine when the

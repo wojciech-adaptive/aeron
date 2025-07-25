@@ -379,6 +379,61 @@ TEST_F(CSystemTest, shouldAddStaticCounter)
     ASSERT_EQ(AERON_COUNTER_RECORD_ALLOCATED, state);
 }
 
+TEST_F(CSystemTest, shouldGetNextAvailableSessionId)
+{
+    aeron_async_get_next_available_session_id_t *async = nullptr;
+
+    ASSERT_TRUE(connect());
+
+    ASSERT_EQ(aeron_async_next_session_id(&async, m_aeron, 555), 0);
+
+    int64_t next_session_id = awaitNextSessionIdOrError(async);
+    ASSERT_NE(next_session_id, INT64_MAX) << aeron_errmsg();
+
+    async = nullptr;
+    ASSERT_EQ(aeron_async_next_session_id(&async, m_aeron, 777), 0);
+
+    int64_t next_session_id2 = awaitNextSessionIdOrError(async);
+    ASSERT_NE(next_session_id, INT64_MAX) << aeron_errmsg();
+    ASSERT_EQ(next_session_id2, next_session_id + 1);
+
+    aeron_async_add_publication_t *asyncPub1 = nullptr, *asyncPub2 = nullptr;
+
+    ASSERT_EQ(aeron_async_add_publication(
+        &asyncPub1,
+        m_aeron,
+        std::string("aeron:ipc?term-length=64k").append("|session-id=").append(std::to_string(next_session_id2 + 1)).c_str(),
+        555), 0);
+    ASSERT_EQ(aeron_async_add_publication(
+        &asyncPub2,
+        m_aeron,
+        std::string("aeron:udp?term-length=64k|endpoint=localhost:8989").append("|session-id=").append(std::to_string(next_session_id2 + 2)).c_str(),
+        777), 0);
+
+    aeron_publication_t *pub1 = awaitPublicationOrError(asyncPub1);
+    ASSERT_TRUE(pub1) << aeron_errmsg();
+
+    aeron_publication_t *pub2 = awaitPublicationOrError(asyncPub2);
+    ASSERT_TRUE(pub2) << aeron_errmsg();
+
+    async = nullptr;
+    ASSERT_EQ(aeron_async_next_session_id(&async, m_aeron, 555), 0);
+
+    next_session_id = awaitNextSessionIdOrError(async);
+    ASSERT_NE(next_session_id, INT64_MAX) << aeron_errmsg();
+    ASSERT_EQ(next_session_id, next_session_id2 + 2);
+
+    async = nullptr;
+    ASSERT_EQ(aeron_async_next_session_id(&async, m_aeron, 777), 0);
+
+    next_session_id = awaitNextSessionIdOrError(async);
+    ASSERT_NE(next_session_id, INT64_MAX) << aeron_errmsg();
+    ASSERT_EQ(next_session_id, next_session_id2 + 3);
+
+    EXPECT_EQ(aeron_publication_close(pub1, nullptr, nullptr), 0);
+    EXPECT_EQ(aeron_publication_close(pub2, nullptr, nullptr), 0);
+}
+
 TEST_P(CSystemTest, shouldAddPublicationAndSubscription)
 {
     aeron_async_add_publication_t *async_pub = nullptr;

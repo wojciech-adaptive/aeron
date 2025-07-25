@@ -1235,6 +1235,31 @@ TEST_F(ClientConductorTest, shouldAddStaticCounterSuccessfully)
     doWork();
 }
 
+TEST_F(ClientConductorTest, shouldReturnRandomSessionIdIfControlProtolVersionNotSatisfied)
+{
+    aeron_async_get_next_available_session_id_t *async = nullptr;
+
+    m_conductor.control_protocol_version = 1;
+
+    const int32_t streamId = 43;
+    ASSERT_EQ(aeron_client_conductor_async_get_next_available_session_id(&async, &m_conductor, streamId), 0);
+    ASSERT_EQ(streamId, async->stream_id);
+    ASSERT_EQ(AERON_CLIENT_REGISTERED_MEDIA_DRIVER, async->registration_status);
+    int32_t nextSessionId = async->resource.next_session_id;
+
+    int32_t sessionId;
+    ASSERT_EQ(aeron_async_next_session_id_poll(&sessionId, async), 1) << aeron_errmsg();
+    ASSERT_EQ(nextSessionId, sessionId);
+
+    ASSERT_EQ(aeron_client_conductor_async_get_next_available_session_id(&async, &m_conductor, streamId), 0);
+    ASSERT_EQ(streamId, async->stream_id);
+    ASSERT_EQ(AERON_CLIENT_REGISTERED_MEDIA_DRIVER, async->registration_status);
+    int32_t nextSessionId2 = async->resource.next_session_id;
+    ASSERT_EQ(aeron_async_next_session_id_poll(&sessionId, async), 1) << aeron_errmsg();
+
+    ASSERT_NE(nextSessionId, nextSessionId2);
+}
+
 class ClientConductorIsLengthSufficientTest : public testing::TestWithParam<std::tuple<aeron_mapped_file_t*, bool>>
 {
 };
