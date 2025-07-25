@@ -501,8 +501,8 @@ public final class Aeron implements AutoCloseable
     }
 
     /**
-     * Get or generate next available session id for the given {@code streamId}. The session id will be unique for the
-     * connected media driver and given {@code streamId}.
+     * Get next available session id from the media driver. The session id will be unique for the connected media
+     * driver and given {@code streamId}.
      * <p>
      * If media driver's version is 1.49.0 or higher, then the session id is returned by the media driver. Otherwise,
      * a random session id is generated.
