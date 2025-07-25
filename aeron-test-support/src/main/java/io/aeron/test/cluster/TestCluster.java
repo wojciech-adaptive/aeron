@@ -284,7 +284,7 @@ public final class TestCluster implements AutoCloseable
         final int index, final boolean cleanStart, final IntFunction<TestNode.TestService[]> serviceSupplier)
     {
         final String baseDirName = clusterBaseDir + "-" + index;
-        final String aeronDirName = CommonContext.getAeronDirectoryName() + "-" + index + "-driver";
+        final String aeronDirName = CommonContext.generateRandomDirName();
         final File markFileDir = null != markFileBaseDir ? new File(markFileBaseDir, "mark-" + index) : null;
         final TestNode.Context context = new TestNode.Context(serviceSupplier.apply(index), nodeNameMappings());
 
@@ -646,10 +646,9 @@ public final class TestCluster implements AutoCloseable
 
     public AeronCluster connectClient(final AeronCluster.Context clientCtx)
     {
-        final String aeronDirName = CommonContext.getAeronDirectoryName();
-
         if (null == clientMediaDriver)
         {
+            final String aeronDirName = CommonContext.generateRandomDirName();
             dataCollector.add(Paths.get(aeronDirName));
 
             final MediaDriver.Context ctx = new MediaDriver.Context()
@@ -668,7 +667,7 @@ public final class TestCluster implements AutoCloseable
         }
 
         clientCtx
-            .aeronDirectoryName(aeronDirName)
+            .aeronDirectoryName(clientMediaDriver.aeronDirectoryName())
             .isIngressExclusive(true)
             .egressListener(egressListener)
             .controlledEgressListener(controlledEgressListener);
