@@ -39,8 +39,6 @@ The cluster can run in various configurations:
     recommended way to use Cluster. Automatic elections are more reliable.
  - **Automatic Elections:** Automatic elections (default) can be enabled to have a leader elected at random from the
     members with the most up-to-date log.
- - **Dynamic Membership:** Cluster node membership can be dynamic with support for members to join and quit the cluster
-    with membership changes recorded in the log.
        
 The majority of cluster members determine consensus. Clusters should typically be 3 or 5 in population size. However,
 2 node clusters are supported whereby both members must agree the log and in the event of failure the remaining member
