@@ -43,8 +43,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayDeque;
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -2629,23 +2627,5 @@ abstract class ArchiveConductor
             this.controlSession = controlSession;
             this.deadlineNs = deadlineNs;
         }
-    }
-
-
-    private static Random stronglySeededRandom()
-    {
-        boolean hasSeed = false;
-        long seed = 0;
-
-        try
-        {
-            seed = SecureRandom.getInstanceStrong().nextLong();
-            hasSeed = true;
-        }
-        catch (final NoSuchAlgorithmException ignore)
-        {
-        }
-
-        return hasSeed ? new Random(seed) : new Random();
     }
 }
