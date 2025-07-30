@@ -121,7 +121,7 @@ public final class DriverConductor implements Agent
     private final ArrayList<SubscriptionLink> subscriptionLinks = new ArrayList<>();
     private final ArrayList<CounterLink> counterLinks = new ArrayList<>();
     private final ArrayList<AeronClient> clients = new ArrayList<>();
-    private final ArrayDeque<DriverManagedResource> endOfLiveResources = new ArrayDeque<>();
+    private final ArrayDeque<DriverManagedResource> endOfLifeResources = new ArrayDeque<>();
     private final ObjectHashSet<SessionKey> activeSessionSet = new ObjectHashSet<>();
     private final EpochClock epochClock;
     private final NanoClock nanoClock;
@@ -2688,7 +2688,7 @@ public final class DriverConductor implements Agent
             if (resource.hasReachedEndOfLife())
             {
                 CloseHelper.close(ctx.errorHandler(), resource::close);
-                endOfLiveResources.add(resource);
+                endOfLifeResources.add(resource);
                 fastUnorderedRemove(list, i, lastIndex--);
             }
         }
@@ -2700,7 +2700,7 @@ public final class DriverConductor implements Agent
 
         for (int i = 0; i < freeLimit; i++)
         {
-            final DriverManagedResource resource = endOfLiveResources.pollFirst();
+            final DriverManagedResource resource = endOfLifeResources.pollFirst();
             if (null == resource)
             {
                 break;
@@ -2713,7 +2713,7 @@ public final class DriverConductor implements Agent
             else
             {
                 ctx.systemCounters().get(FREE_FAILS).incrementRelease();
-                endOfLiveResources.addLast(resource);
+                endOfLifeResources.addLast(resource);
             }
         }
 
