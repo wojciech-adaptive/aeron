@@ -267,7 +267,7 @@ int aeron_driver_validate_value_range(uint64_t value, uint64_t min_value, uint64
     {
         AERON_SET_ERR(
             EINVAL,
-            "%s less than min size of %" PRIu64 ": page size=%" PRIu64,
+            "%s less than min size of %" PRIu64 ": value=%" PRIu64,
             name, min_value, value);
         return -1;
     }
@@ -276,7 +276,7 @@ int aeron_driver_validate_value_range(uint64_t value, uint64_t min_value, uint64
     {
         AERON_SET_ERR(
             EINVAL,
-            "%s greater than max size of %" PRIu64 ": page size=%" PRIu64,
+            "%s greater than max size of %" PRIu64 ": value=%" PRIu64,
             name, max_value, value);
         return -1;
     }
@@ -290,6 +290,7 @@ int aeron_driver_create_cnc_file(aeron_driver_t *driver)
     size_t cnc_file_length = aeron_cnc_length(driver->context);
     if (aeron_driver_validate_value_range(cnc_file_length, 0, INT32_MAX, "CnC file length") < 0)
     {
+        AERON_APPEND_ERR("%s", "");
         return -1;
     }
 
@@ -792,6 +793,7 @@ int aeron_driver_init(aeron_driver_t **driver, aeron_driver_context_t *context)
         INT32_MAX,
         "to_driver_buffer_length") < 0)
     {
+        AERON_APPEND_ERR("%s", "");
         goto error;
     }
 
@@ -801,15 +803,17 @@ int aeron_driver_init(aeron_driver_t **driver, aeron_driver_context_t *context)
         INT32_MAX,
         "to_clients_buffer_length") < 0)
     {
+        AERON_APPEND_ERR("%s", "");
         goto error;
     }
 
     if (aeron_driver_validate_value_range(
         _driver->context->counters_values_buffer_length,
-        AERON_COUNTERS_VALUES_BUFFER_LENGTH_DEFAULT,
+        AERON_COUNTERS_VALUES_BUFFER_LENGTH_MIN,
         AERON_COUNTERS_VALUES_BUFFER_LENGTH_MAX,
         "counters_values_buffer_length") < 0)
     {
+        AERON_APPEND_ERR("%s", "");
         goto error;
     }
 
@@ -819,6 +823,7 @@ int aeron_driver_init(aeron_driver_t **driver, aeron_driver_context_t *context)
         INT32_MAX,
         "error_buffer_length") < 0)
     {
+        AERON_APPEND_ERR("%s", "");
         goto error;
     }
 
@@ -828,6 +833,7 @@ int aeron_driver_init(aeron_driver_t **driver, aeron_driver_context_t *context)
         AERON_LOGBUFFER_TERM_MAX_LENGTH,
         "publication_window_length") < 0)
     {
+        AERON_APPEND_ERR("%s", "");
         goto error;
     }
 
@@ -837,6 +843,7 @@ int aeron_driver_init(aeron_driver_t **driver, aeron_driver_context_t *context)
         AERON_LOGBUFFER_TERM_MAX_LENGTH,
         "ipc_publication_window_length") < 0)
     {
+        AERON_APPEND_ERR("%s", "");
         goto error;
     }
 
