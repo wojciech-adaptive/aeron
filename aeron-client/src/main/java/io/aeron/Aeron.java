@@ -1042,7 +1042,7 @@ public final class Aeron implements AutoCloseable
                     "is set");
             }
 
-            if (null != clientName && clientName.length() > MAX_CLIENT_NAME_LENGTH)
+            if (clientName.length() > MAX_CLIENT_NAME_LENGTH)
             {
                 throw new ConfigurationException("clientName length must <= " + MAX_CLIENT_NAME_LENGTH);
             }
