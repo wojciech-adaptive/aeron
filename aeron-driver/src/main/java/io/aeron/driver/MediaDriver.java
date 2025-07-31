@@ -664,7 +664,7 @@ public final class MediaDriver implements AutoCloseable
                     "toClientsBufferLength");
                 validateValueRange(
                     counterValuesBufferLength,
-                    COUNTERS_VALUES_BUFFER_LENGTH_DEFAULT,
+                    COUNTERS_VALUES_BUFFER_LENGTH_MIN,
                     COUNTERS_VALUES_BUFFER_LENGTH_MAX,
                     "counterValuesBufferLength");
                 validateValueRange(

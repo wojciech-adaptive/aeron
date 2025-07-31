@@ -51,6 +51,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static io.aeron.driver.Configuration.CALLER_RUNS_TASK_EXECUTOR;
+import static io.aeron.driver.Configuration.COUNTERS_VALUES_BUFFER_LENGTH_MAX;
+import static io.aeron.driver.Configuration.COUNTERS_VALUES_BUFFER_LENGTH_MIN;
 import static io.aeron.driver.Configuration.ERROR_BUFFER_LENGTH_DEFAULT;
 import static io.aeron.driver.Configuration.LOSS_REPORT_BUFFER_LENGTH_DEFAULT;
 import static io.aeron.driver.Configuration.NAK_MAX_BACKOFF_DEFAULT_NS;
@@ -134,7 +136,7 @@ class MediaDriverContextTest
     }
 
     @ParameterizedTest
-    @ValueSource(ints = { -76, 0, 1024 * 1024 - 1, 1024 * 1024 * 1024 })
+    @ValueSource(ints = { -76, 0, COUNTERS_VALUES_BUFFER_LENGTH_MIN - 1, COUNTERS_VALUES_BUFFER_LENGTH_MAX + 1 })
     void counterValuesBufferLengthMustBeWithinRange(final int length)
     {
         context.counterValuesBufferLength(length);

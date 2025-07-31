@@ -208,7 +208,12 @@ public final class Configuration
     public static final int COUNTERS_VALUES_BUFFER_LENGTH_DEFAULT = 8 * 1024 * 1024;
 
     /**
-     * Maximum length of the buffer for the counters file.
+     * Minimum counters buffer length.
+     */
+    public static final int COUNTERS_VALUES_BUFFER_LENGTH_MIN = 1024 * 1024;
+
+    /**
+     * Maximum counters buffer length.
      */
     public static final int COUNTERS_VALUES_BUFFER_LENGTH_MAX = 500 * 1024 * 1024;
 
