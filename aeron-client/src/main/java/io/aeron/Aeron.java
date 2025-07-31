@@ -583,7 +583,6 @@ public final class Aeron implements AutoCloseable
         return conductor.addCounter(typeId, label);
     }
 
-
     /**
      * Allocates or returns an existing static counter instance using specified {@code typeId} and
      * {@code registrationId} pair. Such a counter cannot be deleted and its lifecycle is decoupled from this
@@ -640,6 +639,133 @@ public final class Aeron implements AutoCloseable
     public Counter addStaticCounter(final int typeId, final String label, final long registrationId)
     {
         return conductor.addStaticCounter(typeId, label, registrationId);
+    }
+
+    /**
+     * Asynchronously allocate a counter on the media driver.
+     * <p>
+     * The typeId should be 1000 or greater. Values lower than that are reserved for use by Aeron.
+     *
+     * @param typeId for the counter.
+     * @param label  for the counter. It should be US-ASCII.
+     * @return the registration id of the counter which can be used to get it by calling {@link #getCounter(long)}
+     * method.
+     * @see #getCounter(long)
+     * @since 1.49.0
+     */
+    public long asyncAddCounter(final int typeId, final String label)
+    {
+        return conductor.asyncAddCounter(typeId, label);
+    }
+
+    /**
+     * Asynchronously allocate a counter on the media driver.
+     * <p>
+     * The typeId should be 1000 or greater. Values lower than that are reserved for use by Aeron.
+     *
+     * @param typeId      for the counter.
+     * @param keyBuffer   containing the optional key for the counter.
+     * @param keyOffset   within the keyBuffer at which the key begins.
+     * @param keyLength   of the key in the keyBuffer.
+     * @param labelBuffer containing the mandatory label for the counter. The label should not be length prefixed.
+     * @param labelOffset within the labelBuffer at which the label begins.
+     * @param labelLength of the label in the labelBuffer.
+     * @return the registration id of the counter which can be used to get it by calling {@link #getCounter(long)}
+     * method.
+     * @see #getCounter(long)
+     * @since 1.49.0
+     */
+    public long asyncAddCounter(
+        final int typeId,
+        final DirectBuffer keyBuffer,
+        final int keyOffset,
+        final int keyLength,
+        final DirectBuffer labelBuffer,
+        final int labelOffset,
+        final int labelLength)
+    {
+        return conductor.asyncAddCounter(
+            typeId, keyBuffer, keyOffset, keyLength, labelBuffer, labelOffset, labelLength);
+    }
+
+    /**
+     * Asynchronously allocates or returns an existing static counter instance using specified {@code typeId} and
+     * {@code registrationId} pair. Such a counter cannot be deleted and its lifecycle is decoupled from this
+     * {@link Aeron} instance, i.e. won't be closed when this instance is closed or times out.
+     * <p>
+     * <em><strong>Note:</strong> calling {@link Counter#close()} will only close the counter instance itself but will
+     * not free the counter in the CnC file.</em>
+     * <p>
+     * The typeId should be 1000 or greater. Values lower than that are reserved for use by Aeron.
+     *
+     * @param typeId         for the counter.
+     * @param label          for the counter. It should be US-ASCII.
+     * @param registrationId that uniquely identifies the static counter for a given {@code typeId}.
+     * @return the correlation id of the command which can be used to get the counter by calling
+     * {@link #getCounter(long)} method.
+     * @see #getCounter(long)
+     * @since 1.49.0
+     */
+    public long asyncAddStaticCounter(final int typeId, final String label, final long registrationId)
+    {
+        return conductor.asyncAddStaticCounter(typeId, label, registrationId);
+    }
+
+    /**
+     * Asynchronously allocates or returns an existing static counter instance using specified {@code typeId} and
+     * {@code registrationId} pair. Such a counter cannot be deleted and its lifecycle is decoupled from this
+     * {@link Aeron} instance, i.e. won't be closed when this instance is closed or times out.
+     * <p>
+     * <em><strong>Note:</strong> calling {@link Counter#close()} will only close the counter instance itself but will
+     * not free the counter in the CnC file.</em>
+     * <p>
+     * The typeId should be 1000 or greater. Values lower than that are reserved for use by Aeron.
+     *
+     * @param typeId         for the counter.
+     * @param keyBuffer      containing the optional key for the counter.
+     * @param keyOffset      within the keyBuffer at which the key begins.
+     * @param keyLength      of the key in the keyBuffer.
+     * @param labelBuffer    containing the mandatory label for the counter. The label should not be length prefixed.
+     * @param labelOffset    within the labelBuffer at which the label begins.
+     * @param labelLength    of the label in the labelBuffer.
+     * @param registrationId that uniquely identifies the static counter for a given {@code typeId}.
+     * @return the correlation id of the command which can be used to get the counter by calling
+     * {@link #getCounter(long)} method.
+     * @see #getCounter(long)
+     * @since 1.49.0
+     */
+    public long asyncAddStaticCounter(
+        final int typeId,
+        final DirectBuffer keyBuffer,
+        final int keyOffset,
+        final int keyLength,
+        final DirectBuffer labelBuffer,
+        final int labelOffset,
+        final int labelLength,
+        final long registrationId)
+    {
+        return conductor.asyncAddStaticCounter(
+            typeId, keyBuffer, keyOffset, keyLength, labelBuffer, labelOffset, labelLength, registrationId);
+    }
+
+    /**
+     * Get a {@link Counter} that was created asynchronously.
+     *
+     * @param correlationId returned from one of the async methods:
+     *                      {@link #asyncAddCounter(int, String)},
+     *                      {@link #asyncAddCounter(int, DirectBuffer, int, int, DirectBuffer, int, int)},
+     *                      {@link #asyncAddStaticCounter(int, String, long)} or
+     *                      {@link #asyncAddStaticCounter(int, DirectBuffer, int, int, DirectBuffer, int, int, long)}.
+     * @return a new {@link Counter} when available, otherwise {@code null}.
+     * @see #asyncAddCounter(int, String)
+     * @see #asyncAddCounter(int, DirectBuffer, int, int, DirectBuffer, int, int)
+     * @see #asyncAddStaticCounter(int, String, long)
+     * @see #asyncAddStaticCounter(int, DirectBuffer, int, int, DirectBuffer, int, int, long)
+     * @since 1.49.0
+     */
+    public Counter getCounter(final long correlationId)
+    {
+        return conductor.getCounter(correlationId);
     }
 
     /**

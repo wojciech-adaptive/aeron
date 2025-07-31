@@ -120,4 +120,9 @@ public final class Counter extends AtomicCounter
         super.close();
         isClosed = true;
     }
+
+    ClientConductor clientConductor()
+    {
+        return clientConductor;
+    }
 }

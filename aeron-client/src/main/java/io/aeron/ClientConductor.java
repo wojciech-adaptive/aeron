@@ -1199,14 +1199,12 @@ final class ClientConductor implements Agent
                 throw new IllegalArgumentException("label length out of bounds: " + labelLength);
             }
 
-            lastResponseValue = NULL_VALUE;
             final long correlationId = driverProxy.addStaticCounter(
                 typeId, keyBuffer, keyOffset, keyLength, labelBuffer, labelOffset, labelLength, registrationId);
 
             awaitResponse(correlationId);
 
-            final int counterId = (int)lastResponseValue;
-            return new Counter(aeron.countersReader(), registrationId, counterId);
+            return (Counter)resourceByRegIdMap.get(correlationId);
         }
         finally
         {
@@ -1227,12 +1225,150 @@ final class ClientConductor implements Agent
                 throw new IllegalArgumentException("label length exceeds MAX_LABEL_LENGTH: " + label.length());
             }
 
-            lastResponseValue = NULL_VALUE;
             final long correlationId = driverProxy.addStaticCounter(typeId, label, registrationId);
             awaitResponse(correlationId);
 
-            final int counterId = (int)lastResponseValue;
-            return new Counter(aeron.countersReader(), registrationId, counterId);
+            return (Counter)resourceByRegIdMap.get(correlationId);
+        }
+        finally
+        {
+            clientLock.unlock();
+        }
+    }
+
+    long asyncAddCounter(final int typeId, final String label)
+    {
+        clientLock.lock();
+        try
+        {
+            ensureActive();
+            ensureNotReentrant();
+
+            if (label.length() > CountersManager.MAX_LABEL_LENGTH)
+            {
+                throw new IllegalArgumentException("label length exceeds MAX_LABEL_LENGTH: " + label.length());
+            }
+
+            final long registrationId = driverProxy.addCounter(typeId, label);
+            asyncCommandIdSet.add(registrationId);
+            return registrationId;
+        }
+        finally
+        {
+            clientLock.unlock();
+        }
+    }
+
+    long asyncAddCounter(
+        final int typeId,
+        final DirectBuffer keyBuffer,
+        final int keyOffset,
+        final int keyLength,
+        final DirectBuffer labelBuffer,
+        final int labelOffset,
+        final int labelLength)
+    {
+        clientLock.lock();
+        try
+        {
+            ensureActive();
+            ensureNotReentrant();
+
+            if (keyLength < 0 || keyLength > CountersManager.MAX_KEY_LENGTH)
+            {
+                throw new IllegalArgumentException("key length out of bounds: " + keyLength);
+            }
+
+            if (labelLength < 0 || labelLength > CountersManager.MAX_LABEL_LENGTH)
+            {
+                throw new IllegalArgumentException("label length out of bounds: " + labelLength);
+            }
+
+            final long registrationId = driverProxy.addCounter(
+                typeId, keyBuffer, keyOffset, keyLength, labelBuffer, labelOffset, labelLength);
+            asyncCommandIdSet.add(registrationId);
+            return registrationId;
+        }
+        finally
+        {
+            clientLock.unlock();
+        }
+    }
+
+    long asyncAddStaticCounter(final int typeId, final String label, final long registrationId)
+    {
+        clientLock.lock();
+        try
+        {
+            ensureActive();
+            ensureNotReentrant();
+
+            if (label.length() > CountersManager.MAX_LABEL_LENGTH)
+            {
+                throw new IllegalArgumentException("label length exceeds MAX_LABEL_LENGTH: " + label.length());
+            }
+
+            final long correlationId = driverProxy.addStaticCounter(typeId, label, registrationId);
+            asyncCommandIdSet.add(correlationId);
+            return correlationId;
+        }
+        finally
+        {
+            clientLock.unlock();
+        }
+    }
+
+    long asyncAddStaticCounter(
+        final int typeId,
+        final DirectBuffer keyBuffer,
+        final int keyOffset,
+        final int keyLength,
+        final DirectBuffer labelBuffer,
+        final int labelOffset,
+        final int labelLength,
+        final long registrationId)
+    {
+        clientLock.lock();
+        try
+        {
+            ensureActive();
+            ensureNotReentrant();
+
+            if (keyLength < 0 || keyLength > CountersManager.MAX_KEY_LENGTH)
+            {
+                throw new IllegalArgumentException("key length out of bounds: " + keyLength);
+            }
+
+            if (labelLength < 0 || labelLength > CountersManager.MAX_LABEL_LENGTH)
+            {
+                throw new IllegalArgumentException("label length out of bounds: " + labelLength);
+            }
+
+            final long correlationId = driverProxy.addStaticCounter(
+                typeId, keyBuffer, keyOffset, keyLength, labelBuffer, labelOffset, labelLength, registrationId);
+            asyncCommandIdSet.add(correlationId);
+            return correlationId;
+        }
+        finally
+        {
+            clientLock.unlock();
+        }
+    }
+
+    Counter getCounter(final long registrationId)
+    {
+        clientLock.lock();
+        try
+        {
+            ensureActive();
+            ensureNotReentrant();
+
+            if (asyncCommandIdSet.contains(registrationId))
+            {
+                service(NO_CORRELATION_ID);
+            }
+
+            return resourceOrThrow(registrationId, Counter.class);
         }
         finally
         {
@@ -1503,9 +1639,12 @@ final class ClientConductor implements Agent
         }
     }
 
-    void onStaticCounter(final int counterId)
+    void onStaticCounter(final long correlationId, final int counterId)
     {
-        lastResponseValue = counterId;
+        final CountersReader countersReader = aeron.countersReader();
+        resourceByRegIdMap.put(
+            correlationId,
+            new Counter(countersReader, countersReader.getCounterRegistrationId(counterId), counterId));
     }
 
     void rejectImage(final long correlationId, final long position, final String reason)
@@ -1779,20 +1918,17 @@ final class ClientConductor implements Agent
     {
         for (final Object resource : resourceByRegIdMap.values())
         {
-            if (resource instanceof Subscription)
+            if (resource instanceof Subscription subscription)
             {
-                final Subscription subscription = (Subscription)resource;
                 subscription.internalClose(NULL_VALUE);
             }
-            else if (resource instanceof Publication)
+            else if (resource instanceof Publication publication)
             {
-                final Publication publication = (Publication)resource;
                 publication.internalClose();
                 releaseLogBuffers(publication.logBuffers(), publication.originalRegistrationId(), NULL_VALUE);
             }
-            else if (resource instanceof Counter)
+            else if (resource instanceof Counter counter && this == counter.clientConductor())
             {
-                final Counter counter = (Counter)resource;
                 counter.internalClose();
                 notifyUnavailableCounterHandlers(counter.registrationId(), counter.id());
             }

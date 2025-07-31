@@ -79,6 +79,7 @@ class CounterTest
 
         driver = TestMediaDriver.launch(
             new MediaDriver.Context()
+                .aeronDirectoryName(CommonContext.generateRandomDirName())
                 .errorHandler(Tests::onError)
                 .threadingMode(ThreadingMode.SHARED)
                 .clientLivenessTimeoutNs(TimeUnit.SECONDS.toNanos(1))
@@ -86,8 +87,8 @@ class CounterTest
             testWatcher);
         testWatcher.dataCollector().add(driver.context().aeronDirectory());
 
-        clientA = Aeron.connect();
-        clientB = Aeron.connect();
+        clientA = Aeron.connect(new Aeron.Context().aeronDirectoryName(driver.aeronDirectoryName()));
+        clientB = Aeron.connect(new Aeron.Context().aeronDirectoryName(driver.aeronDirectoryName()));
     }
 
     @AfterEach
@@ -515,6 +516,193 @@ class CounterTest
             verify(unavailableCounterHandler, never()).onUnavailableCounter(
                 any(CountersReader.class), eq(counter.registrationId()), eq(counter.id()));
         }
+    }
+
+    @Test
+    @InterruptAfter(10)
+    void shouldAddCounterAsynchronously()
+    {
+        final AvailableCounterHandler availableCounterHandlerClientA = mock(AvailableCounterHandler.class);
+        clientA.addAvailableCounterHandler(availableCounterHandlerClientA);
+
+        final AvailableCounterHandler availableCounterHandlerClientB = mock(AvailableCounterHandler.class);
+        clientB.addAvailableCounterHandler(availableCounterHandlerClientB);
+
+        final long registrationId = clientA.asyncAddCounter(
+            COUNTER_TYPE_ID,
+            keyBuffer,
+            0,
+            keyBuffer.capacity(),
+            labelBuffer,
+            0,
+            COUNTER_LABEL.length());
+
+        Counter counter;
+        while (null == (counter = clientA.getCounter(registrationId)))
+        {
+            Tests.yield();
+        }
+
+        assertNotNull(counter);
+        assertFalse(counter.isClosed());
+        assertEquals(registrationId, clientA.countersReader().getCounterRegistrationId(counter.id()));
+        assertEquals(clientA.clientId(), clientA.countersReader().getCounterOwnerId(counter.id()));
+
+        assertNull(clientB.getCounter(registrationId));
+
+        verify(availableCounterHandlerClientA, timeout(5000L))
+            .onAvailableCounter(any(CountersReader.class), eq(registrationId), eq(counter.id()));
+        verify(availableCounterHandlerClientB, timeout(5000L))
+            .onAvailableCounter(any(CountersReader.class), eq(registrationId), eq(counter.id()));
+    }
+
+    @Test
+    @InterruptAfter(10)
+    void shouldAddCounterAsynchronouslyUsingLabelAndTypeId()
+    {
+        final AvailableCounterHandler availableCounterHandlerClientA = mock(AvailableCounterHandler.class);
+        clientA.addAvailableCounterHandler(availableCounterHandlerClientA);
+
+        final AvailableCounterHandler availableCounterHandlerClientB = mock(AvailableCounterHandler.class);
+        clientB.addAvailableCounterHandler(availableCounterHandlerClientB);
+
+        final long registrationId = clientA.asyncAddCounter(COUNTER_TYPE_ID, "test");
+
+        Counter counter;
+        while (null == (counter = clientA.getCounter(registrationId)))
+        {
+            Tests.yield();
+        }
+
+        assertNotNull(counter);
+        assertFalse(counter.isClosed());
+        assertEquals(registrationId, clientA.countersReader().getCounterRegistrationId(counter.id()));
+        assertEquals(clientA.clientId(), clientA.countersReader().getCounterOwnerId(counter.id()));
+
+        assertNull(clientB.getCounter(registrationId));
+
+        verify(availableCounterHandlerClientA, timeout(5000L))
+            .onAvailableCounter(any(CountersReader.class), eq(registrationId), eq(counter.id()));
+        verify(availableCounterHandlerClientB, timeout(5000L))
+            .onAvailableCounter(any(CountersReader.class), eq(registrationId), eq(counter.id()));
+    }
+
+    @Test
+    @InterruptAfter(10)
+    void shouldAddStaticCounterAsynchronously()
+    {
+        final AvailableCounterHandler availableCounterHandlerClientA = mock(AvailableCounterHandler.class);
+        final UnavailableCounterHandler unavailableCounterHandlerClientA = mock(UnavailableCounterHandler.class);
+        clientA.addAvailableCounterHandler(availableCounterHandlerClientA);
+        clientA.addUnavailableCounterHandler(unavailableCounterHandlerClientA);
+
+        final AvailableCounterHandler availableCounterHandlerClientB = mock(AvailableCounterHandler.class);
+        final UnavailableCounterHandler unavailableCounterHandlerClientB = mock(UnavailableCounterHandler.class);
+        clientB.addAvailableCounterHandler(availableCounterHandlerClientB);
+        clientB.addUnavailableCounterHandler(unavailableCounterHandlerClientB);
+
+        final long registrationId1 = 100;
+        final long correlationId1 = clientA.asyncAddStaticCounter(
+            COUNTER_TYPE_ID,
+            keyBuffer,
+            0,
+            keyBuffer.capacity(),
+            labelBuffer,
+            0,
+            COUNTER_LABEL.length(),
+            registrationId1);
+        assertNotEquals(registrationId1, correlationId1);
+
+        Counter counter1;
+        while (null == (counter1 = clientA.getCounter(correlationId1)))
+        {
+            Thread.yield();
+        }
+
+        assertNotNull(counter1);
+        assertNull(clientB.getCounter(correlationId1));
+        assertFalse(counter1.isClosed());
+        assertEquals(registrationId1, counter1.registrationId());
+        assertEquals(CountersReader.RECORD_ALLOCATED, clientA.countersReader().getCounterState(counter1.id()));
+        assertEquals(registrationId1, clientA.countersReader().getCounterRegistrationId(counter1.id()));
+        assertEquals(NULL_VALUE, clientA.countersReader().getCounterOwnerId(counter1.id()));
+        assertEquals(COUNTER_TYPE_ID, clientA.countersReader().getCounterTypeId(counter1.id()));
+
+        final long registrationId2 = 200;
+        final long correlationId2 =
+            clientB.asyncAddStaticCounter(COUNTER_TYPE_ID, "test static counter", registrationId2);
+        assertNotEquals(registrationId2, correlationId2);
+
+        Counter counter2;
+        while (null == (counter2 = clientB.getCounter(correlationId2)))
+        {
+            Thread.yield();
+        }
+
+        assertNotNull(counter2);
+        assertNull(clientA.getCounter(correlationId2));
+        assertFalse(counter2.isClosed());
+        assertEquals(registrationId2, counter2.registrationId());
+        assertEquals(CountersReader.RECORD_ALLOCATED, clientB.countersReader().getCounterState(counter2.id()));
+        assertEquals(registrationId2, clientB.countersReader().getCounterRegistrationId(counter2.id()));
+        assertEquals(NULL_VALUE, clientB.countersReader().getCounterOwnerId(counter2.id()));
+        assertEquals("test static counter", clientB.countersReader().getCounterLabel(counter2.id()));
+        assertEquals(COUNTER_TYPE_ID, clientB.countersReader().getCounterTypeId(counter2.id()));
+
+        assertSame(counter1, clientA.getCounter(correlationId1));
+        assertSame(counter2, clientB.getCounter(correlationId2));
+
+        verify(availableCounterHandlerClientA, Mockito.after(1000L).never())
+            .onAvailableCounter(any(CountersReader.class), eq(counter1.registrationId()), eq(counter1.id()));
+        verify(availableCounterHandlerClientA, never())
+            .onAvailableCounter(any(CountersReader.class), eq(counter2.registrationId()), eq(counter2.id()));
+        verify(availableCounterHandlerClientB, never())
+            .onAvailableCounter(any(CountersReader.class), eq(counter1.registrationId()), eq(counter1.id()));
+        verify(availableCounterHandlerClientB, never())
+            .onAvailableCounter(any(CountersReader.class), eq(counter2.registrationId()), eq(counter2.id()));
+    }
+
+    @Test
+    @InterruptAfter(10)
+    void shouldNotCloseAsyncStaticCounterWhenClientInstanceIsClosed()
+    {
+        final AtomicBoolean clientClosed = new AtomicBoolean();
+        clientA.addCloseHandler(() -> clientClosed.set(true));
+
+        final long correlationId1 = clientA.asyncAddStaticCounter(
+            COUNTER_TYPE_ID,
+            keyBuffer,
+            0,
+            keyBuffer.capacity(),
+            labelBuffer,
+            0,
+            COUNTER_LABEL.length(),
+            1);
+
+        final long correlationId2 = clientB.asyncAddStaticCounter(COUNTER_TYPE_ID + 2, "test static counter", 22);
+
+        final Counter counter3 = clientA.addCounter(COUNTER_TYPE_ID, "delete me");
+
+        Counter counter1, counter2;
+        while (null == (counter1 = clientA.getCounter(correlationId1)))
+        {
+            Tests.yield();
+        }
+        while (null == (counter2 = clientB.getCounter(correlationId2)))
+        {
+            Tests.yield();
+        }
+
+        clientA.close();
+
+        Tests.await(clientClosed::get);
+
+        assertTrue(counter3.isClosed());
+        Tests.await(() -> CountersReader.RECORD_RECLAIMED == clientB.countersReader().getCounterState(counter3.id()));
+        assertEquals(CountersReader.RECORD_ALLOCATED, clientB.countersReader().getCounterState(counter1.id()));
+        assertEquals(CountersReader.RECORD_ALLOCATED, clientB.countersReader().getCounterState(counter2.id()));
+        assertFalse(counter1.isClosed());
+        assertFalse(counter2.isClosed());
     }
 
     private void createReadableCounter(final CountersReader counters, final long registrationId, final int counterId)

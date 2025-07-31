@@ -222,7 +222,7 @@ class DriverEventsAdapter implements MessageHandler
 
                 final int counterId = counterUpdate.counterId();
                 final long correlationId = counterUpdate.correlationId();
-                if (correlationId == activeCorrelationId)
+                if (correlationId == activeCorrelationId || asyncCommandIdSet.remove(correlationId))
                 {
                     receivedCorrelationId = correlationId;
                     conductor.onNewCounter(correlationId, counterId);
@@ -258,11 +258,11 @@ class DriverEventsAdapter implements MessageHandler
                 staticCounter.wrap(buffer, index);
 
                 final long correlationId = staticCounter.correlationId();
-                if (correlationId == activeCorrelationId)
+                if (correlationId == activeCorrelationId || asyncCommandIdSet.remove(correlationId))
                 {
                     final int counterId = staticCounter.counterId();
                     receivedCorrelationId = correlationId;
-                    conductor.onStaticCounter(counterId);
+                    conductor.onStaticCounter(correlationId, counterId);
                 }
                 break;
             }
