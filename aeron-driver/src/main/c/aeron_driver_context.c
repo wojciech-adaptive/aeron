@@ -573,7 +573,7 @@ int aeron_driver_context_init(aeron_driver_context_t **context)
         AERON_COUNTERS_VALUES_BUFFER_LENGTH_ENV_VAR,
         getenv(AERON_COUNTERS_VALUES_BUFFER_LENGTH_ENV_VAR),
         _context->counters_values_buffer_length,
-        AERON_COUNTERS_VALUES_BUFFER_LENGTH_DEFAULT,
+        AERON_COUNTERS_VALUES_BUFFER_LENGTH_MIN,
         AERON_COUNTERS_VALUES_BUFFER_LENGTH_MAX);
 
     _context->error_buffer_length = aeron_config_parse_size64(
